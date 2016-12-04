@@ -1,27 +1,13 @@
 package lab.kulebin.mydictionary.model;
 
-import android.content.ContentResolver;
-import android.content.ContentUris;
-import android.net.Uri;
-
-import lab.kulebin.mydictionary.EntryProvider;
 import lab.kulebin.mydictionary.db.annotations.Table;
 import lab.kulebin.mydictionary.db.annotations.dbInteger;
 import lab.kulebin.mydictionary.db.annotations.dbLong;
 import lab.kulebin.mydictionary.db.annotations.dbString;
 
-import static lab.kulebin.mydictionary.EntryProvider.BASE_CONTENT_URI;
-
 @Table(name = "entry")
 public class Entry {
 
-    public static final String TABLE_NAME = "entry";
-    public static final Uri ENTRY_URI =
-            BASE_CONTENT_URI.buildUpon().appendPath(TABLE_NAME).build();
-    public static final String CONTENT_TYPE =
-            ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + EntryProvider.AUTHORITY + "/" + TABLE_NAME;
-    public static final String CONTENT_ITEM_TYPE =
-            ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + EntryProvider.AUTHORITY + "/" + TABLE_NAME;
     private static final String STRING_SEPARATOR = "||";
 
     @dbInteger
@@ -54,10 +40,12 @@ public class Entry {
     private long mLastEditionDate;
     private String mImageUrl;
     private String mSoundUrl;
-    private String [] mTranslation;
-    private String [] mUsageContext;
+    private String[] mTranslation;
+    private String[] mUsageContext;
 
-    public Entry(){}
+    //TODO should be deleted
+    public Entry() {
+    }
 
     public Entry(final int pId,
                  final int pDictionaryId,
@@ -161,18 +149,14 @@ public class Entry {
         mUsageContext = pUsageContext;
     }
 
-    public static Uri buildEntryUri(long id) {
-        return ContentUris.withAppendedId(ENTRY_URI, id);
-    }
-
-    public static String [] convertStringToStirngArray(String pString){
+    public static String[] convertStringToStirngArray(String pString) {
         return pString.split(STRING_SEPARATOR);
     }
 
-    public static String convertStringArrayToString (String [] pStringArray){
-        if(pStringArray != null){
+    public static String convertStringArrayToString(String[] pStringArray) {
+        if (pStringArray != null) {
             StringBuilder builder = new StringBuilder();
-            for (String string:pStringArray){
+            for (String string : pStringArray) {
                 builder.append(string);
                 builder.append(STRING_SEPARATOR);
             }

@@ -46,6 +46,7 @@ import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.ui.EntryRecyclerAdapter;
+import lab.kulebin.mydictionary.utils.UriBuilder;
 
 import static android.R.attr.value;
 import static java.security.AccessController.getContext;
@@ -341,8 +342,7 @@ public class MainActivity extends AppCompatActivity
             if ( valuesVector.size() > 0 ) {
                 ContentValues[] valuesArray = new ContentValues[valuesVector.size()];
                 valuesVector.toArray(valuesArray);
-                Log.v(TAG, "Trying to do bulk insert");
-                MainActivity.this.getContentResolver().bulkInsert(Entry.ENTRY_URI, valuesArray);
+                MainActivity.this.getContentResolver().bulkInsert(UriBuilder.getTableUri(Entry.class), valuesArray);
             }
             return valuesVector.size();
         }

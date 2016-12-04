@@ -36,7 +36,7 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     @Nullable
-    private static String getTableName(final AnnotatedElement clazz) {
+    public static String getTableName(final AnnotatedElement clazz) {
         final Table table = clazz.getAnnotation(Table.class);
 
         if (table != null) {
@@ -58,9 +58,7 @@ public class DbHelper extends SQLiteOpenHelper {
                 final Field[] fields = clazz.getFields();
                 boolean isFirstFieldAdded = false;
 
-                for (int i = 0; i < fields.length; i++) {
-                    final Field field = fields[i];
-
+                for (Field field : fields) {
                     final Annotation[] annotations = field.getAnnotations();
                     String type = null;
 
@@ -98,13 +96,11 @@ public class DbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(final SQLiteDatabase db) {
-        Log.v("onCreateDb","Model is creared");
         for (final Class<?> clazz : Contract.MODELS) {
             final String sql = getTableCreateQuery(clazz);
 
             if (sql != null) {
                 db.execSQL(sql);
-                Log.v("onCreateDb", sql);
             }
         }
     }

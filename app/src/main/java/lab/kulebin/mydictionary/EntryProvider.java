@@ -12,12 +12,12 @@ import android.support.annotation.Nullable;
 import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
+import lab.kulebin.mydictionary.utils.UriBuilder;
+
+import static lab.kulebin.mydictionary.utils.UriBuilder.AUTHORITY;
 
 
 public class EntryProvider extends ContentProvider {
-
-    public static final String AUTHORITY = "lab.kulebin.mydictionary.app.EntryProvider";
-    public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + AUTHORITY);
 
     private DbHelper mDbHelper;
     private static final UriMatcher sUriMatcher = buildUriMatcher();
@@ -28,15 +28,15 @@ public class EntryProvider extends ContentProvider {
 
     private static final SQLiteQueryBuilder sEntryByDictionaryQueryBuilder;
 
-    static{
+    static {
         sEntryByDictionaryQueryBuilder = new SQLiteQueryBuilder();
 
         sEntryByDictionaryQueryBuilder.setTables(
-                Entry.TABLE_NAME + " INNER JOIN " +
-                        Dictionary.TABLE_NAME +
-                        " ON " + Entry.TABLE_NAME +
+                DbHelper.getTableName(Entry.class) + " INNER JOIN " +
+                        DbHelper.getTableName(Dictionary.class) +
+                        " ON " + DbHelper.getTableName(Entry.class) +
                         "." + Entry.DICTIONARY_ID +
-                        " = " + Dictionary.TABLE_NAME +
+                        " = " + DbHelper.getTableName(Dictionary.class) +
                         "." + Dictionary.ID);
     }
 
@@ -51,8 +51,7 @@ public class EntryProvider extends ContentProvider {
     public Cursor query(final Uri pUri, final String[] pStrings, final String pS, final String[] pStrings1, final String pSortOrder) {
         Cursor retCursor;
         switch (sUriMatcher.match(pUri)) {
-            case ENTRY_BY_DICTIONARY_ID:
-            {
+            case ENTRY_BY_DICTIONARY_ID: {
                 retCursor = sEntryByDictionaryQueryBuilder.query(mDbHelper.getReadableDatabase(),
                         null,
                         null,
@@ -63,10 +62,9 @@ public class EntryProvider extends ContentProvider {
                 );
                 break;
             }
-            // "weather"
             case ENTRY: {
                 retCursor = mDbHelper.getReadableDatabase().query(
-                        Entry.TABLE_NAME,
+                        DbHelper.getTableName(Entry.class),
                         null,
                         null,
                         null,
@@ -76,10 +74,9 @@ public class EntryProvider extends ContentProvider {
                 );
                 break;
             }
-
             case DICTIONARY: {
                 retCursor = mDbHelper.getReadableDatabase().query(
-                        Dictionary.TABLE_NAME,
+                        DbHelper.getTableName(Dictionary.class),
                         null,
                         null,
                         null,
@@ -89,7 +86,6 @@ public class EntryProvider extends ContentProvider {
                 );
                 break;
             }
-
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + pUri);
         }
@@ -100,68 +96,52 @@ public class EntryProvider extends ContentProvider {
     @Nullable
     @Override
     public String getType(final Uri pUri) {
-
-        final int match = sUriMatcher.match(pUri);
-
-        switch (match) {
-            case ENTRY:
-                return Entry.CONTENT_TYPE;
-            case DICTIONARY:
-                return Dictionary.CONTENT_TYPE;
-            default:
-                throw new UnsupportedOperationException("Unknown uri: " + pUri);
-        }
+        return UriBuilder.getContentType(getTable(pUri), UriBuilder.ContentType.TABLE);
     }
 
     @Nullable
     @Override
     public Uri insert(final Uri pUri, final ContentValues pContentValues) {
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        final int match = sUriMatcher.match(pUri);
         Uri returnUri;
-
-        switch (match) {
-            case ENTRY: {
-                long id = db.insert(Entry.TABLE_NAME, null, pContentValues);
-                if ( id > 0 )
-                    returnUri = Entry.buildEntryUri(id);
-                else
-                    throw new android.database.SQLException("Failed to insert row into " + pUri);
-                break;
-            }
-            case DICTIONARY: {
-                long id = db.insert(Dictionary.TABLE_NAME, null, pContentValues);
-                if ( id > 0 )
-                    returnUri = Dictionary.buildDictionaryUri(id);
-                else
-                    throw new android.database.SQLException("Failed to insert row into " + pUri);
-                break;
-            }
-            default:
-                throw new UnsupportedOperationException("Unknown uri: " + pUri);
+        Class tableClass = getTable(pUri);
+        long id = db.insert(DbHelper.getTableName(tableClass), null, pContentValues);
+        if (id > 0)
+            returnUri = UriBuilder.getItemUri(tableClass, id);
+        else {
+            throw new android.database.SQLException("Failed to insert row into " + pUri);
         }
         getContext().getContentResolver().notifyChange(pUri, null);
         return returnUri;
     }
 
     @Override
+    public int bulkInsert(Uri pUri, ContentValues[] pContentValues) {
+        final SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+        db.beginTransaction();
+        int returnCount = 0;
+        try {
+            for (ContentValues value : pContentValues) {
+                long id = db.insert(DbHelper.getTableName(getTable(pUri)), null, value);
+                if (id != -1) {
+                    returnCount++;
+                }
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+        getContext().getContentResolver().notifyChange(pUri, null);
+        return returnCount;
+    }
+
+    @Override
     public int delete(final Uri pUri, final String pSel, final String[] pArgs) {
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        final int match = sUriMatcher.match(pUri);
         int rowsDeleted;
-        switch (match) {
-            case ENTRY:
-                rowsDeleted = db.delete(
-                        Entry.TABLE_NAME, pSel, pArgs);
-                break;
-            case DICTIONARY:
-                rowsDeleted = db.delete(
-                        Dictionary.TABLE_NAME, pSel, pArgs);
-                break;
-            default:
-                throw new UnsupportedOperationException("Unknown uri: " + pUri);
-        }
-        // Because a null deletes all rows
+        rowsDeleted = db.delete(DbHelper.getTableName(getTable(pUri)), pSel, pArgs);
+
         if (rowsDeleted != 0) {
             getContext().getContentResolver().notifyChange(pUri, null);
         }
@@ -172,60 +152,34 @@ public class EntryProvider extends ContentProvider {
     public int update(
             Uri pUri, ContentValues pValues, String pSelection, String[] pArgs) {
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        final int match = sUriMatcher.match(pUri);
         int rowsUpdated;
+        rowsUpdated = db.update(DbHelper.getTableName(getTable(pUri)), pValues, pSelection, pArgs);
 
-        switch (match) {
-            case ENTRY:
-                rowsUpdated = db.update(Entry.TABLE_NAME, pValues, pSelection,
-                        pArgs);
-                break;
-            case DICTIONARY:
-                rowsUpdated = db.update(Dictionary.TABLE_NAME, pValues, pSelection,
-                        pArgs);
-                break;
-            default:
-                throw new UnsupportedOperationException("Unknown uri: " + pUri);
-        }
         if (rowsUpdated != 0) {
             getContext().getContentResolver().notifyChange(pUri, null);
         }
         return rowsUpdated;
     }
 
-    static UriMatcher buildUriMatcher() {
-
+    private static UriMatcher buildUriMatcher() {
         final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
-
-        matcher.addURI(AUTHORITY, Entry.TABLE_NAME, ENTRY);
-        matcher.addURI(AUTHORITY, Entry.TABLE_NAME + "/#", ENTRY_BY_DICTIONARY_ID);
-        matcher.addURI(AUTHORITY, Dictionary.TABLE_NAME, DICTIONARY);
+        matcher.addURI(AUTHORITY, DbHelper.getTableName(Entry.class), ENTRY);
+        matcher.addURI(AUTHORITY, DbHelper.getTableName(Entry.class) + "/#", ENTRY_BY_DICTIONARY_ID);
+        matcher.addURI(AUTHORITY, DbHelper.getTableName(Dictionary.class), DICTIONARY);
         return matcher;
     }
 
-    @Override
-    public int bulkInsert(Uri pUri, ContentValues[] pContentValues) {
-        final SQLiteDatabase db = mDbHelper.getWritableDatabase();
+    private Class<?> getTable(final Uri pUri) {
         final int match = sUriMatcher.match(pUri);
         switch (match) {
+            case ENTRY_BY_DICTIONARY_ID:
+                return Entry.class;
             case ENTRY:
-                db.beginTransaction();
-                int returnCount = 0;
-                try {
-                    for (ContentValues value : pContentValues) {
-                        long id = db.insert(Entry.TABLE_NAME, null, value);
-                        if (id != -1) {
-                            returnCount++;
-                        }
-                    }
-                    db.setTransactionSuccessful();
-                } finally {
-                    db.endTransaction();
-                }
-                getContext().getContentResolver().notifyChange(pUri, null);
-                return returnCount;
+                return Entry.class;
+            case DICTIONARY:
+                return Dictionary.class;
             default:
-                return super.bulkInsert(pUri, pContentValues);
+                throw new UnsupportedOperationException("Unknown uri: " + pUri);
         }
     }
 }
