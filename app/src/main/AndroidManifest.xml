@@ -22,6 +22,10 @@
         <activity android:name=".app.EntryActivity">
         </activity>
         <activity android:name=".app.SignInActivity" />
+        <provider
+            android:authorities="lab.kulebin.mydictionary.app.EntryProvider"
+            android:name=".EntryProvider"
+            android:exported="false"/>
     </application>
 
 </manifest>

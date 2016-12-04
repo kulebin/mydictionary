@@ -45,7 +45,7 @@ public class EntryRecyclerAdapter extends RecyclerView.Adapter<EntryRecyclerAdap
     @Override
     public void onBindViewHolder(final EntryViewHolder holder, final int position) {
         holder.entryValueTextView.setText(mEntryList.get(position).getValue());
-        holder.entryTranslationTextView.setText(mEntryList.get(position).getTranslation());
+        holder.entryTranslationTextView.setText(Entry.convertStringArrayToString(mEntryList.get(position).getTranslation()));
         Glide.with(mContext)
                 .load(mEntryList.get(position).getImageUrl())
                 .override(300, 300)

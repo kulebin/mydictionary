@@ -39,11 +39,16 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
+
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.db.DbHelper;
-import lab.kulebin.mydictionary.http.HttpUtils;
+import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.ui.EntryRecyclerAdapter;
+
+import static android.R.attr.value;
+import static java.security.AccessController.getContext;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener {
@@ -218,8 +223,8 @@ public class MainActivity extends AppCompatActivity
             String json = null;
 
             try {
-                Uri builtUri = Uri.parse(HttpUtils.FIREBASE_HOST).buildUpon()
-                        .appendPath(HttpUtils.ENTRIES)
+                Uri builtUri = Uri.parse(Api.BASE_URL).buildUpon()
+                        .appendPath(Api.ENTRIES)
                         .build();
 
                 URL url = new URL(builtUri.toString());
@@ -294,9 +299,15 @@ public class MainActivity extends AppCompatActivity
                 JSONObject entryObject = entryArray.getJSONObject(i);
                 entryList.add(new Entry(
                         entryObject.getInt(Entry.ID),
+                        entryObject.getInt(Entry.DICTIONARY_ID),
                         entryObject.getString(Entry.VALUE),
-                        entryObject.isNull(Entry.TRANSLATION)? null : entryObject.getString(Entry.TRANSLATION)                        ,
-                        entryObject.isNull(Entry.IMAGE_URL)? null : entryObject.getString(Entry.IMAGE_URL)
+                        entryObject.isNull(Entry.TRANSCRIPTION) ? null : entryObject.getString(Entry.TRANSCRIPTION),
+                        entryObject.getLong(Entry.CREATION_DATE),
+                        entryObject.isNull(Entry.LAST_EDITION_DATE) ? -1 : entryObject.getLong(Entry.LAST_EDITION_DATE),
+                        entryObject.isNull(Entry.IMAGE_URL)? null : entryObject.getString(Entry.IMAGE_URL),
+                        entryObject.isNull(Entry.SOUND_URL)? null : entryObject.getString(Entry.SOUND_URL),
+                        entryObject.isNull(Entry.TRANSLATION)? null : Entry.convertStringToStirngArray(entryObject.getString(Entry.TRANSLATION)),
+                        entryObject.isNull(Entry.USAGE_CONTEXT)? null : Entry.convertStringToStirngArray(entryObject.getString(Entry.USAGE_CONTEXT))
                 ));
             }
             return entryList;
@@ -310,20 +321,30 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected Integer doInBackground(List<Entry>... pEntryLists) {
             DbHelper dbHelper = new DbHelper(getApplicationContext());
-            List<ContentValues> valuesList = new ArrayList<>();
+            Vector<ContentValues> valuesVector = new Vector<>(pEntryLists[0].size());
 
             for(Entry entry : pEntryLists[0]){
                 ContentValues values = new ContentValues();
                 values.put(Entry.ID, entry.getId());
+                values.put(Entry.DICTIONARY_ID, entry.getDictionaryId());
                 values.put(Entry.VALUE, entry.getValue());
-                values.put(Entry.TRANSLATION, entry.getTranslation());
+                values.put(Entry.TRANSCRIPTION, entry.getTranscription());
+                values.put(Entry.CREATION_DATE, entry.getCreationDate());
+                values.put(Entry.LAST_EDITION_DATE, entry.getLastEditionDate());
                 values.put(Entry.IMAGE_URL, entry.getImageUrl());
-                valuesList.add(values);
+                values.put(Entry.SOUND_URL, entry.getSoundUrl());
+                values.put(Entry.TRANSLATION, Entry.convertStringArrayToString(entry.getTranslation()));
+                values.put(Entry.USAGE_CONTEXT, Entry.convertStringArrayToString(entry.getUsageContext()));
+                valuesVector.add(values);
             }
 
-            dbHelper.bulkInsert(Entry.class,valuesList);
-
-            return pEntryLists[0].size();
+            if ( valuesVector.size() > 0 ) {
+                ContentValues[] valuesArray = new ContentValues[valuesVector.size()];
+                valuesVector.toArray(valuesArray);
+                Log.v(TAG, "Trying to do bulk insert");
+                MainActivity.this.getContentResolver().bulkInsert(Entry.ENTRY_URI, valuesArray);
+            }
+            return valuesVector.size();
         }
 
         @Override

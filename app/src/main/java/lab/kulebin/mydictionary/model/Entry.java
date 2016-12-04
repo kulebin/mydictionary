@@ -1,64 +1,183 @@
 package lab.kulebin.mydictionary.model;
 
+import android.content.ContentResolver;
+import android.content.ContentUris;
+import android.net.Uri;
+
+import lab.kulebin.mydictionary.EntryProvider;
 import lab.kulebin.mydictionary.db.annotations.Table;
 import lab.kulebin.mydictionary.db.annotations.dbInteger;
+import lab.kulebin.mydictionary.db.annotations.dbLong;
 import lab.kulebin.mydictionary.db.annotations.dbString;
 
-@Table(name = "ENTRY")
+import static lab.kulebin.mydictionary.EntryProvider.BASE_CONTENT_URI;
+
+@Table(name = "entry")
 public class Entry {
+
+    public static final String TABLE_NAME = "entry";
+    public static final Uri ENTRY_URI =
+            BASE_CONTENT_URI.buildUpon().appendPath(TABLE_NAME).build();
+    public static final String CONTENT_TYPE =
+            ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + EntryProvider.AUTHORITY + "/" + TABLE_NAME;
+    public static final String CONTENT_ITEM_TYPE =
+            ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + EntryProvider.AUTHORITY + "/" + TABLE_NAME;
+    private static final String STRING_SEPARATOR = "||";
 
     @dbInteger
     public static final String ID = "id";
+    @dbInteger
+    public static final String DICTIONARY_ID = "dictionaryId";
     @dbString
     public static final String VALUE = "value";
     @dbString
-    public static final String TRANSLATION = "translation";
+    public static final String TRANSCRIPTION = "transcription";
+    @dbLong
+    public static final String CREATION_DATE = "creationDate";
+    @dbLong
+    public static final String LAST_EDITION_DATE = "lastEditionDate";
     @dbString
     public static final String IMAGE_URL = "imageUrl";
+    @dbString
+    public static final String SOUND_URL = "soundUrl";
+    @dbString
+    public static final String TRANSLATION = "translation";
+    @dbString
+    public static final String USAGE_CONTEXT = "usageContext";
 
-    private int id;
-    private String value;
-    private String translation;
-    private String imageUrl;
+
+    private int mId;
+    private int mDictionaryId;
+    private String mValue;
+    private String mTranscription;
+    private long mCreationDate;
+    private long mLastEditionDate;
+    private String mImageUrl;
+    private String mSoundUrl;
+    private String [] mTranslation;
+    private String [] mUsageContext;
 
     public Entry(){}
 
-    public Entry(final int pId, final String pValue, final String pTranslation, final String pImageUrl) {
-        id = pId;
-        value = pValue;
-        translation = pTranslation;
-        imageUrl = pImageUrl;
+    public Entry(final int pId,
+                 final int pDictionaryId,
+                 final String pValue,
+                 final String pTranscription,
+                 final long pCreationDate,
+                 final long pLastEditionDate,
+                 final String pImageUrl,
+                 final String pSoundUrl,
+                 final String[] pTranslation,
+                 final String[] pUsageContext) {
+        mId = pId;
+        mDictionaryId = pDictionaryId;
+        mValue = pValue;
+        mTranscription = pTranscription;
+        mCreationDate = pCreationDate;
+        mLastEditionDate = pLastEditionDate;
+        mImageUrl = pImageUrl;
+        mSoundUrl = pSoundUrl;
+        mTranslation = pTranslation;
+        mUsageContext = pUsageContext;
     }
 
     public int getId() {
-        return id;
+        return mId;
     }
 
     public void setId(final int pId) {
-        id = pId;
+        mId = pId;
+    }
+
+    public int getDictionaryId() {
+        return mDictionaryId;
+    }
+
+    public void setDictionaryId(final int pDictionaryId) {
+        mDictionaryId = pDictionaryId;
     }
 
     public String getValue() {
-        return value;
+        return mValue;
     }
 
     public void setValue(final String pValue) {
-        value = pValue;
+        mValue = pValue;
     }
 
-    public String getTranslation() {
-        return translation;
+    public String getTranscription() {
+        return mTranscription;
     }
 
-    public void setTranslation(final String pTranslation) {
-        translation = pTranslation;
+    public void setTranscription(final String pTranscription) {
+        mTranscription = pTranscription;
+    }
+
+    public long getCreationDate() {
+        return mCreationDate;
+    }
+
+    public void setCreationDate(final long pCreationDate) {
+        mCreationDate = pCreationDate;
+    }
+
+    public long getLastEditionDate() {
+        return mLastEditionDate;
+    }
+
+    public void setLastEditionDate(final long pLastEditionDate) {
+        mLastEditionDate = pLastEditionDate;
     }
 
     public String getImageUrl() {
-        return imageUrl;
+        return mImageUrl;
     }
 
     public void setImageUrl(final String pImageUrl) {
-        imageUrl = pImageUrl;
+        mImageUrl = pImageUrl;
+    }
+
+    public String getSoundUrl() {
+        return mSoundUrl;
+    }
+
+    public void setSoundUrl(final String pSoundUrl) {
+        mSoundUrl = pSoundUrl;
+    }
+
+    public String[] getTranslation() {
+        return mTranslation;
+    }
+
+    public void setTranslation(final String[] pTranslation) {
+        mTranslation = pTranslation;
+    }
+
+    public String[] getUsageContext() {
+        return mUsageContext;
+    }
+
+    public void setUsageContext(final String[] pUsageContext) {
+        mUsageContext = pUsageContext;
+    }
+
+    public static Uri buildEntryUri(long id) {
+        return ContentUris.withAppendedId(ENTRY_URI, id);
+    }
+
+    public static String [] convertStringToStirngArray(String pString){
+        return pString.split(STRING_SEPARATOR);
+    }
+
+    public static String convertStringArrayToString (String [] pStringArray){
+        if(pStringArray != null){
+            StringBuilder builder = new StringBuilder();
+            for (String string:pStringArray){
+                builder.append(string);
+                builder.append(STRING_SEPARATOR);
+            }
+            return builder.toString();
+        }
+        return null;
     }
 }

@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
@@ -14,24 +15,28 @@ import java.lang.annotation.Annotation;
 
 import lab.kulebin.mydictionary.db.annotations.Table;
 import lab.kulebin.mydictionary.db.annotations.dbInteger;
+import lab.kulebin.mydictionary.db.annotations.dbLong;
 import lab.kulebin.mydictionary.db.annotations.dbString;
 
 import java.util.List;
 import java.util.Locale;
 
-public class DbHelper extends SQLiteOpenHelper implements IDbOperations {
+import static android.R.attr.id;
+import static android.R.attr.value;
+
+public class DbHelper extends SQLiteOpenHelper {
 
     private static final String SQL_TABLE_CREATE_TEMPLATE = "CREATE TABLE IF NOT EXISTS %s (%s);";
     private static final String SQL_TABLE_CREATE_FIELD_TEMPLATE = "%s %s";
     private static final int DB_VERSION = 1;
-    private static final String DB_NAME = "mydictionary.db";
+    private static final String DB_NAME = "my_dictionary.db";
 
     public DbHelper(final Context context) {
         super(context, DB_NAME, null, DB_VERSION);
     }
 
     @Nullable
-    public static String getTableName(final AnnotatedElement clazz) {
+    private static String getTableName(final AnnotatedElement clazz) {
         final Table table = clazz.getAnnotation(Table.class);
 
         if (table != null) {
@@ -42,7 +47,7 @@ public class DbHelper extends SQLiteOpenHelper implements IDbOperations {
     }
 
     @Nullable
-    public static String getTableCreateQuery(final Class<?> clazz) {
+    private static String getTableCreateQuery(final Class<?> clazz) {
         final Table table = clazz.getAnnotation(Table.class);
 
         if (table != null) {
@@ -51,6 +56,7 @@ public class DbHelper extends SQLiteOpenHelper implements IDbOperations {
 
                 final StringBuilder builder = new StringBuilder();
                 final Field[] fields = clazz.getFields();
+                boolean isFirstFieldAdded = false;
 
                 for (int i = 0; i < fields.length; i++) {
                     final Field field = fields[i];
@@ -63,20 +69,22 @@ public class DbHelper extends SQLiteOpenHelper implements IDbOperations {
                             type = ((dbInteger) annotation).value();
                         } else if (annotation instanceof dbString) {
                             type = ((dbString) annotation).value();
+                        } else if (annotation instanceof dbLong){
+                            type = ((dbLong) annotation).value();
                         }
                     }
 
                     if (type == null) {
-                        return null;
+                        continue;
                     }
 
                     final String value = (String) field.get(null);
-
-                    builder.append(String.format(Locale.US, SQL_TABLE_CREATE_FIELD_TEMPLATE, value, type));
-
-                    if (i < fields.length - 1) {
+                    if (isFirstFieldAdded) {
                         builder.append(",");
                     }
+
+                    builder.append(String.format(Locale.US, SQL_TABLE_CREATE_FIELD_TEMPLATE, value, type));
+                    isFirstFieldAdded = true;
                 }
 
                 return String.format(Locale.US, SQL_TABLE_CREATE_TEMPLATE, name, builder);
@@ -90,11 +98,13 @@ public class DbHelper extends SQLiteOpenHelper implements IDbOperations {
 
     @Override
     public void onCreate(final SQLiteDatabase db) {
+        Log.v("onCreateDb","Model is creared");
         for (final Class<?> clazz : Contract.MODELS) {
             final String sql = getTableCreateQuery(clazz);
 
             if (sql != null) {
                 db.execSQL(sql);
+                Log.v("onCreateDb", sql);
             }
         }
     }
@@ -102,83 +112,5 @@ public class DbHelper extends SQLiteOpenHelper implements IDbOperations {
     @Override
     public void onUpgrade(final SQLiteDatabase db, final int oldVersion, final int newVersion) {
 
-    }
-
-    @Override
-    public Cursor query(final String sql, final String... args) {
-        final SQLiteDatabase database = getReadableDatabase();
-        return database.rawQuery(sql, args);
-    }
-
-    @Override
-    public long insert(final Class<?> table, final ContentValues values) {
-        final String name = getTableName(table);
-
-        if (name != null) {
-            final SQLiteDatabase database = getWritableDatabase();
-            long id;
-
-            try {
-                database.beginTransaction();
-                id = database.insert(name, null, values);
-                database.setTransactionSuccessful();
-            } finally {
-                database.endTransaction();
-            }
-
-            return id;
-        } else {
-            throw new RuntimeException();
-        }
-    }
-
-    @Override
-    public int bulkInsert(final Class<?> table, final List<ContentValues> values) {
-        final String name = getTableName(table);
-
-        if (name != null) {
-            final SQLiteDatabase database = getWritableDatabase();
-            int count = 0;
-
-            try {
-                database.beginTransaction();
-
-                for (final ContentValues value : values) {
-                    database.insert(name, null, value);
-
-                    count++;
-                }
-
-                database.setTransactionSuccessful();
-            } finally {
-                database.endTransaction();
-            }
-
-            return count;
-        } else {
-            throw new RuntimeException();
-        }
-    }
-
-    @Override
-    public int delete(final Class<?> table, final String sql, final String... args) {
-        final String name = getTableName(table);
-
-        if (name != null) {
-            final SQLiteDatabase database = getWritableDatabase();
-            int count = 0;
-
-            try {
-                database.beginTransaction();
-                count = database.delete(name, sql, args);
-                database.setTransactionSuccessful();
-            } finally {
-                database.endTransaction();
-            }
-
-            return count;
-        } else {
-            throw new RuntimeException();
-        }
     }
 }
