@@ -1,28 +1,18 @@
 package lab.kulebin.mydictionary.db;
 
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.support.annotation.Nullable;
-import android.util.Log;
-
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.annotation.Annotation;
-
 import lab.kulebin.mydictionary.db.annotations.Table;
 import lab.kulebin.mydictionary.db.annotations.dbInteger;
 import lab.kulebin.mydictionary.db.annotations.dbLong;
 import lab.kulebin.mydictionary.db.annotations.dbString;
-
-import java.util.List;
 import java.util.Locale;
-
-import static android.R.attr.id;
-import static android.R.attr.value;
 
 public class DbHelper extends SQLiteOpenHelper {
 
@@ -67,7 +57,7 @@ public class DbHelper extends SQLiteOpenHelper {
                             type = ((dbInteger) annotation).value();
                         } else if (annotation instanceof dbString) {
                             type = ((dbString) annotation).value();
-                        } else if (annotation instanceof dbLong){
+                        } else if (annotation instanceof dbLong) {
                             type = ((dbLong) annotation).value();
                         }
                     }

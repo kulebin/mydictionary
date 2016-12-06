@@ -15,6 +15,11 @@ public class Dictionary {
     private int mId;
     private String mName;
 
+    public Dictionary(final int pId, final String pName) {
+        mId = pId;
+        mName = pName;
+    }
+
     public int getId() {
         return mId;
     }

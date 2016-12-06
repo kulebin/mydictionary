@@ -3,7 +3,6 @@ package lab.kulebin.mydictionary.app;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -28,33 +27,21 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
-
 import lab.kulebin.mydictionary.R;
-import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.http.Api;
+import lab.kulebin.mydictionary.http.HttpClient;
+import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
+import lab.kulebin.mydictionary.model.JsonParser;
 import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
 import lab.kulebin.mydictionary.thread.ProgressCallback;
 import lab.kulebin.mydictionary.thread.ThreadManager;
 import lab.kulebin.mydictionary.ui.EntryRecyclerAdapter;
 import lab.kulebin.mydictionary.utils.UriBuilder;
-
-import static java.lang.Thread.sleep;
 
 
 public class MainActivity extends AppCompatActivity
@@ -108,9 +95,12 @@ public class MainActivity extends AppCompatActivity
         // temporary commented, sighIn() method is supposed to be used in the future
         //signIn();
 
+
+        //noinspection WrongConstant
         //mThreadManager = (ThreadManager) this.getSystemService(ThreadManager.APP_SERVICE_KEY);
         mThreadManager = new ThreadManager();
         fetchEntryTask();
+        fetchDictionaryTask();
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
@@ -204,86 +194,19 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private List<Entry> parseEntriesJson(String json) throws JSONException {
-        List<Entry> entryList = new ArrayList<>();
-        JSONArray entryArray = new JSONArray(json);
 
-        for (int i = 0; i < entryArray.length(); i++) {
-            JSONObject entryObject = entryArray.getJSONObject(i);
-            entryList.add(new Entry(
-                    entryObject.getInt(Entry.ID),
-                    entryObject.getInt(Entry.DICTIONARY_ID),
-                    entryObject.getString(Entry.VALUE),
-                    entryObject.isNull(Entry.TRANSCRIPTION) ? null : entryObject.getString(Entry.TRANSCRIPTION),
-                    entryObject.getLong(Entry.CREATION_DATE),
-                    entryObject.isNull(Entry.LAST_EDITION_DATE) ? -1 : entryObject.getLong(Entry.LAST_EDITION_DATE),
-                    entryObject.isNull(Entry.IMAGE_URL) ? null : entryObject.getString(Entry.IMAGE_URL),
-                    entryObject.isNull(Entry.SOUND_URL) ? null : entryObject.getString(Entry.SOUND_URL),
-                    entryObject.isNull(Entry.TRANSLATION) ? null : Entry.convertStringToStirngArray(entryObject.getString(Entry.TRANSLATION)),
-                    entryObject.isNull(Entry.USAGE_CONTEXT) ? null : Entry.convertStringToStirngArray(entryObject.getString(Entry.USAGE_CONTEXT))
-            ));
-        }
-        return entryList;
-    }
-
-    private void fetchEntryTask(){
+    private void fetchEntryTask() {
         mThreadManager.execute(
                 new ITask<Void, Void, List<Entry>>() {
                     @Override
                     public List<Entry> perform(final Void pVoid, final ProgressCallback<Void> progressCallback) throws Exception {
-                        HttpURLConnection urlConnection = null;
-                        BufferedReader reader = null;
-
-                        String json = null;
-
-                        try {
-                            Uri builtUri = Uri.parse(Api.BASE_URL).buildUpon()
-                                    .appendPath(Api.ENTRIES)
-                                    .build();
-
-                            URL url = new URL(builtUri.toString());
-                            Log.v(TAG, url.toString());
-
-                            // Create the request to OpenWeatherMap, and open the connection
-                            urlConnection = (HttpURLConnection) url.openConnection();
-                            urlConnection.setRequestMethod("GET");
-                            urlConnection.connect();
-
-                            // Read the input stream into a String
-                            InputStream inputStream = urlConnection.getInputStream();
-                            StringBuffer buffer = new StringBuffer();
-                            if (inputStream == null) {
-                                return null;
-                            }
-                            reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                            String line;
-                            while ((line = reader.readLine()) != null) {
-                                buffer.append(line + "\n");
-                            }
-
-                            if (buffer.length() == 0) {
-                                return null;
-                            }
-                            json = buffer.toString();
-                        } catch (IOException e) {
-                            Log.e(TAG, "Error ", e);
-                            return null;
-                        } finally {
-                            if (urlConnection != null) {
-                                urlConnection.disconnect();
-                            }
-                            if (reader != null) {
-                                try {
-                                    reader.close();
-                                } catch (final IOException e) {
-                                    Log.e(TAG, "Error closing stream", e);
-                                }
-                            }
-                        }
+                        HttpClient httpClient = new HttpClient();
+                        Uri builtUri = Uri.parse(Api.BASE_URL).buildUpon()
+                                .appendPath(Api.ENTRIES)
+                                .build();
 
                         try {
-                            return parseEntriesJson(json);
+                            return JsonParser.parse(Entry.class, httpClient.get(builtUri.toString()));
                         } catch (JSONException pE) {
                             Log.v(TAG, "Parsing error");
                         }
@@ -317,7 +240,7 @@ public class MainActivity extends AppCompatActivity
                     }
 
                     @Override
-                    public void onStart(){
+                    public void onStart() {
                         if (mProgressBar != null) {
                             mProgressBar.setVisibility(ProgressBar.VISIBLE);
                         }
@@ -326,7 +249,59 @@ public class MainActivity extends AppCompatActivity
         );
     }
 
-    private void storeEntriesTask(List<Entry> pEntryList){
+    private void fetchDictionaryTask() {
+        mThreadManager.execute(
+                new ITask<Void, Void, List<Dictionary>>() {
+                    @Override
+                    public List<Dictionary> perform(final Void pVoid, final ProgressCallback<Void> progressCallback) throws Exception {
+                        HttpClient httpClient = new HttpClient();
+                        Uri builtUri = Uri.parse(Api.BASE_URL).buildUpon()
+                                .appendPath(Api.DICTIONARIES)
+                                .build();
+
+                        try {
+                            return JsonParser.parse(Dictionary.class, httpClient.get(builtUri.toString()));
+                        } catch (JSONException pE) {
+                            Log.v(TAG, "Parsing error");
+                        }
+                        return null;
+                    }
+                },
+                null,
+                new OnResultCallback<List<Dictionary>, Void>() {
+                    @Override
+                    public void onSuccess(final List<Dictionary> pDictionaryList) {
+                        if (mProgressBar != null) {
+                            mProgressBar.setVisibility(ProgressBar.INVISIBLE);
+
+                        }
+                        if (pDictionaryList != null) {
+                            storeDictionariesTask(pDictionaryList);
+                        } else {
+                            Log.v(TAG, "result is null");
+                        }
+                    }
+
+                    @Override
+                    public void onError(final Exception e) {
+
+                    }
+
+                    @Override
+                    public void onProgressChanged(final Void pVoid) {
+                    }
+
+                    @Override
+                    public void onStart() {
+                        if (mProgressBar != null) {
+                            mProgressBar.setVisibility(ProgressBar.VISIBLE);
+                        }
+                    }
+                }
+        );
+    }
+
+    private void storeEntriesTask(List<Entry> pEntryList) {
         mThreadManager.execute(
                 new ITask<List<Entry>, Void, Integer>() {
                     @Override
@@ -357,6 +332,61 @@ public class MainActivity extends AppCompatActivity
                     }
                 },
                 pEntryList,
+                new OnResultCallback<Integer, Void>() {
+                    @Override
+                    public void onStart() {
+
+                    }
+
+                    @Override
+                    public void onSuccess(final Integer pInteger) {
+                        if (pInteger != null) {
+                            Toast toast = Toast.makeText(getApplicationContext(),
+                                    "Success! " + pInteger + " entries have been stored.",
+                                    Toast.LENGTH_SHORT);
+                            toast.show();
+                            Log.v(TAG, String.valueOf(pInteger));
+                        } else {
+                            Log.v(TAG, "result is null");
+                        }
+                    }
+
+                    @Override
+                    public void onError(final Exception e) {
+
+                    }
+
+                    @Override
+                    public void onProgressChanged(final Void pVoid) {
+
+                    }
+                }
+        );
+    }
+
+    private void storeDictionariesTask(final List<Dictionary> pDictionaryList) {
+        mThreadManager.execute(
+                new ITask<List<Dictionary>, Void, Integer>() {
+                    @Override
+                    public Integer perform(final List<Dictionary> pEntryList, final ProgressCallback<Void> progressCallback) throws Exception {
+                        Vector<ContentValues> valuesVector = new Vector<>(pEntryList.size());
+
+                        for (Dictionary dictionary : pDictionaryList) {
+                            ContentValues values = new ContentValues();
+                            values.put(Dictionary.ID, dictionary.getId());
+                            values.put(Dictionary.NAME, dictionary.getName());
+                            valuesVector.add(values);
+                        }
+
+                        if (valuesVector.size() > 0) {
+                            ContentValues[] valuesArray = new ContentValues[valuesVector.size()];
+                            valuesVector.toArray(valuesArray);
+                            MainActivity.this.getContentResolver().bulkInsert(UriBuilder.getTableUri(Dictionary.class), valuesArray);
+                        }
+                        return valuesVector.size();
+                    }
+                },
+                pDictionaryList,
                 new OnResultCallback<Integer, Void>() {
                     @Override
                     public void onStart() {

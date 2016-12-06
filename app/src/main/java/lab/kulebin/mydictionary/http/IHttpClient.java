@@ -1,15 +1,15 @@
 package lab.kulebin.mydictionary.http;
 
 
-import java.io.InputStream;
+import java.util.Map;
 
 public interface IHttpClient {
 
-    InputStream get(IRequest pRequest);
+    String get(String url) throws Exception;
 
-    InputStream post(IRequest pRequest);
+    String get(String url, Map<String, String> headers) throws Exception;
 
-    interface IRequest {
+    String post(String url, Map<String, String> header, String body) throws Exception;
 
-    }
+    String delete(String url) throws Exception;
 }
