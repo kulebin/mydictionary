@@ -33,10 +33,12 @@ import com.google.firebase.auth.FirebaseUser;
 
 import org.json.JSONException;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
 import lab.kulebin.mydictionary.R;
+import lab.kulebin.mydictionary.db.Contract;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
 import lab.kulebin.mydictionary.model.Dictionary;
@@ -56,7 +58,10 @@ public class MainActivity extends AppCompatActivity
 
 
     public static final String ANONYMOUS = "anonymous";
+    public static final String FETCH_DATA_TASK_PARAM_URI = "uri";
+    public static final String FETCH_DATA_TASK_PARAM_TYPE = "clazz";
     private static final String TAG = MainActivity.class.getSimpleName();
+    private static final int ENTRY_LOADER = 0;
     private static final String[] ENTRY_PROJECTION = {
             Entry.ID,
             Entry.VALUE,
@@ -64,7 +69,7 @@ public class MainActivity extends AppCompatActivity
             Entry.IMAGE_URL
     };
 
-    private static final int ENTRY_LOADER = 0;
+
     private GoogleApiClient mGoogleApiClient;
     private FirebaseAuth mFirebaseAuth;
     private FirebaseUser mFirebaseUser;
@@ -74,9 +79,6 @@ public class MainActivity extends AppCompatActivity
     private ImageView mUserImageView;
     private ThreadManager mThreadManager;
     private ListView mListView;
-    //private RecyclerView mEntryRecyclerView;
-    //private LinearLayoutManager mLinearLayoutManager;
-    //private EntryRecyclerAdapter mEntryRecyclerAdapter;
 
 
     @Override
@@ -109,16 +111,6 @@ public class MainActivity extends AppCompatActivity
         mFirebaseUser = mFirebaseAuth.getCurrentUser();
         mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
 
-        // temporary commented, sighIn() method is supposed to be used in the future
-        //signIn();
-
-
-        //noinspection WrongConstant
-        //mThreadManager = (ThreadManager) this.getSystemService(ThreadManager.APP_SERVICE_KEY);
-        mThreadManager = new ThreadManager();
-        fetchEntryTask();
-        fetchDictionaryTask();
-
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
                 .addApi(Auth.GOOGLE_SIGN_IN_API)
@@ -129,16 +121,35 @@ public class MainActivity extends AppCompatActivity
         mEntryCursorAdapter = new EntryCursorAdapter(this, null, 0);
         mListView.setAdapter(mEntryCursorAdapter);
         getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
-        //mEntryRecyclerView = (RecyclerView) findViewById(R.id.entryRecyclerView);
-        //mLinearLayoutManager = new LinearLayoutManager(this);
-        //mEntryRecyclerView.setLayoutManager(mLinearLayoutManager);
-        //mEntryRecyclerView.setAdapter(mEntryCursorAdapter);
+
+        //noinspection WrongConstant
+        // TODO: 12/9/2016 Method returns null instead of reference on instance of thread manager, should be fixed
+        //mThreadManager = (ThreadManager) this.getSystemService(ThreadManager.APP_SERVICE_KEY);
+        mThreadManager = new ThreadManager();
+
+        //Fetch data from backend
+        for (Class model : Contract.MODELS) {
+            String path;
+            if (model == Entry.class) {
+                path = Api.ENTRIES;
+            } else if (model == Dictionary.class) {
+                path = Api.DICTIONARIES;
+            } else {
+                continue;
+            }
+            Uri builtUri = Uri.parse(Api.BASE_URL).buildUpon()
+                    .appendPath(path)
+                    .build();
+            HashMap<String, Object> fetchDataParams = new HashMap();
+            fetchDataParams.put(FETCH_DATA_TASK_PARAM_URI, builtUri);
+            fetchDataParams.put(FETCH_DATA_TASK_PARAM_TYPE, model);
+            fetchDataTask(fetchDataParams);
+        }
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        // Check if user is signed in.
         // TODO: Add code to check if user is signed in.
     }
 
@@ -154,7 +165,6 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
@@ -194,6 +204,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    // Will be used in the future when main activity is done
     private void signIn() {
         if (mFirebaseUser == null) {
             startActivity(new Intent(this, SignInActivity.class));
@@ -204,142 +215,105 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    private void fetchEntryTask() {
-        mThreadManager.execute(
-                new ITask<Void, Void, List<Entry>>() {
-                    @Override
-                    public List<Entry> perform(final Void pVoid, final ProgressCallback<Void> progressCallback) throws Exception {
-                        HttpClient httpClient = new HttpClient();
-                        Uri builtUri = Uri.parse(Api.BASE_URL).buildUpon()
-                                .appendPath(Api.ENTRIES)
-                                .build();
-                        try {
-                            return JsonHelper.parseJson(Entry.class, httpClient.get(builtUri.toString()));
-                        } catch (JSONException pE) {
-                            Log.v(TAG, "Parsing error");
+    private void fetchDataTask(HashMap pHashMap) {
+        if (mThreadManager != null) {
+            mThreadManager.execute(
+                    new ITask<HashMap, Void, List<?>>() {
+                        @Override
+                        public List<?> perform(final HashMap pMap, final ProgressCallback<Void> progressCallback) throws Exception {
+                            HttpClient httpClient = new HttpClient();
+                            Uri uri = (Uri) pMap.get(FETCH_DATA_TASK_PARAM_URI);
+                            Class clazz = (Class) pMap.get(FETCH_DATA_TASK_PARAM_TYPE);
+                            try {
+                                return JsonHelper.parseJson(clazz, httpClient.get(uri.toString()));
+                            } catch (JSONException pE) {
+                                Log.v(TAG, "Parsing error");
+                            }
+                            return null;
                         }
-                        return null;
-                    }
-                },
-                null,
-                new OnResultCallback<List<Entry>, Void>() {
-                    @Override
-                    public void onSuccess(final List<Entry> pEntryList) {
-                        if (mProgressBar != null) {
-                            mProgressBar.setVisibility(ProgressBar.INVISIBLE);
+                    },
+                    pHashMap,
+                    new OnResultCallback<List<?>, Void>() {
+                        @Override
+                        public void onSuccess(final List<?> pList) {
+                            if (mProgressBar != null) {
+                                mProgressBar.setVisibility(ProgressBar.INVISIBLE);
+                            }
+                            if (pList != null) {
+                                storeDataTask(pList);
+                            } else {
+                                Log.v(TAG, "result is null");
+                            }
+                        }
+
+                        @Override
+                        public void onError(final Exception e) {
 
                         }
-                        if (pEntryList != null) {
-                            //mEntryRecyclerAdapter = new EntryRecyclerAdapter(getApplicationContext(), pEntryList);
-                            //mEntryRecyclerView.setAdapter(mEntryRecyclerAdapter);
-                            storeEntriesTask(pEntryList);
-                        } else {
-                            Log.v(TAG, "result is null");
+
+                        @Override
+                        public void onProgressChanged(final Void pVoid) {
                         }
-                    }
 
-                    @Override
-                    public void onError(final Exception e) {
-
-                    }
-
-                    @Override
-                    public void onProgressChanged(final Void pVoid) {
-                    }
-
-                    @Override
-                    public void onStart() {
-                        if (mProgressBar != null) {
-                            mProgressBar.setVisibility(ProgressBar.VISIBLE);
+                        @Override
+                        public void onStart() {
+                            if (mProgressBar != null) {
+                                mProgressBar.setVisibility(ProgressBar.VISIBLE);
+                            }
                         }
                     }
-                }
-        );
+            );
+        } else {
+            Toast toast = Toast.makeText(this, "Error! Data is not loaded!", Toast.LENGTH_SHORT);
+            toast.show();
+        }
+
     }
 
-    private void fetchDictionaryTask() {
+    private void storeDataTask(List<?> pList) {
         mThreadManager.execute(
-                new ITask<Void, Void, List<Dictionary>>() {
+                new ITask<List<?>, Void, Integer>() {
                     @Override
-                    public List<Dictionary> perform(final Void pVoid, final ProgressCallback<Void> progressCallback) throws Exception {
-                        HttpClient httpClient = new HttpClient();
-                        Uri builtUri = Uri.parse(Api.BASE_URL).buildUpon()
-                                .appendPath(Api.DICTIONARIES)
-                                .build();
+                    public Integer perform(final List<?> pList, final ProgressCallback<Void> progressCallback) throws Exception {
+                        Vector<ContentValues> valuesVector = new Vector<>(pList.size());
+                        Class clazz = null;
+                        if (pList.get(0).getClass() == Entry.class) {
+                            for (Entry entry : (List<Entry>) pList) {
+                                clazz = Entry.class;
+                                ContentValues values = new ContentValues();
+                                values.put(Entry.ID, entry.getId());
+                                values.put(Entry.DICTIONARY_ID, entry.getDictionaryId());
+                                values.put(Entry.VALUE, entry.getValue());
+                                values.put(Entry.TRANSCRIPTION, entry.getTranscription());
+                                values.put(Entry.CREATION_DATE, entry.getCreationDate());
+                                values.put(Entry.LAST_EDITION_DATE, entry.getLastEditionDate());
+                                values.put(Entry.IMAGE_URL, entry.getImageUrl());
+                                values.put(Entry.SOUND_URL, entry.getSoundUrl());
+                                values.put(Entry.TRANSLATION, Converter.convertStringArrayToString(entry.getTranslation()));
+                                values.put(Entry.USAGE_CONTEXT, Converter.convertStringArrayToString(entry.getUsageContext()));
+                                valuesVector.add(values);
+                            }
 
-                        try {
-                            return JsonHelper.parseJson(Dictionary.class, httpClient.get(builtUri.toString()));
-                        } catch (JSONException pE) {
-                            Log.v(TAG, "Parsing error");
-                        }
-                        return null;
-                    }
-                },
-                null,
-                new OnResultCallback<List<Dictionary>, Void>() {
-                    @Override
-                    public void onSuccess(final List<Dictionary> pDictionaryList) {
-                        if (mProgressBar != null) {
-                            mProgressBar.setVisibility(ProgressBar.INVISIBLE);
-
-                        }
-                        if (pDictionaryList != null) {
-                            storeDictionariesTask(pDictionaryList);
+                        } else if (pList.get(0).getClass() == Dictionary.class) {
+                            for (Dictionary dictionary : (List<Dictionary>) pList) {
+                                clazz = Dictionary.class;
+                                ContentValues values = new ContentValues();
+                                values.put(Dictionary.ID, dictionary.getId());
+                                values.put(Dictionary.NAME, dictionary.getName());
+                                valuesVector.add(values);
+                            }
                         } else {
-                            Log.v(TAG, "result is null");
+                            return -1;
                         }
-                    }
-
-                    @Override
-                    public void onError(final Exception e) {
-
-                    }
-
-                    @Override
-                    public void onProgressChanged(final Void pVoid) {
-                    }
-
-                    @Override
-                    public void onStart() {
-                        if (mProgressBar != null) {
-                            mProgressBar.setVisibility(ProgressBar.VISIBLE);
-                        }
-                    }
-                }
-        );
-    }
-
-    private void storeEntriesTask(List<Entry> pEntryList) {
-        mThreadManager.execute(
-                new ITask<List<Entry>, Void, Integer>() {
-                    @Override
-                    public Integer perform(final List<Entry> pEntryList, final ProgressCallback<Void> progressCallback) throws Exception {
-                        Vector<ContentValues> valuesVector = new Vector<>(pEntryList.size());
-
-                        for (Entry entry : pEntryList) {
-                            ContentValues values = new ContentValues();
-                            values.put(Entry.ID, entry.getId());
-                            values.put(Entry.DICTIONARY_ID, entry.getDictionaryId());
-                            values.put(Entry.VALUE, entry.getValue());
-                            values.put(Entry.TRANSCRIPTION, entry.getTranscription());
-                            values.put(Entry.CREATION_DATE, entry.getCreationDate());
-                            values.put(Entry.LAST_EDITION_DATE, entry.getLastEditionDate());
-                            values.put(Entry.IMAGE_URL, entry.getImageUrl());
-                            values.put(Entry.SOUND_URL, entry.getSoundUrl());
-                            values.put(Entry.TRANSLATION, Converter.convertStringArrayToString(entry.getTranslation()));
-                            values.put(Entry.USAGE_CONTEXT, Converter.convertStringArrayToString(entry.getUsageContext()));
-                            valuesVector.add(values);
-                        }
-
                         if (valuesVector.size() > 0) {
                             ContentValues[] valuesArray = new ContentValues[valuesVector.size()];
                             valuesVector.toArray(valuesArray);
-                            MainActivity.this.getContentResolver().bulkInsert(UriBuilder.getTableUri(Entry.class), valuesArray);
+                            MainActivity.this.getContentResolver().bulkInsert(UriBuilder.getTableUri(clazz), valuesArray);
                         }
                         return valuesVector.size();
                     }
                 },
-                pEntryList,
+                pList,
                 new OnResultCallback<Integer, Void>() {
                     @Override
                     public void onStart() {
@@ -348,62 +322,7 @@ public class MainActivity extends AppCompatActivity
 
                     @Override
                     public void onSuccess(final Integer pInteger) {
-                        if (pInteger != null) {
-                            Toast toast = Toast.makeText(getApplicationContext(),
-                                    "Success! " + pInteger + " entries have been stored.",
-                                    Toast.LENGTH_SHORT);
-                            toast.show();
-                            Log.v(TAG, String.valueOf(pInteger));
-                        } else {
-                            Log.v(TAG, "result is null");
-                        }
-                    }
-
-                    @Override
-                    public void onError(final Exception e) {
-
-                    }
-
-                    @Override
-                    public void onProgressChanged(final Void pVoid) {
-
-                    }
-                }
-        );
-    }
-
-    private void storeDictionariesTask(final List<Dictionary> pDictionaryList) {
-        mThreadManager.execute(
-                new ITask<List<Dictionary>, Void, Integer>() {
-                    @Override
-                    public Integer perform(final List<Dictionary> pEntryList, final ProgressCallback<Void> progressCallback) throws Exception {
-                        Vector<ContentValues> valuesVector = new Vector<>(pEntryList.size());
-
-                        for (Dictionary dictionary : pDictionaryList) {
-                            ContentValues values = new ContentValues();
-                            values.put(Dictionary.ID, dictionary.getId());
-                            values.put(Dictionary.NAME, dictionary.getName());
-                            valuesVector.add(values);
-                        }
-
-                        if (valuesVector.size() > 0) {
-                            ContentValues[] valuesArray = new ContentValues[valuesVector.size()];
-                            valuesVector.toArray(valuesArray);
-                            MainActivity.this.getContentResolver().bulkInsert(UriBuilder.getTableUri(Dictionary.class), valuesArray);
-                        }
-                        return valuesVector.size();
-                    }
-                },
-                pDictionaryList,
-                new OnResultCallback<Integer, Void>() {
-                    @Override
-                    public void onStart() {
-
-                    }
-
-                    @Override
-                    public void onSuccess(final Integer pInteger) {
-                        if (pInteger != null) {
+                        if (pInteger != -1) {
                             Toast toast = Toast.makeText(getApplicationContext(),
                                     "Success! " + pInteger + " entries have been stored.",
                                     Toast.LENGTH_SHORT);

@@ -8,7 +8,7 @@ import lab.kulebin.mydictionary.db.annotations.dbString;
 public class Dictionary {
 
     @dbInteger
-    public static final String ID = "id";
+    public static final String ID = "_id";
     @dbString
     public static final String NAME = "name";
 
