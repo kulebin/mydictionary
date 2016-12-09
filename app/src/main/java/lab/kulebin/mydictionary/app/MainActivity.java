@@ -35,12 +35,13 @@ import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
 import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
-import lab.kulebin.mydictionary.model.JsonParser;
+import lab.kulebin.mydictionary.model.JsonHelper;
 import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
 import lab.kulebin.mydictionary.thread.ProgressCallback;
 import lab.kulebin.mydictionary.thread.ThreadManager;
 import lab.kulebin.mydictionary.ui.EntryRecyclerAdapter;
+import lab.kulebin.mydictionary.utils.Converter;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
 
@@ -161,16 +162,6 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_camera) {
             // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -206,7 +197,7 @@ public class MainActivity extends AppCompatActivity
                                 .build();
 
                         try {
-                            return JsonParser.parse(Entry.class, httpClient.get(builtUri.toString()));
+                            return JsonHelper.parseJson(Entry.class, httpClient.get(builtUri.toString()));
                         } catch (JSONException pE) {
                             Log.v(TAG, "Parsing error");
                         }
@@ -260,7 +251,7 @@ public class MainActivity extends AppCompatActivity
                                 .build();
 
                         try {
-                            return JsonParser.parse(Dictionary.class, httpClient.get(builtUri.toString()));
+                            return JsonHelper.parseJson(Dictionary.class, httpClient.get(builtUri.toString()));
                         } catch (JSONException pE) {
                             Log.v(TAG, "Parsing error");
                         }
@@ -318,8 +309,8 @@ public class MainActivity extends AppCompatActivity
                             values.put(Entry.LAST_EDITION_DATE, entry.getLastEditionDate());
                             values.put(Entry.IMAGE_URL, entry.getImageUrl());
                             values.put(Entry.SOUND_URL, entry.getSoundUrl());
-                            values.put(Entry.TRANSLATION, Entry.convertStringArrayToString(entry.getTranslation()));
-                            values.put(Entry.USAGE_CONTEXT, Entry.convertStringArrayToString(entry.getUsageContext()));
+                            values.put(Entry.TRANSLATION, Converter.convertStringArrayToString(entry.getTranslation()));
+                            values.put(Entry.USAGE_CONTEXT, Converter.convertStringArrayToString(entry.getUsageContext()));
                             valuesVector.add(values);
                         }
 

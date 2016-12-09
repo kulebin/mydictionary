@@ -8,7 +8,7 @@ import lab.kulebin.mydictionary.db.annotations.dbString;
 @Table(name = "entry")
 public class Entry {
 
-    private static final String STRING_SEPARATOR = "||";
+    public static final int EMPTY_DATE = -1;
 
     @dbInteger
     public static final String ID = "id";
@@ -149,19 +149,4 @@ public class Entry {
         mUsageContext = pUsageContext;
     }
 
-    public static String[] convertStringToStirngArray(String pString) {
-        return pString.split(STRING_SEPARATOR);
-    }
-
-    public static String convertStringArrayToString(String[] pStringArray) {
-        if (pStringArray != null) {
-            StringBuilder builder = new StringBuilder();
-            for (String string : pStringArray) {
-                builder.append(string);
-                builder.append(STRING_SEPARATOR);
-            }
-            return builder.toString();
-        }
-        return null;
-    }
 }
