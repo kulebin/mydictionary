@@ -11,7 +11,7 @@ public class Entry {
     public static final int EMPTY_DATE = -1;
 
     @dbInteger
-    public static final String ID = "id";
+    public static final String ID = "_id";
     @dbInteger
     public static final String DICTIONARY_ID = "dictionaryId";
     @dbString

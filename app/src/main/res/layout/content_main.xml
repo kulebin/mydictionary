@@ -14,10 +14,15 @@
     tools:context="lab.kulebin.mydictionary.app.MainActivity"
     tools:showIn="@layout/app_bar_main">
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/entryRecyclerView"
+    <ListView
+        android:id="@+id/listview_entry"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
+
+    <!-- android.support.v7.widget.RecyclerView
+        android:id="@+id/entryRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/ -->
 
     <ProgressBar
         android:id="@+id/progressBar"

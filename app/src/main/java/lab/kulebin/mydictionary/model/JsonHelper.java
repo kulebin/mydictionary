@@ -16,6 +16,8 @@ import static lab.kulebin.mydictionary.model.Entry.EMPTY_DATE;
 
 public class JsonHelper {
 
+    public static final String TAG = JsonHelper.class.getSimpleName();
+
     @Nullable
     public static List parseJson(Class<?> clazz, String json) throws JSONException {
         JSONArray jsonArray = new JSONArray(json);
@@ -24,7 +26,10 @@ public class JsonHelper {
             List<Entry> entryList = new ArrayList<>();
             for (int i = 0; i < jsonArray.length(); i++) {
                 jsonObject = jsonArray.getJSONObject(i);
-                entryList.add(parseEntryJsonObject(jsonObject));
+                Entry entry = parseEntryJsonObject(jsonObject);
+                if (entry != null) {
+                    entryList.add(entry);
+                }
             }
             return entryList;
         } else if (clazz == Dictionary.class) {
@@ -39,6 +44,9 @@ public class JsonHelper {
     }
 
     private static Entry parseEntryJsonObject(JSONObject pEntryJsonObject) throws JSONException {
+        if (pEntryJsonObject.isNull(Entry.ID)) {
+            return null;
+        }
         return new Entry(
                 pEntryJsonObject.getInt(Entry.ID),
                 pEntryJsonObject.getInt(Entry.DICTIONARY_ID),

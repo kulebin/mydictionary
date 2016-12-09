@@ -2,23 +2,26 @@ package lab.kulebin.mydictionary.app;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.view.View;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -27,9 +30,12 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
 import org.json.JSONException;
+
 import java.util.List;
 import java.util.Vector;
+
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
@@ -40,27 +46,37 @@ import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
 import lab.kulebin.mydictionary.thread.ProgressCallback;
 import lab.kulebin.mydictionary.thread.ThreadManager;
-import lab.kulebin.mydictionary.ui.EntryRecyclerAdapter;
+import lab.kulebin.mydictionary.ui.EntryCursorAdapter;
 import lab.kulebin.mydictionary.utils.Converter;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener {
+        implements LoaderManager.LoaderCallbacks<Cursor>, NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener {
 
 
-    private static final String TAG = MainActivity.class.getSimpleName();
     public static final String ANONYMOUS = "anonymous";
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String[] ENTRY_PROJECTION = {
+            Entry.ID,
+            Entry.VALUE,
+            Entry.TRANSLATION,
+            Entry.IMAGE_URL
+    };
+
+    private static final int ENTRY_LOADER = 0;
     private GoogleApiClient mGoogleApiClient;
     private FirebaseAuth mFirebaseAuth;
     private FirebaseUser mFirebaseUser;
     private String mUsername;
-    private RecyclerView mEntryRecyclerView;
-    private LinearLayoutManager mLinearLayoutManager;
     private ProgressBar mProgressBar;
-    private EntryRecyclerAdapter mEntryRecyclerAdapter;
+    private EntryCursorAdapter mEntryCursorAdapter;
     private ImageView mUserImageView;
     private ThreadManager mThreadManager;
+    private ListView mListView;
+    //private RecyclerView mEntryRecyclerView;
+    //private LinearLayoutManager mLinearLayoutManager;
+    //private EntryRecyclerAdapter mEntryRecyclerAdapter;
 
 
     @Override
@@ -109,9 +125,14 @@ public class MainActivity extends AppCompatActivity
                 .build();
 
 
-        mEntryRecyclerView = (RecyclerView) findViewById(R.id.entryRecyclerView);
-        mLinearLayoutManager = new LinearLayoutManager(this);
-        mEntryRecyclerView.setLayoutManager(mLinearLayoutManager);
+        mListView = (ListView) findViewById(R.id.listview_entry);
+        mEntryCursorAdapter = new EntryCursorAdapter(this, null, 0);
+        mListView.setAdapter(mEntryCursorAdapter);
+        getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
+        //mEntryRecyclerView = (RecyclerView) findViewById(R.id.entryRecyclerView);
+        //mLinearLayoutManager = new LinearLayoutManager(this);
+        //mEntryRecyclerView.setLayoutManager(mLinearLayoutManager);
+        //mEntryRecyclerView.setAdapter(mEntryCursorAdapter);
     }
 
     @Override
@@ -159,10 +180,7 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        }
+        //TODO navigation by dictionary should be implemented
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -195,7 +213,6 @@ public class MainActivity extends AppCompatActivity
                         Uri builtUri = Uri.parse(Api.BASE_URL).buildUpon()
                                 .appendPath(Api.ENTRIES)
                                 .build();
-
                         try {
                             return JsonHelper.parseJson(Entry.class, httpClient.get(builtUri.toString()));
                         } catch (JSONException pE) {
@@ -213,8 +230,8 @@ public class MainActivity extends AppCompatActivity
 
                         }
                         if (pEntryList != null) {
-                            mEntryRecyclerAdapter = new EntryRecyclerAdapter(getApplicationContext(), pEntryList);
-                            mEntryRecyclerView.setAdapter(mEntryRecyclerAdapter);
+                            //mEntryRecyclerAdapter = new EntryRecyclerAdapter(getApplicationContext(), pEntryList);
+                            //mEntryRecyclerView.setAdapter(mEntryRecyclerAdapter);
                             storeEntriesTask(pEntryList);
                         } else {
                             Log.v(TAG, "result is null");
@@ -408,5 +425,29 @@ public class MainActivity extends AppCompatActivity
                     }
                 }
         );
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(final int id, final Bundle args) {
+
+        String sortOrder = Entry.CREATION_DATE + " DESC";
+
+        return new CursorLoader(
+                this,
+                UriBuilder.getTableUri(Entry.class),
+                ENTRY_PROJECTION,
+                null,
+                null,
+                sortOrder);
+    }
+
+    @Override
+    public void onLoadFinished(final Loader<Cursor> loader, final Cursor data) {
+        mEntryCursorAdapter.swapCursor(data);
+    }
+
+    @Override
+    public void onLoaderReset(final Loader<Cursor> loader) {
+        mEntryCursorAdapter.swapCursor(null);
     }
 }

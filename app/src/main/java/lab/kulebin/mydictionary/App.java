@@ -1,11 +1,10 @@
 package lab.kulebin.mydictionary;
 
 import android.app.Application;
+
 import com.facebook.stetho.Stetho;
 
 import lab.kulebin.mydictionary.thread.ThreadManager;
-
-import static android.R.attr.name;
 
 
 public class App extends Application {
