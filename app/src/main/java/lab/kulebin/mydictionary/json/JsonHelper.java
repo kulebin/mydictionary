@@ -1,4 +1,4 @@
-package lab.kulebin.mydictionary.model;
+package lab.kulebin.mydictionary.json;
 
 
 import android.support.annotation.Nullable;
@@ -10,6 +10,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import lab.kulebin.mydictionary.model.Dictionary;
+import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.utils.Converter;
 
 import static lab.kulebin.mydictionary.model.Entry.EMPTY_DATE;
@@ -48,7 +50,7 @@ public class JsonHelper {
             return null;
         }
         return new Entry(
-                pEntryJsonObject.getInt(Entry.ID),
+                pEntryJsonObject.getLong(Entry.ID),
                 pEntryJsonObject.getInt(Entry.DICTIONARY_ID),
                 pEntryJsonObject.getString(Entry.VALUE),
                 pEntryJsonObject.isNull(Entry.TRANSCRIPTION) ? null : pEntryJsonObject.getString(Entry.TRANSCRIPTION),

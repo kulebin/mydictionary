@@ -3,11 +3,11 @@
           package="lab.kulebin.mydictionary">
 
     <application
+        android:name=".App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:name=".App"
         android:theme="@style/AppTheme">
         <activity
             android:name=".app.MainActivity"
@@ -21,11 +21,15 @@
         </activity>
         <activity android:name=".app.EntryActivity">
         </activity>
-        <activity android:name=".app.SignInActivity" />
+        <activity android:name=".app.SignInActivity"/>
+
         <provider
-            android:authorities="lab.kulebin.mydictionary.app.EntryProvider"
             android:name=".EntryProvider"
+            android:authorities="lab.kulebin.mydictionary.app.EntryProvider"
             android:exported="false"/>
+
+        <activity android:name=".app.EditActivity">
+        </activity>
     </application>
 
 </manifest>

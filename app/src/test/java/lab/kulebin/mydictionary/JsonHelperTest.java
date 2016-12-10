@@ -8,7 +8,7 @@ import org.robolectric.RobolectricTestRunner;
 
 import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
-import lab.kulebin.mydictionary.model.JsonHelper;
+import lab.kulebin.mydictionary.json.JsonHelper;
 
 import static org.junit.Assert.assertEquals;
 

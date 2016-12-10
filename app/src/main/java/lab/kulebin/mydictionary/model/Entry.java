@@ -10,7 +10,7 @@ public class Entry {
 
     public static final int EMPTY_DATE = -1;
 
-    @dbInteger
+    @dbLong
     public static final String ID = "_id";
     @dbInteger
     public static final String DICTIONARY_ID = "dictionaryId";
@@ -32,7 +32,7 @@ public class Entry {
     public static final String USAGE_CONTEXT = "usageContext";
 
 
-    private int mId;
+    private long mId;
     private int mDictionaryId;
     private String mValue;
     private String mTranscription;
@@ -47,7 +47,7 @@ public class Entry {
     public Entry() {
     }
 
-    public Entry(final int pId,
+    public Entry(final long pId,
                  final int pDictionaryId,
                  final String pValue,
                  final String pTranscription,
@@ -69,11 +69,11 @@ public class Entry {
         mUsageContext = pUsageContext;
     }
 
-    public int getId() {
+    public long getId() {
         return mId;
     }
 
-    public void setId(final int pId) {
+    public void setId(final long pId) {
         mId = pId;
     }
 

@@ -41,9 +41,9 @@ import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.db.Contract;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
+import lab.kulebin.mydictionary.json.JsonHelper;
 import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
-import lab.kulebin.mydictionary.model.JsonHelper;
 import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
 import lab.kulebin.mydictionary.thread.ProgressCallback;
@@ -92,7 +92,8 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //TODO by clicking on fab tapped Entry Edit activity should be opened
+                Intent intent = new Intent(MainActivity.this, EditActivity.class);
+                startActivity(intent);
             }
         });
 
