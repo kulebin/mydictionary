@@ -20,6 +20,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -121,6 +122,16 @@ public class MainActivity extends AppCompatActivity
         mListView = (ListView) findViewById(R.id.listview_entry);
         mEntryCursorAdapter = new EntryCursorAdapter(this, null, 0);
         mListView.setAdapter(mEntryCursorAdapter);
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
+                Cursor cursor = (Cursor) parent.getItemAtPosition(position);
+                cursor.moveToPosition(position);
+                long entryId = cursor.getLong(cursor.getColumnIndex(Entry.ID));
+                Intent intent = new Intent(MainActivity.this, EntryActivity.class).putExtra(Constants.EXTRA_ENTRY_ID, entryId);
+                startActivity(intent);
+            }
+        });
         getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
 
         //noinspection WrongConstant

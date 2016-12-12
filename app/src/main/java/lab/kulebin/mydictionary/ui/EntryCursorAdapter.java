@@ -24,8 +24,9 @@ public class EntryCursorAdapter extends CursorAdapter {
 
     @Override
     public View newView(final Context context, final Cursor cursor, final ViewGroup parent) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_entry, parent, false);
-        EntryViewHolder entryViewHolder = new EntryViewHolder(view);
+        View view = LayoutInflater.from(context).inflate(R.layout.item_entry_list, parent, false);
+        long entryId = cursor.getLong(cursor.getColumnIndex(Entry.ID));
+        EntryViewHolder entryViewHolder = new EntryViewHolder(view, entryId);
         view.setTag(entryViewHolder);
         return view;
     }
@@ -42,16 +43,17 @@ public class EntryCursorAdapter extends CursorAdapter {
 
     }
 
-    public static class EntryViewHolder extends RecyclerView.ViewHolder {
+    public static class EntryViewHolder {
         TextView entryValueTextView;
         TextView entryTranslationTextView;
         ImageView entryImageView;
+        long entryId;
 
-        public EntryViewHolder(View v) {
-            super(v);
-            entryValueTextView = (TextView) itemView.findViewById(R.id.entry_value);
-            entryTranslationTextView = (TextView) itemView.findViewById(R.id.entry_translate);
-            entryImageView = (ImageView) itemView.findViewById(R.id.entry_image);
+        public EntryViewHolder(View v, long id) {
+            entryValueTextView = (TextView) v.findViewById(R.id.entry_value);
+            entryTranslationTextView = (TextView) v.findViewById(R.id.entry_translate);
+            entryImageView = (ImageView) v.findViewById(R.id.entry_image);
+            entryId = id;
         }
     }
 }

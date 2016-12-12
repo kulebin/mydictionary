@@ -48,7 +48,7 @@ public class EntryProvider extends ContentProvider {
 
     @Nullable
     @Override
-    public Cursor query(final Uri pUri, final String[] pStrings, final String pS, final String[] pStrings1, final String pSortOrder) {
+    public Cursor query(final Uri pUri, final String[] pProjection, final String pSelection, final String[] pSelArgs, final String pSortOrder) {
         Cursor retCursor;
         switch (sUriMatcher.match(pUri)) {
             case ENTRY_BY_DICTIONARY_ID: {
@@ -65,9 +65,9 @@ public class EntryProvider extends ContentProvider {
             case ENTRY: {
                 retCursor = mDbHelper.getReadableDatabase().query(
                         DbHelper.getTableName(Entry.class),
-                        null,
-                        null,
-                        null,
+                        pProjection,
+                        pSelection,
+                        pSelArgs,
                         null,
                         null,
                         pSortOrder
@@ -77,9 +77,9 @@ public class EntryProvider extends ContentProvider {
             case DICTIONARY: {
                 retCursor = mDbHelper.getReadableDatabase().query(
                         DbHelper.getTableName(Dictionary.class),
-                        null,
-                        null,
-                        null,
+                        pProjection,
+                        pSelection,
+                        pSelArgs,
                         null,
                         null,
                         pSortOrder
