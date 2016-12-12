@@ -1,30 +1,30 @@
 package lab.kulebin.mydictionary.model;
 
 import lab.kulebin.mydictionary.db.annotations.Table;
-import lab.kulebin.mydictionary.db.annotations.dbInteger;
+import lab.kulebin.mydictionary.db.annotations.dbLong;
 import lab.kulebin.mydictionary.db.annotations.dbString;
 
 @Table(name = "dictionary")
 public class Dictionary {
 
-    @dbInteger
+    @dbLong
     public static final String ID = "_id";
     @dbString
     public static final String NAME = "name";
 
-    private int mId;
+    private long mId;
     private String mName;
 
-    public Dictionary(final int pId, final String pName) {
+    public Dictionary(final long pId, final String pName) {
         mId = pId;
         mName = pName;
     }
 
-    public int getId() {
+    public long getId() {
         return mId;
     }
 
-    public void setId(final int pId) {
+    public void setId(final long pId) {
         mId = pId;
     }
 

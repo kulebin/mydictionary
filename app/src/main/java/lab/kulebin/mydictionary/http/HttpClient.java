@@ -12,9 +12,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 
+import static android.os.FileObserver.DELETE;
+
 public class HttpClient implements IHttpClient {
 
-    private enum RequestType {GET, POST, DELETE}
+    private enum RequestType {GET, PUT, POST, DELETE}
 
     private static final String TAG = HttpClient.class.getSimpleName();
 
@@ -26,6 +28,11 @@ public class HttpClient implements IHttpClient {
     @Override
     public String get(String url, Map<String, String> headers) throws Exception {
         return doRequest(url, RequestType.GET, headers, null);
+    }
+
+    @Override
+    public String put(String url, Map<String, String> headers, String body) throws Exception {
+        return doRequest(url, RequestType.PUT, headers, body);
     }
 
     @Override

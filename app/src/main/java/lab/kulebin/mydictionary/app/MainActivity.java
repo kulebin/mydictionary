@@ -140,6 +140,7 @@ public class MainActivity extends AppCompatActivity
             }
             Uri builtUri = Uri.parse(Api.BASE_URL).buildUpon()
                     .appendPath(path)
+                    .appendPath(Api.JSON_FORMAT)
                     .build();
             HashMap<String, Object> fetchDataParams = new HashMap();
             fetchDataParams.put(FETCH_DATA_TASK_PARAM_URI, builtUri);

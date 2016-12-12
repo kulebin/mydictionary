@@ -3,19 +3,26 @@ package lab.kulebin.mydictionary.app;
 import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import org.json.JSONException;
+
 import lab.kulebin.mydictionary.R;
+import lab.kulebin.mydictionary.http.Api;
+import lab.kulebin.mydictionary.http.HttpClient;
+import lab.kulebin.mydictionary.json.JsonHelper;
 import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
@@ -85,11 +92,11 @@ public class EditActivity extends AppCompatActivity {
         mEntryCreateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
-                storeDataTask(new Entry(
+                putDataToFirebaseTask(new Entry(
                         System.currentTimeMillis(),
                         1, // TODO: 12/11/2016 Dictionary ID should be got from selected tab
                         mEditTextValue.getText().toString(),
-                        mEditTextTranslation.getText().toString(),
+                        null,
                         System.currentTimeMillis(),
                         -1,
                         mEditTextImageUrl.getText().toString(),
@@ -193,5 +200,48 @@ public class EditActivity extends AppCompatActivity {
                     }
                 }
         );
+    }
+
+    private void putDataToFirebaseTask(Entry pEntry) {
+        new ThreadManager().execute(
+                new ITask<Entry, Void, String>() {
+                    @Override
+                    public String perform(final Entry pEntry, final ProgressCallback<Void> progressCallback) throws Exception {
+                        HttpClient httpClient = new HttpClient();
+                        Uri uri = Uri.parse(Api.BASE_URL).buildUpon()
+                                .appendPath(Api.ENTRIES)
+                                .appendPath(String.valueOf(pEntry.getId()))
+                                .build();
+                        Log.v(TAG, uri.toString());
+                        try {
+                            return httpClient.put(uri.toString() + Api.JSON_FORMAT, null, JsonHelper.buildEntryJsonObject(pEntry).toString());
+                        } catch (JSONException pE) {
+                            Log.v(TAG, "Parsing error");
+                        }
+                        return null;
+                    }
+                },
+                pEntry,
+                new OnResultCallback<String, Void>() {
+                    @Override
+                    public void onSuccess(final String pResponse) {
+                        Log.v(TAG, pResponse);
+                    }
+
+                    @Override
+                    public void onError(final Exception e) {
+
+                    }
+
+                    @Override
+                    public void onProgressChanged(final Void pVoid) {
+                    }
+
+                    @Override
+                    public void onStart() {
+                    }
+                }
+        );
+
     }
 }

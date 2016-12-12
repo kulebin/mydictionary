@@ -8,6 +8,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import lab.kulebin.mydictionary.model.Dictionary;
@@ -22,13 +23,17 @@ public class JsonHelper {
 
     @Nullable
     public static List parseJson(Class<?> clazz, String json) throws JSONException {
-        JSONArray jsonArray = new JSONArray(json);
-        JSONObject jsonObject;
+        JSONObject jsonObject = new JSONObject(json);
+        Iterator<String> iterator = jsonObject.keys();
+        List<String> keys = new ArrayList<>();
+        while (iterator.hasNext()) {
+            keys.add(iterator.next());
+        }
         if (clazz == Entry.class) {
             List<Entry> entryList = new ArrayList<>();
-            for (int i = 0; i < jsonArray.length(); i++) {
-                jsonObject = jsonArray.getJSONObject(i);
-                Entry entry = parseEntryJsonObject(jsonObject);
+            for (String key : keys) {
+                JSONObject jsonSubObject = jsonObject.getJSONObject(key);
+                Entry entry = parseEntryJsonObject(jsonSubObject, key);
                 if (entry != null) {
                     entryList.add(entry);
                 }
@@ -36,21 +41,18 @@ public class JsonHelper {
             return entryList;
         } else if (clazz == Dictionary.class) {
             List<Dictionary> dictionariesList = new ArrayList<>();
-            for (int i = 0; i < jsonArray.length(); i++) {
-                jsonObject = jsonArray.getJSONObject(i);
-                dictionariesList.add(parseDictionaryJsonObject(jsonObject));
+            for (String key : keys) {
+                JSONObject jsonSubObject = jsonObject.getJSONObject(key);
+                dictionariesList.add(parseDictionaryJsonObject(jsonSubObject, key));
             }
             return dictionariesList;
         }
         return null;
     }
 
-    private static Entry parseEntryJsonObject(JSONObject pEntryJsonObject) throws JSONException {
-        if (pEntryJsonObject.isNull(Entry.ID)) {
-            return null;
-        }
+    private static Entry parseEntryJsonObject(JSONObject pEntryJsonObject, String key) throws JSONException {
         return new Entry(
-                pEntryJsonObject.getLong(Entry.ID),
+                Long.parseLong(key),
                 pEntryJsonObject.getInt(Entry.DICTIONARY_ID),
                 pEntryJsonObject.getString(Entry.VALUE),
                 pEntryJsonObject.isNull(Entry.TRANSCRIPTION) ? null : pEntryJsonObject.getString(Entry.TRANSCRIPTION),
@@ -62,9 +64,9 @@ public class JsonHelper {
                 pEntryJsonObject.isNull(Entry.USAGE_CONTEXT) ? null : Converter.convertStringToStringArray(pEntryJsonObject.getString(Entry.USAGE_CONTEXT)));
     }
 
-    private static Dictionary parseDictionaryJsonObject(JSONObject pDictionaryJsonObject) throws JSONException {
+    private static Dictionary parseDictionaryJsonObject(JSONObject pDictionaryJsonObject, String key) throws JSONException {
         return new Dictionary(
-                pDictionaryJsonObject.getInt(Dictionary.ID),
+                Long.parseLong(key),
                 pDictionaryJsonObject.getString(Dictionary.NAME));
     }
 
@@ -87,7 +89,6 @@ public class JsonHelper {
 
     public static JSONObject buildEntryJsonObject(Entry pEntry) throws JSONException {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put(Entry.ID, pEntry.getId());
         jsonObject.put(Entry.DICTIONARY_ID, pEntry.getDictionaryId());
         jsonObject.put(Entry.VALUE, pEntry.getValue());
         jsonObject.put(Entry.TRANSCRIPTION, pEntry.getTranscription());
@@ -102,7 +103,6 @@ public class JsonHelper {
 
     public static JSONObject buildDictionaryJsonObject(Dictionary pDictionary) throws JSONException {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put(Dictionary.ID, pDictionary.getId());
         jsonObject.put(Dictionary.NAME, pDictionary.getName());
         return jsonObject;
     }
