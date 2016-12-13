@@ -19,17 +19,16 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".app.EntryActivity">
-        </activity>
+        <activity android:name=".app.EntryActivity"/>
         <activity android:name=".app.SignInActivity"/>
+        <activity android:name=".app.EditActivity"/>
 
         <provider
             android:name=".EntryProvider"
             android:authorities="lab.kulebin.mydictionary.app.EntryProvider"
             android:exported="false"/>
 
-        <activity android:name=".app.EditActivity">
-        </activity>
+        <service android:name=".service.FetchDataService"/>
     </application>
 
 </manifest>

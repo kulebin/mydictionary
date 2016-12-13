@@ -12,11 +12,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 
-import static android.os.FileObserver.DELETE;
-
 public class HttpClient implements IHttpClient {
-
-    private enum RequestType {GET, PUT, POST, DELETE}
 
     private static final String TAG = HttpClient.class.getSimpleName();
 
@@ -44,7 +40,6 @@ public class HttpClient implements IHttpClient {
     public String delete(final String url) throws Exception {
         return doRequest(url, RequestType.DELETE, null, null);
     }
-
 
     private String doRequest(String url, RequestType type, Map<String, String> header, String body) throws Exception {
         String response = null;
@@ -103,13 +98,6 @@ public class HttpClient implements IHttpClient {
         return response;
     }
 
-    //TODO interface should be deleted
-    public interface ResultConverter<Result> {
-
-        Result convert(InputStream inputStream);
-
-    }
-
     //TODO method should be deleted
     public <Result> Result getResult(String url, ResultConverter<Result> resultConverter) throws IOException {
         HttpURLConnection connection = null;
@@ -137,5 +125,11 @@ public class HttpClient implements IHttpClient {
         os.close();
     }
 
+    private enum RequestType {GET, PUT, POST, DELETE}
 
+    //TODO interface should be deleted
+    public interface ResultConverter<Result> {
+
+        Result convert(InputStream inputStream);
+    }
 }
