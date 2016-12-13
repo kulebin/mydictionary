@@ -3,23 +3,33 @@ package lab.kulebin.mydictionary.app;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
-import android.widget.TextView;
 
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.model.Entry;
+import lab.kulebin.mydictionary.ui.EntryPagerAdapter;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
-public class EntryActivity extends AppCompatActivity {
+public class EntryActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
+    private static final int ENTRY_LOADER = 0;
     private static final String[] ENTRY_PROJECTION = {
             Entry.ID,
-            Entry.VALUE
+            Entry.VALUE,
+            Entry.TRANSLATION,
+            Entry.IMAGE_URL,
+            Entry.USAGE_CONTEXT
     };
-    TextView mTextViewId;
-    TextView mTextViewValue;
+
+    private ViewPager viewPager;
+    private EntryPagerAdapter mEntryPagerAdapter;
+    private int mPosition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,28 +42,9 @@ public class EntryActivity extends AppCompatActivity {
         }
 
         Intent intent = getIntent();
-        long entryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, -1);
-
-        mTextViewId = (TextView) findViewById(R.id.text_entry_id);
-        mTextViewValue = (TextView) findViewById(R.id.text_entry_value);
-
-        //ViewPager viewPager = (ViewPager) findViewById(R.id.pager);
-        //viewPager.setAdapter(new EntryPagerAdapter(this));
-
-        Cursor cursor = getContentResolver().query(
-                UriBuilder.getTableUri(Entry.class),
-                ENTRY_PROJECTION,
-                Entry.ID + "=?",
-                new String[]{String.valueOf(entryId)},
-                null
-        );
-        if (cursor != null && cursor.moveToFirst()) {
-            mTextViewId.setText(String.valueOf(cursor.getLong(cursor.getColumnIndex(Entry.ID))));
-            mTextViewValue.setText(cursor.getString(cursor.getColumnIndex(Entry.VALUE)));
-        }
-        if (cursor != null) {
-            cursor.close();
-        }
+        mPosition = intent.getIntExtra(Constants.EXTRA_ENTRY_POSITION, -1);
+        viewPager = (ViewPager) findViewById(R.id.pager);
+        getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
     }
 
     @Override
@@ -64,5 +55,32 @@ public class EntryActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(final int id, final Bundle args) {
+
+        String sortOrder = Entry.CREATION_DATE + " DESC";
+
+        return new CursorLoader(
+                this,
+                UriBuilder.getTableUri(Entry.class),
+                ENTRY_PROJECTION,
+                null,
+                null,
+                sortOrder);
+    }
+
+    @Override
+    public void onLoadFinished(final Loader<Cursor> loader, final Cursor cursor) {
+        mEntryPagerAdapter = new EntryPagerAdapter(
+                getSupportFragmentManager(), cursor);
+        viewPager.setAdapter(mEntryPagerAdapter);
+        viewPager.setCurrentItem(mPosition);
+    }
+
+    @Override
+    public void onLoaderReset(final Loader<Cursor> loader) {
+        mEntryPagerAdapter.getCursor().close();
     }
 }

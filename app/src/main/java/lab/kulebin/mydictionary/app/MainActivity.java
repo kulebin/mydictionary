@@ -125,10 +125,7 @@ public class MainActivity extends AppCompatActivity
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
-                Cursor cursor = (Cursor) parent.getItemAtPosition(position);
-                cursor.moveToPosition(position);
-                long entryId = cursor.getLong(cursor.getColumnIndex(Entry.ID));
-                Intent intent = new Intent(MainActivity.this, EntryActivity.class).putExtra(Constants.EXTRA_ENTRY_ID, entryId);
+                Intent intent = new Intent(MainActivity.this, EntryActivity.class).putExtra(Constants.EXTRA_ENTRY_POSITION, position);
                 startActivity(intent);
             }
         });
