@@ -92,9 +92,9 @@ public class EditActivity extends AppCompatActivity {
         mEntryCreateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
-                putDataToFirebaseTask(new Entry(
+                Entry entry = new Entry(
                         System.currentTimeMillis(),
-                        1, // TODO: 12/11/2016 Dictionary ID should be got from selected tab
+                        1, // TODO: 12/11/2016 Dictionary ID should be got from selected DICTIONARY tab
                         mEditTextValue.getText().toString(),
                         null,
                         System.currentTimeMillis(),
@@ -103,7 +103,9 @@ public class EditActivity extends AppCompatActivity {
                         null,
                         Converter.convertStringToStringArray(mEditTextTranslation.getText().toString()),
                         Converter.convertStringToStringArray(mEditTextContextUsage.getText().toString())
-                ));
+                );
+                putDataToFirebaseTask(entry);
+                storeDataTask(entry);
                 finish();
             }
         });
@@ -184,14 +186,13 @@ public class EditActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(Void pVoid) {
                         Toast toast = Toast.makeText(getApplicationContext(),
-                                "Success! Entry have been stored.",
+                                R.string.RESULT_SUCCESS_ENTRY_STORED,
                                 Toast.LENGTH_SHORT);
                         toast.show();
                     }
 
                     @Override
                     public void onError(final Exception e) {
-
                     }
 
                     @Override
@@ -214,9 +215,11 @@ public class EditActivity extends AppCompatActivity {
                                 .build();
                         Log.v(TAG, uri.toString());
                         try {
-                            return httpClient.put(uri.toString() + Api.JSON_FORMAT, null, JsonHelper.buildEntryJsonObject(pEntry).toString());
+                            return httpClient.put(
+                                    uri.toString() + Api.JSON_FORMAT, null,
+                                    JsonHelper.buildEntryJsonObject(pEntry).toString());
                         } catch (JSONException pE) {
-                            Log.v(TAG, "Parsing error");
+                            Log.v(TAG, getString(R.string.ERROR_PARSING));
                         }
                         return null;
                     }
@@ -242,6 +245,5 @@ public class EditActivity extends AppCompatActivity {
                     }
                 }
         );
-
     }
 }

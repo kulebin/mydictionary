@@ -8,31 +8,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import com.bumptech.glide.Glide;
+
 import java.util.List;
+
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.utils.Converter;
 
 public class EntryRecyclerAdapter extends RecyclerView.Adapter<EntryRecyclerAdapter.EntryViewHolder> {
 
-    public static class EntryViewHolder extends RecyclerView.ViewHolder {
-        TextView entryValueTextView;
-        TextView entryTranslationTextView;
-        ImageView entryImageView;
-
-        public EntryViewHolder(View v) {
-            super(v);
-            entryValueTextView = (TextView) itemView.findViewById(R.id.entry_value);
-            entryTranslationTextView = (TextView) itemView.findViewById(R.id.entry_translate);
-            entryImageView = (ImageView) itemView.findViewById(R.id.entry_image);
-        }
-    }
-
     private List<Entry> mEntryList;
     private Context mContext;
 
-    public EntryRecyclerAdapter(Context pContext, List<Entry> pEntryList){
+    public EntryRecyclerAdapter(Context pContext, List<Entry> pEntryList) {
         this.mContext = pContext;
         this.mEntryList = pEntryList;
     }
@@ -56,5 +46,18 @@ public class EntryRecyclerAdapter extends RecyclerView.Adapter<EntryRecyclerAdap
     @Override
     public int getItemCount() {
         return mEntryList.size();
+    }
+
+    public static class EntryViewHolder extends RecyclerView.ViewHolder {
+        TextView entryValueTextView;
+        TextView entryTranslationTextView;
+        ImageView entryImageView;
+
+        public EntryViewHolder(View v) {
+            super(v);
+            entryValueTextView = (TextView) itemView.findViewById(R.id.entry_value);
+            entryTranslationTextView = (TextView) itemView.findViewById(R.id.entry_translate);
+            entryImageView = (ImageView) itemView.findViewById(R.id.entry_image);
+        }
     }
 }

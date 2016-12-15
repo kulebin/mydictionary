@@ -1,19 +1,32 @@
 package lab.kulebin.mydictionary.app;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
 import lab.kulebin.mydictionary.R;
+import lab.kulebin.mydictionary.http.Api;
+import lab.kulebin.mydictionary.http.HttpClient;
+import lab.kulebin.mydictionary.model.Entry;
+import lab.kulebin.mydictionary.thread.ITask;
+import lab.kulebin.mydictionary.thread.OnResultCallback;
+import lab.kulebin.mydictionary.thread.ProgressCallback;
+import lab.kulebin.mydictionary.thread.ThreadManager;
+import lab.kulebin.mydictionary.utils.UriBuilder;
 
 
 public class EntryFragment extends Fragment {
+
+    private static final String TAG = EntryFragment.class.getSimpleName();
 
     @Override
     public View onCreateView(LayoutInflater inflater,
@@ -21,13 +34,17 @@ public class EntryFragment extends Fragment {
 
         View rootView = inflater.inflate(
                 R.layout.item_entry_pager, container, false);
-        Bundle args = getArguments();
+        final Bundle args = getArguments();
 
         ImageView imageView = (ImageView) rootView.findViewById(R.id.pager_item_image);
-        Glide.with(this)
-                .load(args.getString(Constants.EXTRA_ENTRY_IMAGE_URL))
-                .override(300, 300)
-                .into(imageView);
+        String imageUrl = args.getString(Constants.EXTRA_ENTRY_IMAGE_URL);
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            Glide.with(this)
+                    .load(imageUrl)
+                    .override(300, 300)
+                    .into(imageView);
+        }
+
 
         ((TextView) rootView.findViewById(R.id.pager_item_value)).setText(
                 args.getString(Constants.EXTRA_ENTRY_VALUE));
@@ -37,6 +54,64 @@ public class EntryFragment extends Fragment {
         ((TextView) rootView.findViewById(R.id.pager_item_context_usage)).setText(
                 args.getString(Constants.EXTRA_ENTRY_USAGE_CONTEXT));
 
+        final ImageView deleteImageView = (ImageView) rootView.findViewById(R.id.pager_delete_icon);
+        deleteImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                deleteEntryTask(args.getLong(Constants.EXTRA_ENTRY_ID));
+            }
+        });
+
         return rootView;
+    }
+
+    private void deleteEntryTask(final Long pEntryId) {
+        new ThreadManager().execute(
+                new ITask<Long, Void, Void>() {
+                    @Override
+                    public Void perform(final Long pEntryId, final ProgressCallback<Void> progressCallback) throws Exception {
+                        Uri uri = Uri.parse(Api.BASE_URL).buildUpon()
+                                .appendPath(Api.ENTRIES)
+                                .appendPath(String.valueOf(pEntryId))
+                                .build();
+                        String url = uri.toString() + Api.JSON_FORMAT;
+                        HttpClient httpClient = new HttpClient();
+                        try {
+                            if (httpClient.delete(url).equals(HttpClient.DELETE_RESPONSE_OK)) {
+                                getContext().getContentResolver().delete(
+                                        UriBuilder.getTableUri(Entry.class),
+                                        Entry.ID + "=?",
+                                        new String[]{String.valueOf(pEntryId)});
+                            } else {
+                                Toast.makeText(getContext(),
+                                        R.string.ERROR_CONNECTION_DELETE, Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (Exception e) {
+                            Log.v(TAG, getString(R.string.ERROR_DELETE_REQUEST));
+                        }
+                        return null;
+                    }
+                },
+                pEntryId,
+                new OnResultCallback<Void, Void>() {
+                    @Override
+                    public void onStart() {
+                    }
+
+                    @Override
+                    public void onSuccess(final Void pVoid) {
+                    }
+
+                    @Override
+                    public void onError(final Exception e) {
+                        Toast.makeText(getContext(),
+                                R.string.ERROR_DELETE_ENTRY, Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onProgressChanged(final Void pVoid) {
+
+                    }
+                });
     }
 }

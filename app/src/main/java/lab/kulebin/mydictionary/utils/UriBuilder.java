@@ -16,7 +16,7 @@ import static android.R.attr.id;
 public class UriBuilder {
 
     public static final String AUTHORITY = "lab.kulebin.mydictionary.app.EntryProvider";
-    public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + AUTHORITY);
+    private static final Uri BASE_CONTENT_URI = Uri.parse("content://" + AUTHORITY);
 
     public static Uri getTableUri(final AnnotatedElement pClazz) {
         return BASE_CONTENT_URI.buildUpon().appendPath(DbHelper.getTableName(pClazz)).build();

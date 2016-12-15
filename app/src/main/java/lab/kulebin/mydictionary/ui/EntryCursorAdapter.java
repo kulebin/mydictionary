@@ -35,14 +35,16 @@ public class EntryCursorAdapter extends CursorAdapter {
         EntryViewHolder holder = (EntryViewHolder) view.getTag();
         holder.entryValueTextView.setText(cursor.getString(cursor.getColumnIndex(Entry.VALUE)));
         holder.entryTranslationTextView.setText(cursor.getString(cursor.getColumnIndex(Entry.TRANSLATION)));
-        Glide.with(mContext)
-                .load(cursor.getString(cursor.getColumnIndex(Entry.IMAGE_URL)))
-                .override(300, 300)
-                .into(holder.entryImageView);
-
+        String url = cursor.getString(cursor.getColumnIndex(Entry.IMAGE_URL));
+        if(url != null && !url.isEmpty()){
+            Glide.with(mContext)
+                    .load(url)
+                    .override(300, 300)
+                    .into(holder.entryImageView);
+        }
     }
 
-    public static class EntryViewHolder {
+    private static class EntryViewHolder {
         TextView entryValueTextView;
         TextView entryTranslationTextView;
         ImageView entryImageView;

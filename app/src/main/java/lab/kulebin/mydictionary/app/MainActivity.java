@@ -19,9 +19,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.Auth;
@@ -33,7 +31,6 @@ import com.google.firebase.auth.FirebaseUser;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.service.FetchDataService;
-import lab.kulebin.mydictionary.thread.ThreadManager;
 import lab.kulebin.mydictionary.ui.EntryCursorAdapter;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
@@ -56,17 +53,14 @@ public class MainActivity extends AppCompatActivity
     private FirebaseAuth mFirebaseAuth;
     private FirebaseUser mFirebaseUser;
     private String mUsername;
-    private ProgressBar mProgressBar;
     private EntryCursorAdapter mEntryCursorAdapter;
-    private ImageView mUserImageView;
-    private ThreadManager mThreadManager;
-    private ListView mListView;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -90,12 +84,10 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-        mUserImageView = (ImageView) findViewById(R.id.user_imageView);
 
         mUsername = ANONYMOUS;
         mFirebaseAuth = FirebaseAuth.getInstance();
         mFirebaseUser = mFirebaseAuth.getCurrentUser();
-        mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
@@ -103,10 +95,10 @@ public class MainActivity extends AppCompatActivity
                 .build();
 
 
-        mListView = (ListView) findViewById(R.id.listview_entry);
+        final ListView listView = (ListView) findViewById(R.id.listview_entry);
         mEntryCursorAdapter = new EntryCursorAdapter(this, null, 0);
-        mListView.setAdapter(mEntryCursorAdapter);
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        listView.setAdapter(mEntryCursorAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
                 Intent intent = new Intent(MainActivity.this, EntryActivity.class).putExtra(Constants.EXTRA_ENTRY_POSITION, position);
@@ -114,12 +106,6 @@ public class MainActivity extends AppCompatActivity
             }
         });
         getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        // TODO: Add code to check if user is signed in.
     }
 
     @Override
@@ -173,7 +159,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    // Will be used in the future when main activity is done
+    //TODO Should be used in the future when main activity is done
     private void signIn() {
         if (mFirebaseUser == null) {
             startActivity(new Intent(this, SignInActivity.class));

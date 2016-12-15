@@ -13,7 +13,7 @@ import lab.kulebin.mydictionary.model.Entry;
 
 public class EntryPagerAdapter extends FragmentStatePagerAdapter {
 
-    public Cursor mCursor;
+    private Cursor mCursor;
 
     public EntryPagerAdapter(FragmentManager pFm, Cursor pCursor) {
         super(pFm);
@@ -27,6 +27,7 @@ public class EntryPagerAdapter extends FragmentStatePagerAdapter {
         mCursor.moveToPosition(position);
 
         Bundle args = new Bundle();
+        args.putLong(Constants.EXTRA_ENTRY_ID, mCursor.getLong(mCursor.getColumnIndex(Entry.ID)));
         args.putString(Constants.EXTRA_ENTRY_VALUE, mCursor.getString(mCursor.getColumnIndex(Entry.VALUE)));
         args.putString(Constants.EXTRA_ENTRY_TRANSLATION, mCursor.getString(mCursor.getColumnIndex(Entry.TRANSLATION)));
         args.putString(Constants.EXTRA_ENTRY_IMAGE_URL, mCursor.getString(mCursor.getColumnIndex(Entry.IMAGE_URL)));

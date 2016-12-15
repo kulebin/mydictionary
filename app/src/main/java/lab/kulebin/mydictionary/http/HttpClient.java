@@ -14,6 +14,7 @@ import java.util.Map;
 
 public class HttpClient implements IHttpClient {
 
+    public static final String DELETE_RESPONSE_OK = "null";
     private static final String TAG = HttpClient.class.getSimpleName();
 
     @Override
@@ -32,8 +33,8 @@ public class HttpClient implements IHttpClient {
     }
 
     @Override
-    public String post(String url, Map<String, String> header, String body) throws Exception {
-        return doRequest(url, RequestType.POST, header, body);
+    public String post(String url, Map<String, String> headers, String body) throws Exception {
+        return doRequest(url, RequestType.POST, headers, body);
     }
 
     @Override
@@ -98,26 +99,6 @@ public class HttpClient implements IHttpClient {
         return response;
     }
 
-    //TODO method should be deleted
-    public <Result> Result getResult(String url, ResultConverter<Result> resultConverter) throws IOException {
-        HttpURLConnection connection = null;
-        InputStream inputStream = null;
-        try {
-            URL reqUrl = new URL(url);
-            connection = ((HttpURLConnection) reqUrl.openConnection());
-            connection.setRequestMethod("GET");
-            inputStream = connection.getInputStream();
-            return resultConverter.convert(inputStream);
-        } finally {
-            if (inputStream != null) {
-                inputStream.close();
-            }
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-    }
-
     private void applyBody(HttpURLConnection httpURLConnection, String body) throws Exception {
         byte[] outputInBytes = body.getBytes("UTF-8");
         OutputStream os = httpURLConnection.getOutputStream();
@@ -126,10 +107,4 @@ public class HttpClient implements IHttpClient {
     }
 
     private enum RequestType {GET, PUT, POST, DELETE}
-
-    //TODO interface should be deleted
-    public interface ResultConverter<Result> {
-
-        Result convert(InputStream inputStream);
-    }
 }

@@ -43,10 +43,6 @@ public class Entry {
     private String[] mTranslation;
     private String[] mUsageContext;
 
-    //TODO should be deleted
-    public Entry() {
-    }
-
     public Entry(final long pId,
                  final int pDictionaryId,
                  final String pValue,

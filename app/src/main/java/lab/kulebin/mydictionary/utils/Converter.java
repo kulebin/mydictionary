@@ -10,7 +10,7 @@ public class Converter {
 
     @Nullable
     public static String[] convertStringToStringArray(String pString) {
-        if(pString != null){
+        if (pString != null) {
             return pString.split(STRING_SEPARATOR);
         }
         return null;

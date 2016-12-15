@@ -16,4 +16,10 @@
     <string name="alert_body_data_not_saved">Do you want to leave without data saving?</string>
     <string name="alert_positive_button">Yes</string>
     <string name="alert_negative_button">No</string>
+    <string name="ERROR_CONNECTION_DELETE">Connection Error! The Entry has not been deleted.
+    </string>
+    <string name="ERROR_DELETE_REQUEST">Delete request error!</string>
+    <string name="ERROR_DELETE_ENTRY">Error! The Entry has not been deleted.</string>
+    <string name="ERROR_PARSING">Parsing error</string>
+    <string name="RESULT_SUCCESS_ENTRY_STORED">Success! Entry have been stored.</string>
 </resources>

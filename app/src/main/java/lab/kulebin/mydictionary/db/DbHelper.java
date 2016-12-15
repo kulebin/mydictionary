@@ -5,14 +5,16 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.support.annotation.Nullable;
+
+import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
-import java.lang.annotation.Annotation;
+import java.util.Locale;
+
 import lab.kulebin.mydictionary.db.annotations.Table;
 import lab.kulebin.mydictionary.db.annotations.dbInteger;
 import lab.kulebin.mydictionary.db.annotations.dbLong;
 import lab.kulebin.mydictionary.db.annotations.dbString;
-import java.util.Locale;
 
 public class DbHelper extends SQLiteOpenHelper {
 
