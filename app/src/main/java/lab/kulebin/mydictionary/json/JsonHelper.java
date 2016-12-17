@@ -106,4 +106,9 @@ public class JsonHelper {
         jsonObject.put(Dictionary.NAME, pDictionary.getName());
         return jsonObject;
     }
+
+    public static long getEntryIdFromJson(String json) throws JSONException{
+        JSONObject jsonObject = new JSONObject(json);
+        return jsonObject.getLong(Entry.ID);
+    }
 }

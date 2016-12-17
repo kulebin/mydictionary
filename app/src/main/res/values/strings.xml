@@ -21,5 +21,7 @@
     <string name="ERROR_DELETE_REQUEST">Delete request error!</string>
     <string name="ERROR_DELETE_ENTRY">Error! The Entry has not been deleted.</string>
     <string name="ERROR_PARSING">Parsing error</string>
+    <string name="ERROR_FETCHING_ENTRY_FROM_DB">Oops! Entry not found!</string>
     <string name="RESULT_SUCCESS_ENTRY_STORED">Success! Entry have been stored.</string>
+    <string name="button_save">Save</string>
 </resources>

@@ -3,6 +3,8 @@ package lab.kulebin.mydictionary.app;
 import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
@@ -16,8 +18,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-
-import org.json.JSONException;
 
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.http.Api;
@@ -34,13 +34,14 @@ import lab.kulebin.mydictionary.utils.UriBuilder;
 public class EditActivity extends AppCompatActivity {
 
     public static final String TAG = EditActivity.class.getSimpleName();
-
     private EditText mEditTextValue;
     private EditText mEditTextTranslation;
     private EditText mEditTextContextUsage;
     private EditText mEditTextImageUrl;
     private Button mEntryCreateButton;
     private boolean isDataChanged = false;
+    private long mEntryId;
+    private EditActivityMode mEditActivityMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +58,21 @@ public class EditActivity extends AppCompatActivity {
         mEditTextContextUsage = (EditText) findViewById(R.id.edit_text_context_usage);
         mEditTextImageUrl = (EditText) findViewById(R.id.edit_text_image_url);
         mEntryCreateButton = (Button) findViewById(R.id.button_create);
+
+        Intent intent = getIntent();
+        if (intent.hasExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE)) {
+            mEditActivityMode = (EditActivityMode) intent.getSerializableExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE);
+            if (mEditActivityMode == EditActivityMode.EDIT) {
+                mEntryCreateButton.setText(R.string.button_save);
+                mEntryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, Constants.ENTRY_ID_EMPTY);
+                if (mEntryId > 0) {
+                    fetchEntryTask(mEntryId);
+                }
+            } else {
+                mEntryCreateButton.setText(R.string.button_create);
+            }
+
+        }
 
         TextWatcher textWatcher = new TextWatcher() {
             boolean isEnabled = false;
@@ -92,8 +108,14 @@ public class EditActivity extends AppCompatActivity {
         mEntryCreateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
+                long entryId;
+                if (mEditActivityMode == EditActivityMode.CREATE) {
+                    entryId = System.currentTimeMillis();
+                } else {
+                    entryId = mEntryId;
+                }
                 Entry entry = new Entry(
-                        System.currentTimeMillis(),
+                        entryId,
                         1, // TODO: 12/11/2016 Dictionary ID should be got from selected DICTIONARY tab
                         mEditTextValue.getText().toString(),
                         null,
@@ -104,7 +126,6 @@ public class EditActivity extends AppCompatActivity {
                         Converter.convertStringToStringArray(mEditTextTranslation.getText().toString()),
                         Converter.convertStringToStringArray(mEditTextContextUsage.getText().toString())
                 );
-                putDataToFirebaseTask(entry);
                 storeDataTask(entry);
                 finish();
             }
@@ -160,6 +181,7 @@ public class EditActivity extends AppCompatActivity {
                 new ITask<Entry, Void, Void>() {
                     @Override
                     public Void perform(final Entry pEntry, final ProgressCallback<Void> progressCallback) throws Exception {
+
                         ContentValues values = new ContentValues();
                         values.put(Entry.ID, pEntry.getId());
                         values.put(Entry.DICTIONARY_ID, pEntry.getDictionaryId());
@@ -172,7 +194,31 @@ public class EditActivity extends AppCompatActivity {
                         values.put(Entry.TRANSLATION, Converter.convertStringArrayToString(pEntry.getTranslation()));
                         values.put(Entry.USAGE_CONTEXT, Converter.convertStringArrayToString(pEntry.getUsageContext()));
 
-                        EditActivity.this.getContentResolver().insert(UriBuilder.getTableUri(Entry.class), values);
+                        Uri uri = Uri.parse(Api.BASE_URL).buildUpon()
+                                .appendPath(Api.ENTRIES)
+                                .appendPath(String.valueOf(pEntry.getId()))
+                                .build();
+                        String url = uri.toString() + Api.JSON_FORMAT;
+                        HttpClient httpClient = new HttpClient();
+                        try {
+                            String response = httpClient.put(url, null, JsonHelper.buildEntryJsonObject(pEntry).toString());
+                            if (pEntry.getId() == JsonHelper.getEntryIdFromJson(response)) {
+                                if (mEditActivityMode == EditActivityMode.EDIT) {
+                                    getContentResolver().update(
+                                            UriBuilder.getTableUri(Entry.class),
+                                            values,
+                                            Entry.ID + "=?",
+                                            new String[]{String.valueOf(pEntry.getId())});
+                                } else {
+                                    getContentResolver().insert(
+                                            UriBuilder.getTableUri(Entry.class),
+                                            values
+                                    );
+                                }
+                            }
+                        } catch (Exception e) {
+                            Log.v(TAG, getString(R.string.ERROR_DELETE_REQUEST));
+                        }
                         return null;
                     }
                 },
@@ -203,37 +249,35 @@ public class EditActivity extends AppCompatActivity {
         );
     }
 
-    private void putDataToFirebaseTask(Entry pEntry) {
+    private void fetchEntryTask(long pEntryId) {
         new ThreadManager().execute(
-                new ITask<Entry, Void, String>() {
+                new ITask<Long, Void, Cursor>() {
                     @Override
-                    public String perform(final Entry pEntry, final ProgressCallback<Void> progressCallback) throws Exception {
-                        HttpClient httpClient = new HttpClient();
-                        Uri uri = Uri.parse(Api.BASE_URL).buildUpon()
-                                .appendPath(Api.ENTRIES)
-                                .appendPath(String.valueOf(pEntry.getId()))
-                                .build();
-                        Log.v(TAG, uri.toString());
-                        try {
-                            return httpClient.put(
-                                    uri.toString() + Api.JSON_FORMAT, null,
-                                    JsonHelper.buildEntryJsonObject(pEntry).toString());
-                        } catch (JSONException pE) {
-                            Log.v(TAG, getString(R.string.ERROR_PARSING));
-                        }
-                        return null;
+                    public Cursor perform(final Long pEntryId, final ProgressCallback<Void> progressCallback) throws Exception {
+                        return getContentResolver().query(
+                                UriBuilder.getTableUri(Entry.class),
+                                null, Entry.ID + "=?",
+                                new String[]{String.valueOf(pEntryId)},
+                                null);
                     }
                 },
-                pEntry,
-                new OnResultCallback<String, Void>() {
+                pEntryId,
+                new OnResultCallback<Cursor, Void>() {
                     @Override
-                    public void onSuccess(final String pResponse) {
-                        Log.v(TAG, pResponse);
+                    public void onSuccess(final Cursor pCursor) {
+                        if (pCursor.getCount() > 0) {
+                            pCursor.moveToFirst();
+                            mEditTextValue.setText(pCursor.getString(pCursor.getColumnIndex(Entry.VALUE)));
+                            mEditTextTranslation.setText(pCursor.getString(pCursor.getColumnIndex(Entry.TRANSLATION)));
+                            mEditTextImageUrl.setText(pCursor.getString(pCursor.getColumnIndex(Entry.IMAGE_URL)));
+                            mEditTextContextUsage.setText(pCursor.getString(pCursor.getColumnIndex(Entry.USAGE_CONTEXT)));
+                        }
                     }
 
                     @Override
                     public void onError(final Exception e) {
-
+                        Toast toast = Toast.makeText(EditActivity.this, R.string.ERROR_FETCHING_ENTRY_FROM_DB, Toast.LENGTH_SHORT);
+                        toast.show();
                     }
 
                     @Override
@@ -246,4 +290,6 @@ public class EditActivity extends AppCompatActivity {
                 }
         );
     }
+
+    public enum EditActivityMode {CREATE, EDIT}
 }

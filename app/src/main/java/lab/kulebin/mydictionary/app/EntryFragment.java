@@ -1,5 +1,6 @@
 package lab.kulebin.mydictionary.app;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -35,6 +36,7 @@ public class EntryFragment extends Fragment {
         View rootView = inflater.inflate(
                 R.layout.item_entry_pager, container, false);
         final Bundle args = getArguments();
+        final long entryId = args.getLong(Constants.EXTRA_ENTRY_ID);
 
         ImageView imageView = (ImageView) rootView.findViewById(R.id.pager_item_image);
         String imageUrl = args.getString(Constants.EXTRA_ENTRY_IMAGE_URL);
@@ -58,7 +60,18 @@ public class EntryFragment extends Fragment {
         deleteImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                deleteEntryTask(args.getLong(Constants.EXTRA_ENTRY_ID));
+                deleteEntryTask(entryId);
+            }
+        });
+
+        final ImageView editImageView = (ImageView) rootView.findViewById(R.id.pager_edit_icon);
+        editImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                Intent intent = new Intent(getContext(), EditActivity.class);
+                intent.putExtra(Constants.EXTRA_ENTRY_ID, entryId);
+                intent.putExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE, EditActivity.EditActivityMode.EDIT);
+                startActivity(intent);
             }
         });
 
