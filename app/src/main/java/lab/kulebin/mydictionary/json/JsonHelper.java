@@ -111,4 +111,9 @@ public class JsonHelper {
         JSONObject jsonObject = new JSONObject(json);
         return jsonObject.getLong(Entry.ID);
     }
+
+    public static long getEntryLastEditionDateFromJson(String json) throws JSONException{
+        JSONObject jsonObject = new JSONObject(json);
+        return jsonObject.getLong(Entry.LAST_EDITION_DATE);
+    }
 }

@@ -39,8 +39,9 @@ public class EditActivity extends AppCompatActivity {
     private EditText mEditTextContextUsage;
     private EditText mEditTextImageUrl;
     private Button mEntryCreateButton;
-    private boolean isDataChanged = false;
+    private boolean mIsDataChanged = false;
     private long mEntryId;
+    private long mCreationDate;
     private EditActivityMode mEditActivityMode;
 
     @Override
@@ -87,7 +88,7 @@ public class EditActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable editable) {
-                if (!isDataChanged) isDataChanged = true;
+                if (!mIsDataChanged) mIsDataChanged = true;
                 if (!isEnabled) {
                     if (isAllDataFilled()) {
                         mEntryCreateButton.setEnabled(true);
@@ -109,18 +110,23 @@ public class EditActivity extends AppCompatActivity {
             @Override
             public void onClick(View arg0) {
                 long entryId;
+                long systemTimeStamp = System.currentTimeMillis();
+                ;
+                long entryCreationDate;
                 if (mEditActivityMode == EditActivityMode.CREATE) {
-                    entryId = System.currentTimeMillis();
+                    entryId = systemTimeStamp;
+                    entryCreationDate = systemTimeStamp;
                 } else {
                     entryId = mEntryId;
+                    entryCreationDate = mCreationDate;
                 }
                 Entry entry = new Entry(
                         entryId,
                         1, // TODO: 12/11/2016 Dictionary ID should be got from selected DICTIONARY tab
                         mEditTextValue.getText().toString(),
                         null,
-                        System.currentTimeMillis(),
-                        -1,
+                        entryCreationDate,
+                        systemTimeStamp,
                         mEditTextImageUrl.getText().toString(),
                         null,
                         Converter.convertStringToStringArray(mEditTextTranslation.getText().toString()),
@@ -136,7 +142,7 @@ public class EditActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                if (isAnyDataFilled() && isDataChanged) {
+                if (isAnyDataFilled() && mIsDataChanged) {
                     AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
                     alertDialogBuilder.setTitle(getString(R.string.alert_title_data_not_saved));
                     alertDialogBuilder
@@ -202,7 +208,7 @@ public class EditActivity extends AppCompatActivity {
                         HttpClient httpClient = new HttpClient();
                         try {
                             String response = httpClient.put(url, null, JsonHelper.buildEntryJsonObject(pEntry).toString());
-                            if (pEntry.getId() == JsonHelper.getEntryIdFromJson(response)) {
+                            if (pEntry.getLastEditionDate() == JsonHelper.getEntryLastEditionDateFromJson(response)) {
                                 if (mEditActivityMode == EditActivityMode.EDIT) {
                                     getContentResolver().update(
                                             UriBuilder.getTableUri(Entry.class),
@@ -271,6 +277,8 @@ public class EditActivity extends AppCompatActivity {
                             mEditTextTranslation.setText(pCursor.getString(pCursor.getColumnIndex(Entry.TRANSLATION)));
                             mEditTextImageUrl.setText(pCursor.getString(pCursor.getColumnIndex(Entry.IMAGE_URL)));
                             mEditTextContextUsage.setText(pCursor.getString(pCursor.getColumnIndex(Entry.USAGE_CONTEXT)));
+                            mCreationDate = pCursor.getLong(pCursor.getColumnIndex(Entry.CREATION_DATE));
+                            mIsDataChanged = false;
                         }
                     }
 

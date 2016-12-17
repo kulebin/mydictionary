@@ -1,5 +1,7 @@
 package lab.kulebin.mydictionary.app;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -60,7 +62,24 @@ public class EntryFragment extends Fragment {
         deleteImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                deleteEntryTask(entryId);
+                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
+                alertDialogBuilder.setTitle(getString(R.string.alert_title_confirm_entry_deletion));
+                alertDialogBuilder
+                        .setMessage(getString(R.string.alert_body_confirm_entry_deletion))
+                        .setCancelable(true)
+                        .setPositiveButton(getString(R.string.alert_positive_button), new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                deleteEntryTask(entryId);
+                            }
+                        })
+                        .setNegativeButton(getString(R.string.alert_negative_button), new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
+
+                AlertDialog alertDialog = alertDialogBuilder.create();
+                alertDialog.show();
             }
         });
 
