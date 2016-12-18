@@ -101,6 +101,7 @@ public class FetchDataService extends IntentService {
                 ContentValues values = new ContentValues();
                 values.put(Dictionary.ID, dictionary.getId());
                 values.put(Dictionary.NAME, dictionary.getName());
+                values.put(Dictionary.CREATION_DATE, dictionary.getCreationDate());
                 valuesVector.add(values);
             }
         } else {

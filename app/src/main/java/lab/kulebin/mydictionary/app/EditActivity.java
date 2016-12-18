@@ -111,7 +111,6 @@ public class EditActivity extends AppCompatActivity {
             public void onClick(View arg0) {
                 long entryId;
                 long systemTimeStamp = System.currentTimeMillis();
-                ;
                 long entryCreationDate;
                 if (mEditActivityMode == EditActivityMode.CREATE) {
                     entryId = systemTimeStamp;
