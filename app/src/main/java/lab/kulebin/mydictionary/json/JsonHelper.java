@@ -66,9 +66,9 @@ public class JsonHelper {
 
     private static Dictionary parseDictionaryJsonObject(JSONObject pDictionaryJsonObject, String key) throws JSONException {
         return new Dictionary(
-                Integer.parseInt(key),
+                pDictionaryJsonObject.getInt(Dictionary.ID),
                 pDictionaryJsonObject.getString(Dictionary.NAME),
-                pDictionaryJsonObject.getLong(Dictionary.CREATION_DATE));
+                Long.valueOf(key));
     }
 
     @Nullable
@@ -104,8 +104,8 @@ public class JsonHelper {
 
     public static JSONObject buildDictionaryJsonObject(Dictionary pDictionary) throws JSONException {
         JSONObject jsonObject = new JSONObject();
+        jsonObject.put(Dictionary.ID, pDictionary.getId());
         jsonObject.put(Dictionary.NAME, pDictionary.getName());
-        jsonObject.put(Dictionary.CREATION_DATE, pDictionary.getCreationDate());
         return jsonObject;
     }
 

@@ -3,6 +3,11 @@ package lab.kulebin.mydictionary.app;
 
 public class Constants {
 
+    public static final String ANONYMOUS = "anonymous";
+    public static final String APP_PREFERENCES = "AP";
+    public static final String APP_PREFERENCES_SELECTED_DICTIONARY_ID = "AP_SELECTED_DICTIONARY_ID";
+    public static final int DEFAULT_SELECTED_DICTIONARY_ID = -1;
+
     public static final String EXTRA_ENTRY_POSITION = "EXTRA_ENTRY_ID";
     public static final int ENTRY_ID_EMPTY = -1;
 

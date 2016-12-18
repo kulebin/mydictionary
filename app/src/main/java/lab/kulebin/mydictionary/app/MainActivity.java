@@ -1,8 +1,12 @@
 package lab.kulebin.mydictionary.app;
 
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -37,17 +41,25 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import lab.kulebin.mydictionary.R;
+import lab.kulebin.mydictionary.http.Api;
+import lab.kulebin.mydictionary.http.HttpClient;
+import lab.kulebin.mydictionary.json.JsonHelper;
 import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.service.FetchDataService;
+import lab.kulebin.mydictionary.thread.ITask;
+import lab.kulebin.mydictionary.thread.OnResultCallback;
+import lab.kulebin.mydictionary.thread.ProgressCallback;
+import lab.kulebin.mydictionary.thread.ThreadManager;
 import lab.kulebin.mydictionary.ui.EntryCursorAdapter;
 import lab.kulebin.mydictionary.utils.UriBuilder;
+
+import static lab.kulebin.mydictionary.app.Constants.ANONYMOUS;
 
 
 public class MainActivity extends AppCompatActivity
         implements LoaderManager.LoaderCallbacks<Cursor>, NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener {
 
-    public static final String ANONYMOUS = "anonymous";
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int DICTIONARY_LOADER = 0;
     private static final int ENTRY_LOADER = 1;
@@ -57,15 +69,15 @@ public class MainActivity extends AppCompatActivity
             Entry.TRANSLATION,
             Entry.IMAGE_URL
     };
-
-
+    DrawerLayout mDrawerLayout;
     private GoogleApiClient mGoogleApiClient;
     private FirebaseAuth mFirebaseAuth;
     private FirebaseUser mFirebaseUser;
     private String mUsername;
     private EntryCursorAdapter mEntryCursorAdapter;
     private NavigationView mNavigationView;
-
+    private Cursor mDictionaryMenuCursor;
+    private int mSelectedDictionaryId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,16 +100,21 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
+                this, mDrawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        mDrawerLayout.addDrawerListener(toggle);
         toggle.syncState();
+
+        SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
+        mSelectedDictionaryId = shp.getInt(
+                Constants.APP_PREFERENCES_SELECTED_DICTIONARY_ID,
+                Constants.DEFAULT_SELECTED_DICTIONARY_ID);
 
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
 
-        mUsername = ANONYMOUS;
+        mUsername = Constants.ANONYMOUS;
         mFirebaseAuth = FirebaseAuth.getInstance();
         mFirebaseUser = mFirebaseAuth.getCurrentUser();
 
@@ -123,9 +140,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
+        if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+            mDrawerLayout.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
         }
@@ -160,10 +176,13 @@ public class MainActivity extends AppCompatActivity
         switch (pItem.getItemId()) {
             case R.id.navigation_menu_add_dictionary:
                 startCreateDictionaryDialog();
+                break;
+            default:
+                mNavigationView.getMenu().findItem(mSelectedDictionaryId).setChecked(false);
+                pItem.setChecked(true);
+                mSelectedDictionaryId = pItem.getItemId();
         }
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
+        mDrawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
 
@@ -178,10 +197,7 @@ public class MainActivity extends AppCompatActivity
                 .setPositiveButton(R.string.alert_positive_button, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        String dictionaryName = inputDictionaryName.getText().toString();
-                        if (!dictionaryName.equals("")) {
-
-                        }
+                        createAndStoreDictionary(inputDictionaryName.getText().toString());
                     }
                 })
                 .setNegativeButton(R.string.alert_negative_button, new DialogInterface.OnClickListener() {
@@ -219,7 +235,88 @@ public class MainActivity extends AppCompatActivity
             }
         };
         inputDictionaryName.addTextChangedListener(textWatcher);
-        //addDictionaryDialog.show();
+    }
+
+    private void createAndStoreDictionary(final String pDictionaryName) {
+        new ThreadManager().execute(
+                new ITask<String, Void, Void>() {
+                    @Override
+                    public Void perform(final String pDictionaryName, final ProgressCallback<Void> progressCallback) throws Exception {
+
+                        Cursor cursor = getContentResolver().query(
+                                UriBuilder.getTableUri(Dictionary.class),
+                                new String[]{Dictionary.ID},
+                                null,
+                                null,
+                                Dictionary.ID + " ASC");
+
+                        int dictionaryId = 0;
+                        if (cursor != null && cursor.getCount() > 0) {
+                            while (cursor.moveToNext()) {
+                                if (dictionaryId != cursor.getInt(cursor.getColumnIndex(Dictionary.ID))) {
+                                    break;
+                                }
+                                dictionaryId++;
+                            }
+                        }
+                        if (cursor != null) {
+                            cursor.close();
+                        }
+
+                        long creationDate = System.currentTimeMillis();
+                        Dictionary dictionary = new Dictionary(
+                                dictionaryId,
+                                pDictionaryName,
+                                creationDate);
+
+                        ContentValues values = new ContentValues();
+                        values.put(Dictionary.ID, dictionaryId);
+                        values.put(Dictionary.NAME, pDictionaryName);
+                        values.put(Dictionary.CREATION_DATE, creationDate);
+
+                        Uri uri = Uri.parse(Api.BASE_URL).buildUpon()
+                                .appendPath(Api.DICTIONARIES)
+                                .appendPath(String.valueOf(creationDate))
+                                .build();
+                        String url = uri.toString() + Api.JSON_FORMAT;
+                        HttpClient httpClient = new HttpClient();
+                        try {
+                            httpClient.put(url, null, JsonHelper.buildDictionaryJsonObject(dictionary).toString());
+                            getContentResolver().insert(
+                                    UriBuilder.getTableUri(Dictionary.class),
+                                    values
+                            );
+                        } catch (Exception e) {
+                            Log.v(TAG, getString(R.string.ERROR_CREATE_DICTIONARY));
+                        }
+                        return null;
+                    }
+                },
+                pDictionaryName,
+                new OnResultCallback<Void, Void>() {
+                    @Override
+                    public void onStart() {
+
+                    }
+
+                    @Override
+                    public void onSuccess(Void pVoid) {
+                        Toast toast = Toast.makeText(getApplicationContext(),
+                                R.string.RESULT_SUCCESS_ENTRY_STORED,
+                                Toast.LENGTH_SHORT);
+                        toast.show();
+                    }
+
+                    @Override
+                    public void onError(final Exception e) {
+                    }
+
+                    @Override
+                    public void onProgressChanged(final Void pVoid) {
+
+                    }
+                }
+        );
     }
 
     @Override
@@ -275,19 +372,49 @@ public class MainActivity extends AppCompatActivity
                 break;
             case DICTIONARY_LOADER:
                 if (pCursor != null && pCursor.getCount() > 0) {
+                    Menu menu = mNavigationView.getMenu();
+                    menu.removeGroup(R.id.dictionary_group_navigation_menu);
+                    boolean isMenuItemSelected = false;
+                    int dictionaryIdColumnIndex = pCursor.getColumnIndex(Dictionary.ID);
+                    int dictionaryNameColumnIndex = pCursor.getColumnIndex(Dictionary.NAME);
                     while (pCursor.moveToNext()) {
-                        Menu menu = mNavigationView.getMenu();
+                        int dictionaryId = pCursor.getInt(dictionaryIdColumnIndex);
                         menu.add(
                                 R.id.dictionary_group_navigation_menu,
-                                pCursor.getInt(pCursor.getColumnIndex(Dictionary.ID)),
+                                dictionaryId,
                                 Menu.NONE,
-                                pCursor.getString(pCursor.getColumnIndex(Dictionary.NAME)));
+                                pCursor.getString(dictionaryNameColumnIndex));
+                        if (dictionaryId == mSelectedDictionaryId) {
+                            menu.findItem(dictionaryId).setChecked(true);
+                            isMenuItemSelected = true;
+                        }
+                    }
+                    if (!isMenuItemSelected) {
+                        pCursor.moveToFirst();
+                        int firstMenuItemId = pCursor.getInt(dictionaryIdColumnIndex);
+                        menu.findItem(firstMenuItemId).setChecked(true);
+                        mSelectedDictionaryId = firstMenuItemId;
                     }
                 }
-                if (pCursor != null) {
-                    pCursor.close();
-                }
+                mDictionaryMenuCursor = pCursor;
                 break;
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        SharedPreferences appPreferences = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = appPreferences.edit();
+        editor.putInt(Constants.APP_PREFERENCES_SELECTED_DICTIONARY_ID, mSelectedDictionaryId);
+        editor.apply();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mDictionaryMenuCursor != null) {
+            mDictionaryMenuCursor.close();
         }
     }
 

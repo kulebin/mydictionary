@@ -29,4 +29,5 @@
     <string name="menu_title_add_dictionary">Add dictionary</string>
     <string name="dialog_title_add_dictionary">New dictionary name</string>
     <string name="dialog_hint_add_dictionary">Dictionary name</string>
+    <string name="ERROR_CREATE_DICTIONARY">Dictionary is not created!</string>
 </resources>
