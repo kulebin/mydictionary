@@ -18,4 +18,5 @@ public class Constants {
     public static final String EXTRA_ENTRY_USAGE_CONTEXT = "EXTRA_ENTRY_USAGE_CONTEXT";
     public static final String EXTRA_EDIT_ACTIVITY_MODE = "EXTRA_EDIT_ACTIVITY_MODE";
     public static final String EXTRA_SELECTED_DICTIONARY_ID = "EXTRA_SELECTED_DICTIONARY_ID";
+    public static final String EXTRA_SELECTED_DICTIONARY_NAME = "EXTRA_SELECTED_DICTIONARY_NAME";
 }

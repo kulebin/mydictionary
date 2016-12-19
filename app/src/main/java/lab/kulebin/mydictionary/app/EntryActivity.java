@@ -37,12 +37,13 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_entry);
 
+        Intent intent = getIntent();
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setTitle(intent.getCharSequenceExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME));
         }
 
-        Intent intent = getIntent();
         mPosition = intent.getIntExtra(Constants.EXTRA_ENTRY_POSITION, -1);
         mDictionaryId = intent.getIntExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, Constants.DEFAULT_SELECTED_DICTIONARY_ID);
         viewPager = (ViewPager) findViewById(R.id.pager);

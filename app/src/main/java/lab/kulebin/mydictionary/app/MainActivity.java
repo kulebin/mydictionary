@@ -135,7 +135,8 @@ public class MainActivity extends AppCompatActivity
             public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
                 Intent intent = new Intent(MainActivity.this, EntryActivity.class)
                         .putExtra(Constants.EXTRA_ENTRY_POSITION, position)
-                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryId);
+                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryId)
+                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME, mToolbar.getTitle());
                 startActivity(intent);
             }
         });
