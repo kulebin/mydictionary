@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import lab.kulebin.mydictionary.db.DbHelper;
@@ -19,25 +20,18 @@ import static lab.kulebin.mydictionary.utils.UriBuilder.AUTHORITY;
 
 public class EntryProvider extends ContentProvider {
 
-    private DbHelper mDbHelper;
-    private static final UriMatcher sUriMatcher = buildUriMatcher();
-
     static final int ENTRY = 100;
-    static final int ENTRY_BY_DICTIONARY_ID = 101;
+    static final int DICTIONARY_BY_DICTIONARY_ID = 101;
     static final int DICTIONARY = 200;
+    private static final UriMatcher sUriMatcher = buildUriMatcher();
+    private DbHelper mDbHelper;
 
-    private static final SQLiteQueryBuilder sEntryByDictionaryQueryBuilder;
-
-    static {
-        sEntryByDictionaryQueryBuilder = new SQLiteQueryBuilder();
-
-        sEntryByDictionaryQueryBuilder.setTables(
-                DbHelper.getTableName(Entry.class) + " INNER JOIN " +
-                        DbHelper.getTableName(Dictionary.class) +
-                        " ON " + DbHelper.getTableName(Entry.class) +
-                        "." + Entry.DICTIONARY_ID +
-                        " = " + DbHelper.getTableName(Dictionary.class) +
-                        "." + Dictionary.ID);
+    private static UriMatcher buildUriMatcher() {
+        final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
+        matcher.addURI(AUTHORITY, DbHelper.getTableName(Entry.class), ENTRY);
+        matcher.addURI(AUTHORITY, DbHelper.getTableName(Dictionary.class) + "/#", DICTIONARY_BY_DICTIONARY_ID);
+        matcher.addURI(AUTHORITY, DbHelper.getTableName(Dictionary.class), DICTIONARY);
+        return matcher;
     }
 
     @Override
@@ -48,20 +42,9 @@ public class EntryProvider extends ContentProvider {
 
     @Nullable
     @Override
-    public Cursor query(final Uri pUri, final String[] pProjection, final String pSelection, final String[] pSelArgs, final String pSortOrder) {
+    public Cursor query(@NonNull final Uri pUri, final String[] pProjection, final String pSelection, final String[] pSelArgs, final String pSortOrder) {
         Cursor retCursor;
         switch (sUriMatcher.match(pUri)) {
-            case ENTRY_BY_DICTIONARY_ID: {
-                retCursor = sEntryByDictionaryQueryBuilder.query(mDbHelper.getReadableDatabase(),
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        pSortOrder
-                );
-                break;
-            }
             case ENTRY: {
                 retCursor = mDbHelper.getReadableDatabase().query(
                         DbHelper.getTableName(Entry.class),
@@ -95,13 +78,13 @@ public class EntryProvider extends ContentProvider {
 
     @Nullable
     @Override
-    public String getType(final Uri pUri) {
+    public String getType(@NonNull final Uri pUri) {
         return UriBuilder.getContentType(getTable(pUri), UriBuilder.ContentType.TABLE);
     }
 
     @Nullable
     @Override
-    public Uri insert(final Uri pUri, final ContentValues pContentValues) {
+    public Uri insert(@NonNull final Uri pUri, final ContentValues pContentValues) {
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
         Uri returnUri;
         Class tableClass = getTable(pUri);
@@ -116,7 +99,7 @@ public class EntryProvider extends ContentProvider {
     }
 
     @Override
-    public int bulkInsert(Uri pUri, ContentValues[] pContentValues) {
+    public int bulkInsert(@NonNull Uri pUri, ContentValues[] pContentValues) {
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         db.beginTransaction();
@@ -137,10 +120,26 @@ public class EntryProvider extends ContentProvider {
     }
 
     @Override
-    public int delete(final Uri pUri, final String pSel, final String[] pArgs) {
+    public int delete(@NonNull final Uri pUri, final String pSel, final String[] pArgs) {
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
         int rowsDeleted;
-        rowsDeleted = db.delete(DbHelper.getTableName(getTable(pUri)), pSel, pArgs);
+        switch (sUriMatcher.match(pUri)) {
+            case DICTIONARY_BY_DICTIONARY_ID:
+                String dictionaryId = pUri.getLastPathSegment();
+                db.beginTransaction();
+                try {
+                    int dictionariesDeleted = db.delete(DbHelper.getTableName(Dictionary.class), Dictionary.ID + "=" + dictionaryId, null);
+                    db.delete(DbHelper.getTableName(Entry.class), Entry.DICTIONARY_ID + "=" + dictionaryId, null);
+                    db.setTransactionSuccessful();
+                    rowsDeleted = dictionariesDeleted;
+                } finally {
+                    db.endTransaction();
+                }
+                break;
+            default:
+                rowsDeleted = db.delete(DbHelper.getTableName(getTable(pUri)), pSel, pArgs);
+        }
+
 
         if (rowsDeleted != 0) {
             getContext().getContentResolver().notifyChange(pUri, null);
@@ -149,8 +148,7 @@ public class EntryProvider extends ContentProvider {
     }
 
     @Override
-    public int update(
-            Uri pUri, ContentValues pValues, String pSelection, String[] pArgs) {
+    public int update(@NonNull Uri pUri, ContentValues pValues, String pSelection, String[] pArgs) {
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
         int rowsUpdated;
         rowsUpdated = db.update(DbHelper.getTableName(getTable(pUri)), pValues, pSelection, pArgs);
@@ -161,19 +159,9 @@ public class EntryProvider extends ContentProvider {
         return rowsUpdated;
     }
 
-    private static UriMatcher buildUriMatcher() {
-        final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
-        matcher.addURI(AUTHORITY, DbHelper.getTableName(Entry.class), ENTRY);
-        matcher.addURI(AUTHORITY, DbHelper.getTableName(Entry.class) + "/#", ENTRY_BY_DICTIONARY_ID);
-        matcher.addURI(AUTHORITY, DbHelper.getTableName(Dictionary.class), DICTIONARY);
-        return matcher;
-    }
-
     private Class<?> getTable(final Uri pUri) {
         final int match = sUriMatcher.match(pUri);
         switch (match) {
-            case ENTRY_BY_DICTIONARY_ID:
-                return Entry.class;
             case ENTRY:
                 return Entry.class;
             case DICTIONARY:

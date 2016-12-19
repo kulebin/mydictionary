@@ -43,6 +43,7 @@ public class EditActivity extends AppCompatActivity {
     private long mEntryId;
     private long mCreationDate;
     private EditActivityMode mEditActivityMode;
+    private int mDictionaryId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +71,8 @@ public class EditActivity extends AppCompatActivity {
                     fetchEntryTask(mEntryId);
                 }
             } else {
+                mDictionaryId = intent.getIntExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID,
+                        Constants.DEFAULT_SELECTED_DICTIONARY_ID);
                 mEntryCreateButton.setText(R.string.button_create);
             }
 
@@ -121,7 +124,7 @@ public class EditActivity extends AppCompatActivity {
                 }
                 Entry entry = new Entry(
                         entryId,
-                        1, // TODO: 12/11/2016 Dictionary ID should be got from selected DICTIONARY tab
+                        mDictionaryId,
                         mEditTextValue.getText().toString(),
                         null,
                         entryCreationDate,
@@ -277,6 +280,7 @@ public class EditActivity extends AppCompatActivity {
                             mEditTextImageUrl.setText(pCursor.getString(pCursor.getColumnIndex(Entry.IMAGE_URL)));
                             mEditTextContextUsage.setText(pCursor.getString(pCursor.getColumnIndex(Entry.USAGE_CONTEXT)));
                             mCreationDate = pCursor.getLong(pCursor.getColumnIndex(Entry.CREATION_DATE));
+                            mDictionaryId = pCursor.getInt(pCursor.getColumnIndex(Entry.DICTIONARY_ID));
                             mIsDataChanged = false;
                         }
                     }

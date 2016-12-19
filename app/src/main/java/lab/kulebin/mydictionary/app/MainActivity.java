@@ -78,14 +78,15 @@ public class MainActivity extends AppCompatActivity
     private NavigationView mNavigationView;
     private Cursor mDictionaryMenuCursor;
     private int mSelectedDictionaryId;
+    private Toolbar mToolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
 
         Intent serviceIntent = new Intent(this, FetchDataService.class);
         startService(serviceIntent);
@@ -95,14 +96,15 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, EditActivity.class);
-                intent.putExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE, EditActivity.EditActivityMode.CREATE);
+                intent.putExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE, EditActivity.EditActivityMode.CREATE)
+                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryId);
                 startActivity(intent);
             }
         });
 
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, mDrawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+                this, mDrawerLayout, mToolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         mDrawerLayout.addDrawerListener(toggle);
         toggle.syncState();
 
@@ -131,7 +133,9 @@ public class MainActivity extends AppCompatActivity
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
-                Intent intent = new Intent(MainActivity.this, EntryActivity.class).putExtra(Constants.EXTRA_ENTRY_POSITION, position);
+                Intent intent = new Intent(MainActivity.this, EntryActivity.class)
+                        .putExtra(Constants.EXTRA_ENTRY_POSITION, position)
+                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryId);
                 startActivity(intent);
             }
         });
@@ -162,17 +166,125 @@ public class MainActivity extends AppCompatActivity
                 mUsername = ANONYMOUS;
                 startActivity(new Intent(this, SignInActivity.class));
                 return true;
-            case R.id.action_settings:
+            case R.id.action_delete_dictionary:
+                android.app.AlertDialog.Builder alertDialogBuilder = new android.app.AlertDialog.Builder(MainActivity.this);
+                alertDialogBuilder.setTitle(getString(R.string.alert_title_confirm_entry_deletion));
+                alertDialogBuilder
+                        .setMessage(getString(R.string.alert_body_confirm_dictionary_deletion))
+                        .setCancelable(true)
+                        .setPositiveButton(getString(R.string.alert_positive_button), new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                deleteDictionaryTask();
+                            }
+                        })
+                        .setNegativeButton(getString(R.string.alert_negative_button), new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
+
+                android.app.AlertDialog alertDialog = alertDialogBuilder.create();
+                alertDialog.show();
                 return true;
             default:
                 return super.onOptionsItemSelected(pItem);
         }
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
+    private void deleteDictionaryTask() {
+        new ThreadManager().execute(
+                new ITask<Void, Void, Void>() {
+                    @Override
+                    public Void perform(final Void pVoid, final ProgressCallback<Void> progressCallback) throws Exception {
+
+                        Cursor dictionaryCursor = getContentResolver().query(
+                                UriBuilder.getTableUri(Dictionary.class),
+                                new String[]{Dictionary.CREATION_DATE},
+                                Dictionary.ID + "=?",
+                                new String[]{String.valueOf(mSelectedDictionaryId)},
+                                null);
+                        long dictionaryCreationDate;
+                        if (dictionaryCursor != null) {
+                            dictionaryCursor.moveToFirst();
+                            dictionaryCreationDate = dictionaryCursor.getLong(dictionaryCursor.getColumnIndex(Dictionary.CREATION_DATE));
+                            dictionaryCursor.close();
+                        } else {
+                            throw new Exception("Dictionary cursor is null");
+                        }
+
+                        Uri dictionaryUri = Uri.parse(Api.BASE_URL).buildUpon()
+                                .appendPath(Api.DICTIONARIES)
+                                .appendPath(String.valueOf(dictionaryCreationDate))
+                                .build();
+                        String dictionaryUrl = dictionaryUri.toString() + Api.JSON_FORMAT;
+
+
+                        HttpClient httpClient;
+                        Cursor entryIdsCursor = null;
+                        try {
+                            httpClient = new HttpClient();
+                            if (httpClient.delete(dictionaryUrl).equals(HttpClient.DELETE_RESPONSE_OK)) {
+                                entryIdsCursor = getContentResolver().query(
+                                        UriBuilder.getTableUri(Entry.class),
+                                        new String[]{Entry.ID},
+                                        Entry.DICTIONARY_ID + "=?",
+                                        new String[]{String.valueOf(mSelectedDictionaryId)},
+                                        null);
+                                if (entryIdsCursor != null) {
+                                    while (entryIdsCursor.moveToNext()) {
+                                        Uri entryUri = Uri.parse(Api.BASE_URL).buildUpon()
+                                                .appendPath(Api.ENTRIES)
+                                                .appendPath(String.valueOf(entryIdsCursor.getLong(entryIdsCursor.getColumnIndex(Entry.ID))))
+                                                .build();
+                                        String entryUrl = entryUri.toString() + Api.JSON_FORMAT;
+                                        httpClient.delete(entryUrl);
+                                    }
+                                    getContentResolver().delete(
+                                            UriBuilder.getTableUri(Dictionary.class, String.valueOf(mSelectedDictionaryId)),
+                                            null,
+                                            null
+                                    );
+                                }
+                            } else {
+                                Toast.makeText(MainActivity.this,
+                                        R.string.ERROR_CONNECTION_DELETE, Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (Exception e) {
+                            Log.v(TAG, getString(R.string.ERROR_DELETE_REQUEST));
+                        } finally {
+                            if (entryIdsCursor != null) {
+                                entryIdsCursor.close();
+                            }
+                        }
+                        return null;
+                    }
+                },
+                null,
+                new OnResultCallback<Void, Void>() {
+                    @Override
+                    public void onStart() {
+                    }
+
+                    @Override
+                    public void onSuccess(final Void pVoid) {
+
+                    }
+
+                    @Override
+                    public void onError(final Exception e) {
+                        Toast.makeText(MainActivity.this,
+                                R.string.ERROR_DELETE_DICTIONARY, Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onProgressChanged(final Void pVoid) {
+
+                    }
+                });
+    }
+
     @Override
     public boolean onNavigationItemSelected(MenuItem pItem) {
-        //TODO navigation by dictionary should be implemented
         switch (pItem.getItemId()) {
             case R.id.navigation_menu_add_dictionary:
                 startCreateDictionaryDialog();
@@ -180,7 +292,9 @@ public class MainActivity extends AppCompatActivity
             default:
                 mNavigationView.getMenu().findItem(mSelectedDictionaryId).setChecked(false);
                 pItem.setChecked(true);
+                mToolbar.setTitle(pItem.getTitle());
                 mSelectedDictionaryId = pItem.getItemId();
+                getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, this);
         }
         mDrawerLayout.closeDrawer(GravityCompat.START);
         return true;
@@ -286,6 +400,7 @@ public class MainActivity extends AppCompatActivity
                                     UriBuilder.getTableUri(Dictionary.class),
                                     values
                             );
+                            mSelectedDictionaryId = dictionaryId;
                         } catch (Exception e) {
                             Log.v(TAG, getString(R.string.ERROR_CREATE_DICTIONARY));
                         }
@@ -301,6 +416,7 @@ public class MainActivity extends AppCompatActivity
 
                     @Override
                     public void onSuccess(Void pVoid) {
+                        getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, MainActivity.this);
                         Toast toast = Toast.makeText(getApplicationContext(),
                                 R.string.RESULT_SUCCESS_ENTRY_STORED,
                                 Toast.LENGTH_SHORT);
@@ -348,8 +464,8 @@ public class MainActivity extends AppCompatActivity
                         this,
                         UriBuilder.getTableUri(Entry.class),
                         ENTRY_PROJECTION,
-                        null,
-                        null,
+                        Entry.DICTIONARY_ID + "=?",
+                        new String[]{String.valueOf(mSelectedDictionaryId)},
                         entrySortOrder);
             case DICTIONARY_LOADER:
                 return new CursorLoader(
@@ -386,6 +502,7 @@ public class MainActivity extends AppCompatActivity
                                 pCursor.getString(dictionaryNameColumnIndex));
                         if (dictionaryId == mSelectedDictionaryId) {
                             menu.findItem(dictionaryId).setChecked(true);
+                            mToolbar.setTitle(pCursor.getString(dictionaryNameColumnIndex));
                             isMenuItemSelected = true;
                         }
                     }
@@ -393,7 +510,9 @@ public class MainActivity extends AppCompatActivity
                         pCursor.moveToFirst();
                         int firstMenuItemId = pCursor.getInt(dictionaryIdColumnIndex);
                         menu.findItem(firstMenuItemId).setChecked(true);
+                        mToolbar.setTitle(pCursor.getString(dictionaryNameColumnIndex));
                         mSelectedDictionaryId = firstMenuItemId;
+                        getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, this);
                     }
                 }
                 mDictionaryMenuCursor = pCursor;

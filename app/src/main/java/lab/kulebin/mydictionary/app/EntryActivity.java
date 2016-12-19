@@ -30,6 +30,7 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
     private ViewPager viewPager;
     private EntryPagerAdapter mEntryPagerAdapter;
     private int mPosition;
+    private int mDictionaryId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +44,7 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
 
         Intent intent = getIntent();
         mPosition = intent.getIntExtra(Constants.EXTRA_ENTRY_POSITION, -1);
+        mDictionaryId = intent.getIntExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, Constants.DEFAULT_SELECTED_DICTIONARY_ID);
         viewPager = (ViewPager) findViewById(R.id.pager);
         getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
     }
@@ -66,8 +68,8 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
                 this,
                 UriBuilder.getTableUri(Entry.class),
                 ENTRY_PROJECTION,
-                null,
-                null,
+                Entry.DICTIONARY_ID + "=?",
+                new String[]{String.valueOf(mDictionaryId)},
                 sortOrder);
     }
 
