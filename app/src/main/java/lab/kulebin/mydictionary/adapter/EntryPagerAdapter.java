@@ -1,4 +1,4 @@
-package lab.kulebin.mydictionary.ui;
+package lab.kulebin.mydictionary.adapter;
 
 import android.database.Cursor;
 import android.os.Bundle;

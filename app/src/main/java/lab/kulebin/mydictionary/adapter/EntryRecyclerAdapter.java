@@ -1,4 +1,4 @@
-package lab.kulebin.mydictionary.ui;
+package lab.kulebin.mydictionary.adapter;
 
 
 import android.content.Context;
@@ -29,7 +29,7 @@ public class EntryRecyclerAdapter extends RecyclerView.Adapter<EntryRecyclerAdap
 
     @Override
     public EntryViewHolder onCreateViewHolder(final ViewGroup parent, final int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_entry_list, parent, false);
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_list_entry, parent, false);
         return new EntryViewHolder(v);
     }
 

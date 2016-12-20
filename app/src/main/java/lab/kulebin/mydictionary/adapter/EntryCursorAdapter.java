@@ -1,4 +1,4 @@
-package lab.kulebin.mydictionary.ui;
+package lab.kulebin.mydictionary.adapter;
 
 
 import android.content.Context;
@@ -23,7 +23,7 @@ public class EntryCursorAdapter extends CursorAdapter {
 
     @Override
     public View newView(final Context context, final Cursor cursor, final ViewGroup parent) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_entry_list, parent, false);
+        View view = LayoutInflater.from(context).inflate(R.layout.item_list_entry, parent, false);
         long entryId = cursor.getLong(cursor.getColumnIndex(Entry.ID));
         EntryViewHolder entryViewHolder = new EntryViewHolder(view, entryId);
         view.setTag(entryViewHolder);

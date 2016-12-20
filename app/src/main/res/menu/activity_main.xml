@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/search_menu_action_search"
+        android:icon="@drawable/ic_search"
+        android:title="@string/search_menu_item_title"
+        app:showAsAction="ifRoom"/>
+
     <item android:id="@+id/action_delete_dictionary"
           android:title="@string/action_delete_dictionary"
           app:showAsAction="never"/>
+
     <item
-        android:id="@+id/sign_out_menu"
+        android:id="@+id/action_sign_out"
         android:title="@string/sign_out"
         app:showAsAction="never"/>
 </menu>

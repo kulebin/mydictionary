@@ -6,14 +6,10 @@
         android:checkableBehavior="single"
         android:orderInCategory="1"/>
 
-    <item android:orderInCategory="100"
-          android:title="Communicate">
-        <menu>
-            <item
-                android:id="@+id/navigation_menu_add_dictionary"
-                android:icon="@drawable/ic_add_box_black_24dp"
-                android:title="@string/menu_title_add_dictionary"/>
-        </menu>
-    </item>
+    <item
+        android:id="@+id/action_add_dictionary"
+        android:icon="@drawable/ic_add_box"
+        android:orderInCategory="999"
+        android:title="@string/menu_title_add_dictionary"/>
 
 </menu>

@@ -13,7 +13,7 @@ import android.view.MenuItem;
 
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.model.Entry;
-import lab.kulebin.mydictionary.ui.EntryPagerAdapter;
+import lab.kulebin.mydictionary.adapter.EntryPagerAdapter;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
 public class EntryActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {

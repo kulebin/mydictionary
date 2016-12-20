@@ -36,7 +36,7 @@ public class EntryFragment extends Fragment {
                              ViewGroup container, Bundle savedInstanceState) {
 
         View rootView = inflater.inflate(
-                R.layout.item_entry_pager, container, false);
+                R.layout.item_pager_entry, container, false);
         final Bundle args = getArguments();
         final long entryId = args.getLong(Constants.EXTRA_ENTRY_ID);
 
