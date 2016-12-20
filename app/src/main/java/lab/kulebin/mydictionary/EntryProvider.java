@@ -23,12 +23,28 @@ public class EntryProvider extends ContentProvider {
     static final int ENTRY = 100;
     static final int DICTIONARY_BY_DICTIONARY_ID = 101;
     static final int DICTIONARY = 200;
+    static final int ENTRY_BY_DICTIONARY_ID = 300;
     private static final UriMatcher sUriMatcher = buildUriMatcher();
+    private static final SQLiteQueryBuilder sEntryByDictionaryIdQueryBuilder;
+
+    static {
+        sEntryByDictionaryIdQueryBuilder = new SQLiteQueryBuilder();
+
+        sEntryByDictionaryIdQueryBuilder.setTables(
+                DbHelper.getTableName(Entry.class) + " INNER JOIN " +
+                        DbHelper.getTableName(Dictionary.class) +
+                        " ON " + DbHelper.getTableName(Entry.class) +
+                        "." + Entry.DICTIONARY_ID +
+                        " = " + DbHelper.getTableName(Dictionary.class) +
+                        "." + Dictionary.ID);
+    }
+
     private DbHelper mDbHelper;
 
     private static UriMatcher buildUriMatcher() {
         final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
         matcher.addURI(AUTHORITY, DbHelper.getTableName(Entry.class), ENTRY);
+        matcher.addURI(AUTHORITY, DbHelper.getTableName(Entry.class) + "/" + DbHelper.getTableName(Dictionary.class), ENTRY_BY_DICTIONARY_ID);
         matcher.addURI(AUTHORITY, DbHelper.getTableName(Dictionary.class) + "/#", DICTIONARY_BY_DICTIONARY_ID);
         matcher.addURI(AUTHORITY, DbHelper.getTableName(Dictionary.class), DICTIONARY);
         return matcher;
@@ -48,6 +64,18 @@ public class EntryProvider extends ContentProvider {
             case ENTRY: {
                 retCursor = mDbHelper.getReadableDatabase().query(
                         DbHelper.getTableName(Entry.class),
+                        pProjection,
+                        pSelection,
+                        pSelArgs,
+                        null,
+                        null,
+                        pSortOrder
+                );
+                break;
+            }
+            case ENTRY_BY_DICTIONARY_ID: {
+                retCursor = sEntryByDictionaryIdQueryBuilder.query(
+                        mDbHelper.getReadableDatabase(),
                         pProjection,
                         pSelection,
                         pSelArgs,

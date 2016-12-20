@@ -15,7 +15,9 @@
     <string name="alert_title_data_not_saved">Data not saved</string>
     <string name="alert_body_data_not_saved">Do you want to leave without data saving?</string>
     <string name="alert_body_confirm_entry_deletion">Do you want to delete this entry?</string>
-    <string name="alert_body_confirm_dictionary_deletion">All your entries for this dictionary will be deleted.\nDo you want to proceed?</string>
+    <string name="alert_body_confirm_dictionary_deletion">All your entries for this dictionary will
+        be deleted.\nDo you want to proceed?
+    </string>
     <string name="alert_positive_button">Ok</string>
     <string name="alert_negative_button">Cancel</string>
     <string name="ERROR_CONNECTION_DELETE">Connection Error! The Entry has not been deleted.
@@ -32,4 +34,7 @@
     <string name="dialog_title_add_dictionary">New dictionary name</string>
     <string name="dialog_hint_add_dictionary">Dictionary name</string>
     <string name="ERROR_CREATE_DICTIONARY">Dictionary is not created!</string>
+    <string name="search_hint">Search entry</string>
+    <string name="search_menu_item_title">Search</string>
+    <string name="nav_header_user_name_anonymous">Anonymous</string>
 </resources>

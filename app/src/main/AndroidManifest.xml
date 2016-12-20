@@ -21,6 +21,13 @@
         <activity android:name=".app.EntryActivity"/>
         <activity android:name=".app.SignInActivity"/>
         <activity android:name=".app.EditActivity"/>
+        <activity android:name=".app.SearchActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH"/>
+            </intent-filter>
+            <meta-data android:name="android.app.searchable"
+                       android:resource="@xml/searchable"/>
+        </activity>
 
         <provider
             android:name=".EntryProvider"

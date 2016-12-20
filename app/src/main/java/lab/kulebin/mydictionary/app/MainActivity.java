@@ -41,6 +41,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import lab.kulebin.mydictionary.R;
+import lab.kulebin.mydictionary.adapter.EntryCursorAdapter;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
 import lab.kulebin.mydictionary.json.JsonHelper;
@@ -51,7 +52,6 @@ import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
 import lab.kulebin.mydictionary.thread.ProgressCallback;
 import lab.kulebin.mydictionary.thread.ThreadManager;
-import lab.kulebin.mydictionary.ui.EntryCursorAdapter;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
 import static lab.kulebin.mydictionary.app.Constants.ANONYMOUS;
@@ -154,14 +154,18 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu pMenu) {
-        getMenuInflater().inflate(R.menu.main, pMenu);
+        getMenuInflater().inflate(R.menu.activity_main, pMenu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem pItem) {
         switch (pItem.getItemId()) {
-            case R.id.sign_out_menu:
+            case R.id.search_menu_action_search:
+                Intent intent = new Intent(MainActivity.this, SearchActivity.class);
+                startActivity(intent);
+                return true;
+            case R.id.action_sign_out:
                 mFirebaseAuth.signOut();
                 Auth.GoogleSignInApi.signOut(mGoogleApiClient);
                 mUsername = ANONYMOUS;
@@ -287,7 +291,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onNavigationItemSelected(MenuItem pItem) {
         switch (pItem.getItemId()) {
-            case R.id.navigation_menu_add_dictionary:
+            case R.id.action_add_dictionary:
                 startCreateDictionaryDialog();
                 break;
             default:
