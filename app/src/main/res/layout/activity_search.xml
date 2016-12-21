@@ -15,9 +15,17 @@
         android:id="@+id/listview_search_result"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
+    <TextView
+        android:id="@+id/search_no_result"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:gravity="center_horizontal"
+        android:text="@string/no_search_results"
+        android:visibility="gone"/>
 
     <ProgressBar
-        android:id="@+id/progressBar"
+        android:id="@+id/search_progressBar"
         style="?android:attr/progressBarStyleLarge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

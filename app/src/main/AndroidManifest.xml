@@ -21,7 +21,8 @@
         <activity android:name=".app.EntryActivity"/>
         <activity android:name=".app.SignInActivity"/>
         <activity android:name=".app.EditActivity"/>
-        <activity android:name=".app.SearchActivity">
+        <activity android:name=".app.SearchActivity"
+                  android:label="">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH"/>
             </intent-filter>

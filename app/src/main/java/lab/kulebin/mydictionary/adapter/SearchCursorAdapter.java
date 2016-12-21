@@ -18,26 +18,47 @@ import lab.kulebin.mydictionary.model.Entry;
 
 public class SearchCursorAdapter extends CursorAdapter {
 
+    private static final int VIEW_TYPE_SEARCH = 0;
+    private static final int VIEW_TYPE_SEARCH_WITH_HEADER = 1;
+    private static final int VIEW_TYPE_COUNT = 2;
+    private Cursor mCursor;
+
     public SearchCursorAdapter(final Context context, final Cursor c, final int flags) {
         super(context, c, flags);
+        this.mCursor = c;
     }
 
     @Override
     public View newView(final Context context, final Cursor cursor, final ViewGroup parent) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_list_search_result, parent, false);
-        long entryId = cursor.getLong(cursor.getColumnIndex(Entry.ID));
-        SearchCursorAdapter.EntryViewHolder entryViewHolder = new SearchCursorAdapter.EntryViewHolder(view, entryId);
+        mCursor = cursor;
+        int viewType = getItemViewType(cursor.getPosition());
+        int layoutId = -1;
+        switch (viewType) {
+            case VIEW_TYPE_SEARCH: {
+                layoutId = R.layout.item_list_search;
+                break;
+            }
+            case VIEW_TYPE_SEARCH_WITH_HEADER: {
+                layoutId = R.layout.item_list_search_with_header;
+                break;
+            }
+        }
+
+        View view = LayoutInflater.from(context).inflate(layoutId, parent, false);
+        SearchCursorAdapter.EntryViewHolder entryViewHolder = new SearchCursorAdapter.EntryViewHolder(view);
         view.setTag(entryViewHolder);
         return view;
     }
 
     @Override
     public void bindView(final View view, final Context context, final Cursor cursor) {
+        mCursor = cursor;
         SearchCursorAdapter.EntryViewHolder holder = (SearchCursorAdapter.EntryViewHolder) view.getTag();
         holder.entryValueTextView.setText(cursor.getString(cursor.getColumnIndex(Entry.VALUE)));
         holder.entryTranslationTextView.setText(cursor.getString(cursor.getColumnIndex(Entry.TRANSLATION)));
-        holder.dictionaryNameTextView.setText(cursor.getString(cursor.getColumnIndex(Dictionary.NAME)));
-        holder.dictionaryIdTextView.setText(String.valueOf(cursor.getInt(cursor.getColumnIndex(Dictionary.ID))));
+        if (getItemViewType(cursor.getPosition()) == VIEW_TYPE_SEARCH_WITH_HEADER) {
+            holder.dictionaryNameHeader.setText(cursor.getString(cursor.getColumnIndex(Dictionary.NAME)));
+        }
         String url = cursor.getString(cursor.getColumnIndex(Entry.IMAGE_URL));
         if (url != null && !url.isEmpty()) {
             Glide.with(mContext)
@@ -47,21 +68,39 @@ public class SearchCursorAdapter extends CursorAdapter {
         }
     }
 
+    @Override
+    public int getItemViewType(final int pPosition) {
+        if (mCursor != null && pPosition > 0) {
+            mCursor.moveToPosition(pPosition);
+            int dictionaryId = mCursor.getInt(mCursor.getColumnIndex(Entry.DICTIONARY_ID));
+            mCursor.moveToPosition(pPosition - 1);
+            if (mCursor.getInt(mCursor.getColumnIndex(Entry.DICTIONARY_ID)) == dictionaryId) {
+                mCursor.moveToNext();
+                return VIEW_TYPE_SEARCH;
+            }
+            mCursor.moveToNext();
+        }
+        return VIEW_TYPE_SEARCH_WITH_HEADER;
+    }
+
+    @Override
+    public int getViewTypeCount() {
+        return VIEW_TYPE_COUNT;
+    }
+
     private static class EntryViewHolder {
         TextView entryValueTextView;
         TextView entryTranslationTextView;
         ImageView entryImageView;
-        TextView dictionaryIdTextView;
-        TextView dictionaryNameTextView;
-        long entryId;
+        TextView dictionaryNameHeader;
+        View v;
 
-        public EntryViewHolder(View v, long id) {
+        public EntryViewHolder(View v) {
+            this.v = v;
             entryValueTextView = (TextView) v.findViewById(R.id.entry_value);
             entryTranslationTextView = (TextView) v.findViewById(R.id.entry_translate);
             entryImageView = (ImageView) v.findViewById(R.id.entry_image);
-            dictionaryIdTextView = (TextView) v.findViewById(R.id.dictionary_id);
-            dictionaryNameTextView = (TextView) v.findViewById(R.id.dictionary_name);
-            entryId = id;
+            dictionaryNameHeader = (TextView) v.findViewById(R.id.dictionary_name);
         }
     }
 }

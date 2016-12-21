@@ -154,14 +154,14 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu pMenu) {
-        getMenuInflater().inflate(R.menu.activity_main, pMenu);
+        getMenuInflater().inflate(R.menu.activity_main_menu, pMenu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem pItem) {
         switch (pItem.getItemId()) {
-            case R.id.search_menu_action_search:
+            case R.id.main_menu_action_search:
                 Intent intent = new Intent(MainActivity.this, SearchActivity.class);
                 startActivity(intent);
                 return true;

@@ -24,8 +24,7 @@ public class EntryCursorAdapter extends CursorAdapter {
     @Override
     public View newView(final Context context, final Cursor cursor, final ViewGroup parent) {
         View view = LayoutInflater.from(context).inflate(R.layout.item_list_entry, parent, false);
-        long entryId = cursor.getLong(cursor.getColumnIndex(Entry.ID));
-        EntryViewHolder entryViewHolder = new EntryViewHolder(view, entryId);
+        EntryViewHolder entryViewHolder = new EntryViewHolder(view);
         view.setTag(entryViewHolder);
         return view;
     }
@@ -36,7 +35,7 @@ public class EntryCursorAdapter extends CursorAdapter {
         holder.entryValueTextView.setText(cursor.getString(cursor.getColumnIndex(Entry.VALUE)));
         holder.entryTranslationTextView.setText(cursor.getString(cursor.getColumnIndex(Entry.TRANSLATION)));
         String url = cursor.getString(cursor.getColumnIndex(Entry.IMAGE_URL));
-        if(url != null && !url.isEmpty()){
+        if (url != null && !url.isEmpty()) {
             Glide.with(mContext)
                     .load(url)
                     .override(300, 300)
@@ -48,13 +47,11 @@ public class EntryCursorAdapter extends CursorAdapter {
         TextView entryValueTextView;
         TextView entryTranslationTextView;
         ImageView entryImageView;
-        long entryId;
 
-        public EntryViewHolder(View v, long id) {
+        public EntryViewHolder(View v) {
             entryValueTextView = (TextView) v.findViewById(R.id.entry_value);
             entryTranslationTextView = (TextView) v.findViewById(R.id.entry_translate);
             entryImageView = (ImageView) v.findViewById(R.id.entry_image);
-            entryId = id;
         }
     }
 }
