@@ -2,8 +2,10 @@ package lab.kulebin.mydictionary.app;
 
 import android.app.AlertDialog;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -202,14 +204,17 @@ public class EditActivity extends AppCompatActivity {
                         values.put(Entry.TRANSLATION, Converter.convertStringArrayToString(pEntry.getTranslation()));
                         values.put(Entry.USAGE_CONTEXT, Converter.convertStringArrayToString(pEntry.getUsageContext()));
 
-                        Uri uri = Uri.parse(Api.BASE_URL).buildUpon()
+                        SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
+                        final String token = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
+
+                        Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
                                 .appendPath(Api.ENTRIES)
-                                .appendPath(String.valueOf(pEntry.getId()))
+                                .appendPath(String.valueOf(pEntry.getId()) + Api.JSON_FORMAT)
+                                .appendQueryParameter(Api.PARAM_AUTH, token)
                                 .build();
-                        String url = uri.toString() + Api.JSON_FORMAT;
                         HttpClient httpClient = new HttpClient();
                         try {
-                            String response = httpClient.put(url, null, JsonHelper.buildEntryJsonObject(pEntry).toString());
+                            String response = httpClient.put(uri.toString(), null, JsonHelper.buildEntryJsonObject(pEntry).toString());
                             if (pEntry.getLastEditionDate() == JsonHelper.getEntryLastEditionDateFromJson(response)) {
                                 if (mEditActivityMode == EditActivityMode.EDIT) {
                                     getContentResolver().update(

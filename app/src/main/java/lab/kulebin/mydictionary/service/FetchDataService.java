@@ -2,7 +2,9 @@ package lab.kulebin.mydictionary.service;
 
 import android.app.IntentService;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
 import android.widget.Toast;
@@ -12,6 +14,7 @@ import org.json.JSONException;
 import java.util.List;
 import java.util.Vector;
 
+import lab.kulebin.mydictionary.app.Constants;
 import lab.kulebin.mydictionary.db.Contract;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
@@ -31,6 +34,8 @@ public class FetchDataService extends IntentService {
 
     @Override
     protected void onHandleIntent(final Intent intent) {
+        SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
+        final String token = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
         for (Class model : Contract.MODELS) {
             String path;
             if (model == Entry.class) {
@@ -40,11 +45,11 @@ public class FetchDataService extends IntentService {
             } else {
                 continue;
             }
-            Uri uri = Uri.parse(Api.BASE_URL).buildUpon()
-                    .appendPath(path)
+            Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
+                    .appendPath(path + Api.JSON_FORMAT)
+                    .appendQueryParameter(Api.PARAM_AUTH, token)
                     .build();
-            String url = uri.toString() + Api.JSON_FORMAT;
-            List<?> list = fetchData(url, model);
+            List<?> list = fetchData(uri.toString(), model);
             int storeResult = -1;
             if (list != null && list.size() > 0) {
                 storeResult = storeData(list);

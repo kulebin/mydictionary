@@ -88,6 +88,7 @@ public class MainActivity extends AppCompatActivity
     private String mUserPhotoUrl;
     private String mUsername;
     private String mUserEmail;
+    private String mToken;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,15 +101,12 @@ public class MainActivity extends AppCompatActivity
         mUsername = Constants.ANONYMOUS;
         mFirebaseAuth = FirebaseAuth.getInstance();
         mFirebaseUser = mFirebaseAuth.getCurrentUser();
-        //signIn();
+        signIn();
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .enableAutoManage(this, this)
                 .addApi(Auth.GOOGLE_SIGN_IN_API)
                 .build();
-
-        Intent serviceIntent = new Intent(this, FetchDataService.class);
-        startService(serviceIntent);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -191,10 +189,7 @@ public class MainActivity extends AppCompatActivity
                 startActivity(intent);
                 return true;
             case R.id.action_sign_out:
-                mFirebaseAuth.signOut();
-                Auth.GoogleSignInApi.signOut(mGoogleApiClient);
-                mUsername = ANONYMOUS;
-                startActivity(new Intent(this, SignInActivity.class));
+                signOut();
                 return true;
             case R.id.action_delete_dictionary:
                 android.app.AlertDialog.Builder alertDialogBuilder = new android.app.AlertDialog.Builder(MainActivity.this);
@@ -221,6 +216,17 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
+        mToken = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
+        if (mToken != null) {
+            Intent serviceIntent = new Intent(this, FetchDataService.class);
+            startService(serviceIntent);
+        }
+    }
+
     private void deleteDictionaryTask() {
         new ThreadManager().execute(
                 new ITask<Void, Void, Void>() {
@@ -242,18 +248,23 @@ public class MainActivity extends AppCompatActivity
                             throw new Exception("Dictionary cursor is null");
                         }
 
-                        Uri dictionaryUri = Uri.parse(Api.BASE_URL).buildUpon()
-                                .appendPath(Api.DICTIONARIES)
-                                .appendPath(String.valueOf(dictionaryCreationDate))
-                                .build();
-                        String dictionaryUrl = dictionaryUri.toString() + Api.JSON_FORMAT;
-
+                        Uri dictionaryUri;
+                        if (mToken != null) {
+                            dictionaryUri = Uri.parse(Api.getBaseUrl()).buildUpon()
+                                    .appendPath(Api.DICTIONARIES)
+                                    .appendPath(String.valueOf(dictionaryCreationDate) + Api.JSON_FORMAT)
+                                    .appendQueryParameter(Api.PARAM_AUTH, mToken)
+                                    .build();
+                        } else {
+                            signOut();
+                            throw new Exception("Token is null");
+                        }
 
                         HttpClient httpClient;
                         Cursor entryIdsCursor = null;
                         try {
                             httpClient = new HttpClient();
-                            if (httpClient.delete(dictionaryUrl).equals(HttpClient.DELETE_RESPONSE_OK)) {
+                            if (httpClient.delete(dictionaryUri.toString()).equals(HttpClient.DELETE_RESPONSE_OK)) {
                                 entryIdsCursor = getContentResolver().query(
                                         UriBuilder.getTableUri(Entry.class),
                                         new String[]{Entry.ID},
@@ -262,12 +273,13 @@ public class MainActivity extends AppCompatActivity
                                         null);
                                 if (entryIdsCursor != null) {
                                     while (entryIdsCursor.moveToNext()) {
-                                        Uri entryUri = Uri.parse(Api.BASE_URL).buildUpon()
+                                        Uri entryUri = Uri.parse(Api.getBaseUrl()).buildUpon()
                                                 .appendPath(Api.ENTRIES)
-                                                .appendPath(String.valueOf(entryIdsCursor.getLong(entryIdsCursor.getColumnIndex(Entry.ID))))
+                                                .appendPath(String.valueOf(entryIdsCursor.getLong(entryIdsCursor.getColumnIndex(Entry.ID)))
+                                                        + Api.JSON_FORMAT)
+                                                .appendQueryParameter(Api.PARAM_AUTH, mToken)
                                                 .build();
-                                        String entryUrl = entryUri.toString() + Api.JSON_FORMAT;
-                                        httpClient.delete(entryUrl);
+                                        httpClient.delete(entryUri.toString());
                                     }
                                     getContentResolver().delete(
                                             UriBuilder.getTableUri(Dictionary.class, String.valueOf(mSelectedDictionaryId)),
@@ -419,14 +431,14 @@ public class MainActivity extends AppCompatActivity
                         values.put(Dictionary.NAME, pDictionaryName);
                         values.put(Dictionary.CREATION_DATE, creationDate);
 
-                        Uri uri = Uri.parse(Api.BASE_URL).buildUpon()
+                        Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
                                 .appendPath(Api.DICTIONARIES)
-                                .appendPath(String.valueOf(creationDate))
+                                .appendPath(String.valueOf(creationDate) + Api.JSON_FORMAT)
+                                .appendQueryParameter(Api.PARAM_AUTH, mToken)
                                 .build();
-                        String url = uri.toString() + Api.JSON_FORMAT;
                         HttpClient httpClient = new HttpClient();
                         try {
-                            httpClient.put(url, null, JsonHelper.buildDictionaryJsonObject(dictionary).toString());
+                            httpClient.put(uri.toString(), null, JsonHelper.buildDictionaryJsonObject(dictionary).toString());
                             getContentResolver().insert(
                                     UriBuilder.getTableUri(Dictionary.class),
                                     values
@@ -482,6 +494,13 @@ public class MainActivity extends AppCompatActivity
             mUserPhotoUrl = mFirebaseUser.getPhotoUrl().toString();
             mUserEmail = mFirebaseUser.getEmail();
         }
+    }
+
+    private void signOut() {
+        mFirebaseAuth.signOut();
+        Auth.GoogleSignInApi.signOut(mGoogleApiClient);
+        mUsername = ANONYMOUS;
+        startActivity(new Intent(this, SignInActivity.class));
     }
 
     @Override

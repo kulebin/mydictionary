@@ -1,8 +1,10 @@
 package lab.kulebin.mydictionary.app;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -102,9 +104,12 @@ public class EntryFragment extends Fragment {
                 new ITask<Long, Void, Void>() {
                     @Override
                     public Void perform(final Long pEntryId, final ProgressCallback<Void> progressCallback) throws Exception {
-                        Uri uri = Uri.parse(Api.BASE_URL).buildUpon()
+                        SharedPreferences shp = getActivity().getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
+                        final String token = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
+                        Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
                                 .appendPath(Api.ENTRIES)
-                                .appendPath(String.valueOf(pEntryId))
+                                .appendPath(String.valueOf(pEntryId) + Api.JSON_FORMAT)
+                                .appendQueryParameter(Api.PARAM_AUTH, token)
                                 .build();
                         String url = uri.toString() + Api.JSON_FORMAT;
                         HttpClient httpClient = new HttpClient();
