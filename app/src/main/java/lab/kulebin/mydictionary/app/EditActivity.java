@@ -52,7 +52,7 @@ public class EditActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
 
-        ActionBar actionBar = getSupportActionBar();
+        ActionBar actionBar =  getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
@@ -68,11 +68,17 @@ public class EditActivity extends AppCompatActivity {
             mEditActivityMode = (EditActivityMode) intent.getSerializableExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE);
             if (mEditActivityMode == EditActivityMode.EDIT) {
                 mEntryCreateButton.setText(R.string.button_save);
+                if(actionBar!=null){
+                    actionBar.setTitle(R.string.activity_edit_title_mode_edit);
+                }
                 mEntryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, Constants.ENTRY_ID_EMPTY);
                 if (mEntryId > 0) {
                     fetchEntryTask(mEntryId);
                 }
             } else {
+                if(actionBar!=null){
+                    actionBar.setTitle(R.string.activity_edit_title_mode_create_new);
+                }
                 mDictionaryId = intent.getIntExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID,
                         Constants.DEFAULT_SELECTED_DICTIONARY_ID);
                 mEntryCreateButton.setText(R.string.button_create);

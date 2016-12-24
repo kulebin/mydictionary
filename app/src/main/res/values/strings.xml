@@ -38,4 +38,7 @@
     <string name="search_menu_item_title">Search</string>
     <string name="nav_header_user_name_anonymous">Anonymous</string>
     <string name="no_search_results">No search results</string>
+    <string name="alert_body_no_dictionary_added">Please add at least one dictionary</string>
+    <string name="activity_edit_title_mode_edit">Edit entry</string>
+    <string name="activity_edit_title_mode_create_new">New entry</string>
 </resources>

@@ -112,10 +112,25 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, EditActivity.class);
-                intent.putExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE, EditActivity.EditActivityMode.CREATE)
-                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryId);
-                startActivity(intent);
+                if(mSelectedDictionaryId == Constants.DEFAULT_SELECTED_DICTIONARY_ID){
+                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+                    alertDialogBuilder
+                            .setMessage(getString(R.string.alert_body_no_dictionary_added))
+                            .setCancelable(true)
+                            .setPositiveButton(getString(R.string.alert_positive_button), new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    dialog.dismiss();
+                                }
+                            });
+
+                    AlertDialog alertDialog = alertDialogBuilder.create();
+                    alertDialog.show();
+                } else {
+                    Intent intent = new Intent(MainActivity.this, EditActivity.class);
+                    intent.putExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE, EditActivity.EditActivityMode.CREATE)
+                            .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryId);
+                    startActivity(intent);
+                }
             }
         });
 
@@ -192,7 +207,7 @@ public class MainActivity extends AppCompatActivity
                 signOut();
                 return true;
             case R.id.action_delete_dictionary:
-                android.app.AlertDialog.Builder alertDialogBuilder = new android.app.AlertDialog.Builder(MainActivity.this);
+                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
                 alertDialogBuilder.setTitle(getString(R.string.alert_title_confirm_entry_deletion));
                 alertDialogBuilder
                         .setMessage(getString(R.string.alert_body_confirm_dictionary_deletion))
@@ -208,7 +223,7 @@ public class MainActivity extends AppCompatActivity
                             }
                         });
 
-                android.app.AlertDialog alertDialog = alertDialogBuilder.create();
+                AlertDialog alertDialog = alertDialogBuilder.create();
                 alertDialog.show();
                 return true;
             default:
