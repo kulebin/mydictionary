@@ -151,9 +151,9 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
     @Override
     public void onLoadFinished(final Loader<Cursor> loader, final Cursor pCursor) {
         mProgressBar.setVisibility(View.GONE);
-        if (pCursor.getCount() == 0) {
+        if (pCursor.getCount() == 0 && !mNoSearchResultView.isShown()) {
             mNoSearchResultView.setVisibility(View.VISIBLE);
-        } else {
+        } else if (pCursor.getCount() > 0 && mNoSearchResultView.isShown()) {
             mNoSearchResultView.setVisibility(View.GONE);
         }
         mSearchResultCursorAdapter.swapCursor(pCursor);

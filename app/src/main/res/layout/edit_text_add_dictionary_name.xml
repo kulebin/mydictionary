@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <EditText
+
+        android:id="@+id/edit_text_add_dictionary"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginEnd="@dimen/alert_edit_add_dictionary_name"
+        android:layout_marginLeft="@dimen/alert_edit_add_dictionary_name"
+        android:layout_marginRight="@dimen/alert_edit_add_dictionary_name"
+        android:layout_marginStart="@dimen/alert_edit_add_dictionary_name"
+        android:hint="@string/dialog_hint_add_dictionary"
+        android:inputType="text">
+
+    </EditText>
+
+</FrameLayout>

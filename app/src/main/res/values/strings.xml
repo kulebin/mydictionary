@@ -41,4 +41,5 @@
     <string name="alert_body_no_dictionary_added">Please add at least one dictionary</string>
     <string name="activity_edit_title_mode_edit">Edit entry</string>
     <string name="activity_edit_title_mode_create_new">New entry</string>
+    <string name="no_entry_in_dictionary">There is not any entry in this dictionary</string>
 </resources>

@@ -14,6 +14,15 @@
     tools:context="lab.kulebin.mydictionary.app.MainActivity"
     tools:showIn="@layout/app_bar_main">
 
+    <TextView
+        android:id="@+id/text_no_entry_in_dictionary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:gravity="center_horizontal"
+        android:text="@string/no_entry_in_dictionary"
+        android:visibility="gone"/>
+
     <ListView
         android:id="@+id/listview_entry"
         android:layout_width="match_parent"

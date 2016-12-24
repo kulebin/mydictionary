@@ -27,6 +27,7 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -89,6 +90,7 @@ public class MainActivity extends AppCompatActivity
     private String mUsername;
     private String mUserEmail;
     private String mToken;
+    private TextView mTextViewNoEntry;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,7 +114,7 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(mSelectedDictionaryId == Constants.DEFAULT_SELECTED_DICTIONARY_ID){
+                if (mSelectedDictionaryId == Constants.DEFAULT_SELECTED_DICTIONARY_ID) {
                     AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
                     alertDialogBuilder
                             .setMessage(getString(R.string.alert_body_no_dictionary_added))
@@ -135,6 +137,7 @@ public class MainActivity extends AppCompatActivity
         });
 
         mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
+        mTextViewNoEntry = (TextView) findViewById(R.id.text_no_entry_in_dictionary);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, mDrawerLayout, mToolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -362,10 +365,11 @@ public class MainActivity extends AppCompatActivity
         AlertDialog.Builder addDictionaryDialogBuilder = new AlertDialog.Builder(MainActivity.this);
         addDictionaryDialogBuilder.setTitle(R.string.dialog_title_add_dictionary);
 
-        final EditText inputDictionaryName = new EditText(this);
-        inputDictionaryName.setInputType(InputType.TYPE_CLASS_TEXT);
-        inputDictionaryName.setHint(R.string.dialog_hint_add_dictionary);
-        addDictionaryDialogBuilder.setView(inputDictionaryName)
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View dialogView = inflater.inflate(R.layout.edit_text_add_dictionary_name, null);
+        final EditText inputDictionaryName = (EditText) dialogView.findViewById(R.id.edit_text_add_dictionary);
+
+        addDictionaryDialogBuilder.setView(dialogView)
                 .setPositiveButton(R.string.alert_positive_button, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -552,6 +556,11 @@ public class MainActivity extends AppCompatActivity
         mProgressBar.setVisibility(View.GONE);
         switch (pLoader.getId()) {
             case ENTRY_LOADER:
+                if (pCursor.getCount() > 0 && mTextViewNoEntry.isShown()) {
+                    mTextViewNoEntry.setVisibility(View.GONE);
+                } else if (pCursor.getCount() == 0 && !mTextViewNoEntry.isShown()) {
+                    mTextViewNoEntry.setVisibility(View.VISIBLE);
+                }
                 mEntryCursorAdapter.swapCursor(pCursor);
                 break;
             case DICTIONARY_LOADER:
