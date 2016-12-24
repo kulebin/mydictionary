@@ -2,6 +2,8 @@ package lab.kulebin.mydictionary.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
+import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -65,6 +67,9 @@ public class SearchCursorAdapter extends CursorAdapter {
                     .load(url)
                     .override(300, 300)
                     .into(holder.entryImageView);
+        } else {
+            Drawable entryImageDrawable = VectorDrawableCompat.create(context.getResources(), R.drawable.image_default_entry_96dp, null);
+            holder.entryImageView.setImageDrawable(entryImageDrawable);
         }
     }
 

@@ -1,6 +1,8 @@
 package lab.kulebin.mydictionary.app;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -12,8 +14,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 
 import lab.kulebin.mydictionary.R;
-import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.adapter.EntryPagerAdapter;
+import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
 public class EntryActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -29,8 +31,11 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
 
     private ViewPager viewPager;
     private EntryPagerAdapter mEntryPagerAdapter;
-    private int mPosition;
+    private long mEntryId;
     private int mDictionaryId;
+    private SortOrder mSortOrder;
+    private int mEntryPosition;
+    private String mIntentSender;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,14 +43,26 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
         setContentView(R.layout.activity_entry);
 
         Intent intent = getIntent();
+
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setTitle(intent.getCharSequenceExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME));
         }
 
-        mPosition = intent.getIntExtra(Constants.EXTRA_ENTRY_POSITION, -1);
-        mDictionaryId = intent.getIntExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, Constants.DEFAULT_SELECTED_DICTIONARY_ID);
+        mIntentSender = intent.getStringExtra(Constants.EXTRA_INTENT_SENDER);
+        if (mIntentSender.equals(MainActivity.class.getSimpleName())) {
+            mEntryPosition = intent.getIntExtra(Constants.EXTRA_SELECTED_ENTRY_POSITION, 0);
+        } else if (mIntentSender.equals(SearchActivity.class.getSimpleName())) {
+            mEntryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, Constants.ENTRY_ID_EMPTY);
+        }
+        mDictionaryId = intent.getIntExtra(
+                Constants.EXTRA_SELECTED_DICTIONARY_ID,
+                Constants.DEFAULT_SELECTED_DICTIONARY_ID);
+        SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
+        mSortOrder = SortOrder.valueOf(shp.getString(
+                Constants.APP_PREFERENCES_SORT_ORDER,
+                SortOrder.NEWEST.toString()));
         viewPager = (ViewPager) findViewById(R.id.pager);
         getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
     }
@@ -63,23 +80,30 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
     @Override
     public Loader<Cursor> onCreateLoader(final int id, final Bundle args) {
 
-        String sortOrder = Entry.CREATION_DATE + " DESC";
-
         return new CursorLoader(
                 this,
                 UriBuilder.getTableUri(Entry.class),
                 ENTRY_PROJECTION,
                 Entry.DICTIONARY_ID + "=?",
                 new String[]{String.valueOf(mDictionaryId)},
-                sortOrder);
+                mSortOrder.getEntrySortOrderQueryParam());
     }
 
     @Override
     public void onLoadFinished(final Loader<Cursor> loader, final Cursor cursor) {
-        mEntryPagerAdapter = new EntryPagerAdapter(
-                getSupportFragmentManager(), cursor);
+
+        mEntryPagerAdapter = new EntryPagerAdapter(getSupportFragmentManager(), cursor);
         viewPager.setAdapter(mEntryPagerAdapter);
-        viewPager.setCurrentItem(mPosition);
+
+        if (mIntentSender.equals(SearchActivity.class.getSimpleName())) {
+            while (cursor.moveToNext()) {
+                if (cursor.getLong(cursor.getColumnIndex(Entry.ID)) == mEntryId) {
+                    mEntryPosition = cursor.getPosition();
+                    break;
+                }
+            }
+        }
+        viewPager.setCurrentItem(mEntryPosition);
     }
 
     @Override

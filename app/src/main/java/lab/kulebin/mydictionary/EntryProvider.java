@@ -20,10 +20,10 @@ import static lab.kulebin.mydictionary.utils.UriBuilder.AUTHORITY;
 
 public class EntryProvider extends ContentProvider {
 
-    static final int ENTRY = 100;
-    static final int DICTIONARY_BY_DICTIONARY_ID = 101;
-    static final int DICTIONARY = 200;
-    static final int ENTRY_BY_DICTIONARY_ID = 300;
+    private static final int ENTRY = 100;
+    private static final int DICTIONARY_BY_DICTIONARY_ID = 101;
+    private static final int DICTIONARY = 200;
+    private static final int ENTRY_BY_DICTIONARY_ID = 300;
     private static final UriMatcher sUriMatcher = buildUriMatcher();
     private static final SQLiteQueryBuilder sEntryByDictionaryIdQueryBuilder;
 

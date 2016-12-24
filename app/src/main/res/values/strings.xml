@@ -28,6 +28,7 @@
     <string name="ERROR_PARSING">Parsing error</string>
     <string name="ERROR_FETCHING_ENTRY_FROM_DB">Oops! Entry not found!</string>
     <string name="RESULT_SUCCESS_ENTRY_STORED">Success! Entry have been stored.</string>
+    <string name="RESULT_SUCCESS_DICTIONARY_STORED">Success! Dictionary have been created.</string>
     <string name="button_save">Save</string>
     <string name="alert_title_confirm_entry_deletion">Confirm deletion</string>
     <string name="menu_title_add_dictionary">Add dictionary</string>
@@ -42,4 +43,9 @@
     <string name="activity_edit_title_mode_edit">Edit entry</string>
     <string name="activity_edit_title_mode_create_new">New entry</string>
     <string name="no_entry_in_dictionary">There is not any entry in this dictionary</string>
+    <string name="sort_by_newest">Newest</string>
+    <string name="sort_by_oldest">Oldest</string>
+    <string name="sort_by_a_z">A-Z</string>
+    <string name="sort_by_z_a">Z-A</string>
+    <string name="sort_by">Sort by</string>
 </resources>

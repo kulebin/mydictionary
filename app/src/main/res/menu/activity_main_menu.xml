@@ -7,6 +7,32 @@
           android:title="@string/search_menu_item_title"
           app:showAsAction="ifRoom"/>
 
+    <item android:id="@+id/action_sort_by"
+          android:title="@string/sort_by"
+          app:showAsAction="never">
+
+        <menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+            <group android:checkableBehavior="single">
+
+                <item android:id="@+id/sort_by_newest"
+                      android:title="@string/sort_by_newest"/>
+
+                <item android:id="@+id/sort_by_oldest"
+                      android:title="@string/sort_by_oldest"/>
+
+                <item android:id="@+id/sort_by_a_z"
+                      android:title="@string/sort_by_a_z"/>
+
+                <item android:id="@+id/sort_by_z_a"
+                      android:title="@string/sort_by_z_a"/>
+
+            </group>
+
+        </menu>
+
+    </item>
+
     <item android:id="@+id/action_delete_dictionary"
           android:title="@string/action_delete_dictionary"
           app:showAsAction="never"/>

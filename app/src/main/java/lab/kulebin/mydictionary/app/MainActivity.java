@@ -23,7 +23,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
-import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -91,6 +90,7 @@ public class MainActivity extends AppCompatActivity
     private String mUserEmail;
     private String mToken;
     private TextView mTextViewNoEntry;
+    private SortOrder mSortOrder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -148,6 +148,7 @@ public class MainActivity extends AppCompatActivity
         mSelectedDictionaryId = shp.getInt(
                 Constants.APP_PREFERENCES_SELECTED_DICTIONARY_ID,
                 Constants.DEFAULT_SELECTED_DICTIONARY_ID);
+        mSortOrder = SortOrder.valueOf(shp.getString(Constants.APP_PREFERENCES_SORT_ORDER, SortOrder.NEWEST.toString()));
 
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         View navigationHeaderLayout = mNavigationView.getHeaderView(0);
@@ -175,7 +176,8 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
                 Intent intent = new Intent(MainActivity.this, EntryActivity.class)
-                        .putExtra(Constants.EXTRA_ENTRY_POSITION, position)
+                        .putExtra(Constants.EXTRA_INTENT_SENDER, MainActivity.class.getSimpleName())
+                        .putExtra(Constants.EXTRA_SELECTED_ENTRY_POSITION, position)
                         .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryId)
                         .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME, mToolbar.getTitle());
                 startActivity(intent);
@@ -196,6 +198,19 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu pMenu) {
         getMenuInflater().inflate(R.menu.activity_main_menu, pMenu);
+        switch (mSortOrder){
+            case NEWEST:
+                pMenu.findItem(R.id.sort_by_newest).setChecked(true);
+                break;
+            case OLDEST:
+                pMenu.findItem(R.id.sort_by_oldest).setChecked(true);
+                break;
+            case A_Z:
+                pMenu.findItem(R.id.sort_by_a_z).setChecked(true);
+                break;
+            case Z_A:
+                pMenu.findItem(R.id.sort_by_z_a).setChecked(true);
+        }
         return true;
     }
 
@@ -205,6 +220,34 @@ public class MainActivity extends AppCompatActivity
             case R.id.main_menu_action_search:
                 Intent intent = new Intent(MainActivity.this, SearchActivity.class);
                 startActivity(intent);
+                return true;
+            case R.id.sort_by_newest:
+                if(mSortOrder != SortOrder.NEWEST){
+                    mSortOrder = SortOrder.NEWEST;
+                    pItem.setChecked(true);
+                    getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, this);
+                }
+                return true;
+            case R.id.sort_by_oldest:
+                if(mSortOrder != SortOrder.OLDEST){
+                    mSortOrder = SortOrder.OLDEST;
+                    pItem.setChecked(true);
+                    getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, this);
+                }
+                return true;
+            case R.id.sort_by_a_z:
+                if(mSortOrder != SortOrder.A_Z){
+                    mSortOrder = SortOrder.A_Z;
+                    pItem.setChecked(true);
+                    getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, this);
+                }
+                return true;
+            case R.id.sort_by_z_a:
+                if(mSortOrder != SortOrder.Z_A){
+                    mSortOrder = SortOrder.Z_A;
+                    pItem.setChecked(true);
+                    getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, this);
+                }
                 return true;
             case R.id.action_sign_out:
                 signOut();
@@ -480,13 +523,17 @@ public class MainActivity extends AppCompatActivity
                     public void onSuccess(Void pVoid) {
                         getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, MainActivity.this);
                         Toast toast = Toast.makeText(getApplicationContext(),
-                                R.string.RESULT_SUCCESS_ENTRY_STORED,
+                                R.string.RESULT_SUCCESS_DICTIONARY_STORED,
                                 Toast.LENGTH_SHORT);
                         toast.show();
                     }
 
                     @Override
                     public void onError(final Exception e) {
+                        Toast toast = Toast.makeText(getApplicationContext(),
+                                "Error! Dictionary has not been created!",
+                                Toast.LENGTH_SHORT);
+                        toast.show();
                     }
 
                     @Override
@@ -526,8 +573,7 @@ public class MainActivity extends AppCompatActivity
     public Loader<Cursor> onCreateLoader(final int pId, final Bundle pArgs) {
 
         mProgressBar.setVisibility(View.VISIBLE);
-        String entrySortOrder = Entry.CREATION_DATE + " DESC";
-        String dictionarySortOrder = Dictionary.CREATION_DATE + " DESC";
+        String dictionarySortOrder = Dictionary.CREATION_DATE + Constants.SQL_SORT_QUERY_DESC;
 
         switch (pId) {
             case ENTRY_LOADER:
@@ -537,7 +583,7 @@ public class MainActivity extends AppCompatActivity
                         ENTRY_PROJECTION,
                         Entry.DICTIONARY_ID + "=?",
                         new String[]{String.valueOf(mSelectedDictionaryId)},
-                        entrySortOrder);
+                        mSortOrder.getEntrySortOrderQueryParam());
             case DICTIONARY_LOADER:
                 return new CursorLoader(
                         this,
@@ -603,6 +649,7 @@ public class MainActivity extends AppCompatActivity
         SharedPreferences appPreferences = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = appPreferences.edit();
         editor.putInt(Constants.APP_PREFERENCES_SELECTED_DICTIONARY_ID, mSelectedDictionaryId);
+        editor.putString(Constants.APP_PREFERENCES_SORT_ORDER, mSortOrder.toString());
         editor.apply();
     }
 
