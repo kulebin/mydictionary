@@ -23,10 +23,18 @@
         android:text="@string/no_entry_in_dictionary"
         android:visibility="gone"/>
 
-    <ListView
-        android:id="@+id/listview_entry"
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/swiperefresh"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        tools:context=".app.MainActivity">
+
+        <ListView
+            android:id="@+id/listview_entry"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </android.support.v4.widget.SwipeRefreshLayout>
 
     <ProgressBar
         android:id="@+id/progressBar"

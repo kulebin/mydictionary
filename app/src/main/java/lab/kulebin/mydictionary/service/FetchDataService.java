@@ -35,6 +35,11 @@ public class FetchDataService extends IntentService {
 
     @Override
     protected void onHandleIntent(final Intent intent) {
+        FetchDataServiceMode serviceMode = FetchDataServiceMode.SYNCHRONIZE;
+        if (intent.hasExtra(Constants.EXTRA_FETCH_DATA_SERVICE_MODE)) {
+            serviceMode = FetchDataServiceMode.valueOf(
+                    intent.getStringExtra(Constants.EXTRA_FETCH_DATA_SERVICE_MODE));
+        }
         final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
         final String token = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
         for (final Class model : Contract.MODELS) {
@@ -50,7 +55,7 @@ public class FetchDataService extends IntentService {
                     .appendPath(path + Api.JSON_FORMAT)
                     .build()
                     .toString();
-            if (DataCache.isDataRefreshNeeded(this, url)) {
+            if (DataCache.isDataRefreshNeeded(this, url) || serviceMode == FetchDataServiceMode.REFRESH) {
                 final String fullUrl = Uri.parse(url).buildUpon()
                         .appendQueryParameter(Api.PARAM_AUTH, token)
                         .build()
@@ -124,4 +129,6 @@ public class FetchDataService extends IntentService {
         }
         return valuesVector.size();
     }
+
+    public enum FetchDataServiceMode {SYNCHRONIZE, REFRESH}
 }

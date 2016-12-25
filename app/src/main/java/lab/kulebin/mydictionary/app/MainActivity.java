@@ -18,6 +18,7 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -66,7 +67,7 @@ import lab.kulebin.mydictionary.utils.UriBuilder;
 import static lab.kulebin.mydictionary.Constants.ANONYMOUS;
 
 public class MainActivity extends AppCompatActivity
-        implements LoaderManager.LoaderCallbacks<Cursor>, NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.OnConnectionFailedListener {
+        implements LoaderManager.LoaderCallbacks<Cursor>, NavigationView.OnNavigationItemSelectedListener, SwipeRefreshLayout.OnRefreshListener, GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int DICTIONARY_LOADER = 0;
@@ -93,6 +94,7 @@ public class MainActivity extends AppCompatActivity
     private String mToken;
     private TextView mTextViewNoEntry;
     private SortOrder mSortOrder;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
 
     @Override
     public void onBackPressed() {
@@ -241,7 +243,12 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onLoadFinished(final Loader<Cursor> pLoader, final Cursor pCursor) {
-        mProgressBar.setVisibility(View.GONE);
+        if (mProgressBar.isShown()) {
+            mProgressBar.setVisibility(View.GONE);
+        }
+        if (mSwipeRefreshLayout.isRefreshing()) {
+            mSwipeRefreshLayout.setRefreshing(false);
+        }
         switch (pLoader.getId()) {
             case ENTRY_LOADER:
                 if (pCursor.getCount() > 0 && mTextViewNoEntry.isShown()) {
@@ -289,6 +296,18 @@ public class MainActivity extends AppCompatActivity
     public void onLoaderReset(final Loader<Cursor> pLoader) {
         if (pLoader.getId() == ENTRY_LOADER) {
             mEntryCursorAdapter.swapCursor(null);
+        }
+    }
+
+    @Override
+    public void onRefresh() {
+        if (mToken != null) {
+            mSwipeRefreshLayout.setRefreshing(true);
+            final Intent serviceIntent = new Intent(this, FetchDataService.class);
+            serviceIntent.putExtra(
+                    Constants.EXTRA_FETCH_DATA_SERVICE_MODE,
+                    FetchDataService.FetchDataServiceMode.REFRESH.toString());
+            startService(serviceIntent);
         }
     }
 
@@ -371,6 +390,9 @@ public class MainActivity extends AppCompatActivity
 
         getSupportLoaderManager().initLoader(DICTIONARY_LOADER, null, this);
 
+        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
+        mSwipeRefreshLayout.setOnRefreshListener(this);
+
         final ListView listView = (ListView) findViewById(R.id.listview_entry);
         mEntryCursorAdapter = new EntryCursorAdapter(this, null, 0);
         listView.setAdapter(mEntryCursorAdapter);
@@ -390,8 +412,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onStart() {
+        super.onStart();
         final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
         mToken = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
         if (mToken != null) {
