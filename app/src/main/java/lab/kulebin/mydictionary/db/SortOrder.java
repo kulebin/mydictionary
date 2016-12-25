@@ -1,5 +1,6 @@
-package lab.kulebin.mydictionary.app;
+package lab.kulebin.mydictionary.db;
 
+import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.model.Entry;
 
 public enum SortOrder {

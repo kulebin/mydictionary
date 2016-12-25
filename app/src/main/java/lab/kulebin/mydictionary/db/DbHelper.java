@@ -1,6 +1,5 @@
 package lab.kulebin.mydictionary.db;
 
-
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -15,6 +14,7 @@ import lab.kulebin.mydictionary.db.annotations.Table;
 import lab.kulebin.mydictionary.db.annotations.dbInteger;
 import lab.kulebin.mydictionary.db.annotations.dbLong;
 import lab.kulebin.mydictionary.db.annotations.dbString;
+import lab.kulebin.mydictionary.db.annotations.dbUnique;
 
 public class DbHelper extends SQLiteOpenHelper {
 
@@ -53,6 +53,7 @@ public class DbHelper extends SQLiteOpenHelper {
                 for (final Field field : fields) {
                     final Annotation[] annotations = field.getAnnotations();
                     String type = null;
+                    String unique = null;
 
                     for (final Annotation annotation : annotations) {
                         if (annotation instanceof dbInteger) {
@@ -61,11 +62,15 @@ public class DbHelper extends SQLiteOpenHelper {
                             type = ((dbString) annotation).value();
                         } else if (annotation instanceof dbLong) {
                             type = ((dbLong) annotation).value();
+                        } else if (annotation instanceof dbUnique) {
+                            unique = ((dbUnique) annotation).value();
                         }
                     }
 
                     if (type == null) {
                         continue;
+                    } else if (unique != null) {
+                        type += unique;
                     }
 
                     final String value = (String) field.get(null);

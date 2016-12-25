@@ -7,19 +7,19 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.json.JSONException;
 
 import java.util.List;
 import java.util.Vector;
 
-import lab.kulebin.mydictionary.app.Constants;
+import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.db.Contract;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
 import lab.kulebin.mydictionary.http.IHttpClient;
 import lab.kulebin.mydictionary.json.JsonHelper;
+import lab.kulebin.mydictionary.model.DataCache;
 import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.utils.Converter;
@@ -46,24 +46,27 @@ public class FetchDataService extends IntentService {
             } else {
                 continue;
             }
-            final Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
+            final String url = Uri.parse(Api.getBaseUrl()).buildUpon()
                     .appendPath(path + Api.JSON_FORMAT)
-                    .appendQueryParameter(Api.PARAM_AUTH, token)
-                    .build();
-            final List<?> list = fetchData(uri.toString(), model);
-            int storeResult = -1;
-            if (list != null && !list.isEmpty()) {
-                storeResult = storeData(list);
-            }
+                    .build()
+                    .toString();
+            if (DataCache.isDataRefreshNeeded(this, url)) {
+                final String fullUrl = Uri.parse(url).buildUpon()
+                        .appendQueryParameter(Api.PARAM_AUTH, token)
+                        .build()
+                        .toString();
+                final List<?> list = fetchData(fullUrl, model);
+                int storeResult = -1;
+                if (list != null && !list.isEmpty()) {
+                    storeResult = storeData(list);
+                }
 
-            if (storeResult != -1) {
-                final Toast toast = Toast.makeText(this,
-                        "Success! " + storeResult + " entries have been stored.",
-                        Toast.LENGTH_SHORT);
-                toast.show();
-                Log.v(TAG, String.valueOf(storeResult));
-            } else {
-                Log.v(TAG, "result is null");
+                if (storeResult != -1) {
+                    DataCache.updateLastRequestedTime(this, url);
+
+                } else {
+                    Log.v(TAG, "result is null");
+                }
             }
         }
     }

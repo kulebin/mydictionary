@@ -13,8 +13,10 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 
+import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.adapter.EntryPagerAdapter;
+import lab.kulebin.mydictionary.db.SortOrder;
 import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 

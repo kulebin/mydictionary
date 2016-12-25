@@ -11,10 +11,12 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import lab.kulebin.mydictionary.db.DbHelper;
+import lab.kulebin.mydictionary.model.DataCache;
 import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
+import static android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE;
 import static lab.kulebin.mydictionary.utils.UriBuilder.AUTHORITY;
 
 public class EntryProvider extends ContentProvider {
@@ -23,6 +25,7 @@ public class EntryProvider extends ContentProvider {
     private static final int DICTIONARY_BY_DICTIONARY_ID = 101;
     private static final int DICTIONARY = 200;
     private static final int ENTRY_BY_DICTIONARY_ID = 300;
+    private static final int DATA_CACHE = 400;
     private static final UriMatcher sUriMatcher = buildUriMatcher();
     private static final SQLiteQueryBuilder sEntryByDictionaryIdQueryBuilder;
 
@@ -46,6 +49,7 @@ public class EntryProvider extends ContentProvider {
         matcher.addURI(AUTHORITY, DbHelper.getTableName(Entry.class) + "/" + DbHelper.getTableName(Dictionary.class), ENTRY_BY_DICTIONARY_ID);
         matcher.addURI(AUTHORITY, DbHelper.getTableName(Dictionary.class) + "/#", DICTIONARY_BY_DICTIONARY_ID);
         matcher.addURI(AUTHORITY, DbHelper.getTableName(Dictionary.class), DICTIONARY);
+        matcher.addURI(AUTHORITY, DbHelper.getTableName(DataCache.class), DATA_CACHE);
         return matcher;
     }
 
@@ -60,17 +64,6 @@ public class EntryProvider extends ContentProvider {
     public Cursor query(@NonNull final Uri pUri, final String[] pProjection, final String pSelection, final String[] pSelArgs, final String pSortOrder) {
         final Cursor retCursor;
         switch (sUriMatcher.match(pUri)) {
-            case ENTRY:
-                retCursor = mDbHelper.getReadableDatabase().query(
-                        DbHelper.getTableName(Entry.class),
-                        pProjection,
-                        pSelection,
-                        pSelArgs,
-                        null,
-                        null,
-                        pSortOrder
-                );
-                break;
             case ENTRY_BY_DICTIONARY_ID:
                 retCursor = sEntryByDictionaryIdQueryBuilder.query(
                         mDbHelper.getReadableDatabase(),
@@ -82,9 +75,9 @@ public class EntryProvider extends ContentProvider {
                         pSortOrder
                 );
                 break;
-            case DICTIONARY:
+            default:
                 retCursor = mDbHelper.getReadableDatabase().query(
-                        DbHelper.getTableName(Dictionary.class),
+                        DbHelper.getTableName(getTable(pUri)),
                         pProjection,
                         pSelection,
                         pSelArgs,
@@ -92,9 +85,6 @@ public class EntryProvider extends ContentProvider {
                         null,
                         pSortOrder
                 );
-                break;
-            default:
-                throw new UnsupportedOperationException("Unknown uri: " + pUri);
         }
         retCursor.setNotificationUri(getContext().getContentResolver(), pUri);
         return retCursor;
@@ -112,7 +102,19 @@ public class EntryProvider extends ContentProvider {
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
         final Uri returnUri;
         final Class tableClass = getTable(pUri);
-        final long id = db.insert(DbHelper.getTableName(tableClass), null, pContentValues);
+        final long id;
+        switch (sUriMatcher.match(pUri)) {
+            case DATA_CACHE:
+                id = db.insertWithOnConflict(
+                        DbHelper.getTableName(getTable(pUri)),
+                        null,
+                        pContentValues,
+                        CONFLICT_REPLACE
+                );
+                break;
+            default:
+                id = db.insert(DbHelper.getTableName(tableClass), null, pContentValues);
+        }
         if (id > 0) {
             returnUri = UriBuilder.getItemUri(tableClass, id);
         } else {
@@ -189,6 +191,8 @@ public class EntryProvider extends ContentProvider {
                 return Entry.class;
             case DICTIONARY:
                 return Dictionary.class;
+            case DATA_CACHE:
+                return DataCache.class;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + pUri);
         }

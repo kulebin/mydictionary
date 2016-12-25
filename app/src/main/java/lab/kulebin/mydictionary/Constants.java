@@ -1,4 +1,4 @@
-package lab.kulebin.mydictionary.app;
+package lab.kulebin.mydictionary;
 
 public final class Constants {
 

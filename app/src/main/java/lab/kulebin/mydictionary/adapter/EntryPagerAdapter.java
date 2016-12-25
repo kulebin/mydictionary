@@ -6,7 +6,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 
-import lab.kulebin.mydictionary.app.Constants;
+import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.app.EntryFragment;
 import lab.kulebin.mydictionary.model.Entry;
 
