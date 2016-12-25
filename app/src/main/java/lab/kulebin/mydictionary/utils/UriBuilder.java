@@ -1,6 +1,5 @@
 package lab.kulebin.mydictionary.utils;
 
-
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.net.Uri;
@@ -12,8 +11,7 @@ import lab.kulebin.mydictionary.db.DbHelper;
 
 import static android.R.attr.id;
 
-
-public class UriBuilder {
+public final class UriBuilder {
 
     public static final String AUTHORITY = "lab.kulebin.mydictionary.app.EntryProvider";
     private static final Uri BASE_CONTENT_URI = Uri.parse("content://" + AUTHORITY);
@@ -28,16 +26,16 @@ public class UriBuilder {
                 .appendPath(DbHelper.getTableName(pClazzSecond)).build();
     }
 
-    public static Uri getTableUri(final AnnotatedElement pClazz, String pParam) {
+    public static Uri getTableUri(final AnnotatedElement pClazz, final String pParam) {
         return BASE_CONTENT_URI.buildUpon().appendPath(DbHelper.getTableName(pClazz)).appendPath(pParam).build();
     }
 
-    public static Uri getItemUri(final AnnotatedElement pClazz, long pId) {
+    public static Uri getItemUri(final AnnotatedElement pClazz, final long pId) {
         return ContentUris.withAppendedId(getTableUri(pClazz), id);
     }
 
     @Nullable
-    public static String getContentType(final AnnotatedElement pClazz, ContentType pType) {
+    public static String getContentType(final AnnotatedElement pClazz, final ContentType pType) {
         switch (pType) {
             case ITEM:
                 return ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + AUTHORITY + "/" + DbHelper.getTableName(pClazz);

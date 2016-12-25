@@ -1,6 +1,5 @@
 package lab.kulebin.mydictionary.http;
 
-
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -18,23 +17,18 @@ public class HttpClient implements IHttpClient {
     private static final String TAG = HttpClient.class.getSimpleName();
 
     @Override
-    public String get(String url) throws Exception {
+    public String get(final String url) throws Exception {
         return doRequest(url, RequestType.GET, null, null);
     }
 
     @Override
-    public String get(String url, Map<String, String> headers) throws Exception {
+    public String get(final String url, final Map<String, String> headers) throws Exception {
         return doRequest(url, RequestType.GET, headers, null);
     }
 
     @Override
-    public String put(String url, Map<String, String> headers, String body) throws Exception {
+    public String put(final String url, final Map<String, String> headers, final String body) throws Exception {
         return doRequest(url, RequestType.PUT, headers, body);
-    }
-
-    @Override
-    public String post(String url, Map<String, String> headers, String body) throws Exception {
-        return doRequest(url, RequestType.POST, headers, body);
     }
 
     @Override
@@ -42,17 +36,17 @@ public class HttpClient implements IHttpClient {
         return doRequest(url, RequestType.DELETE, null, null);
     }
 
-    private String doRequest(String url, RequestType type, Map<String, String> header, String body) throws Exception {
+    private String doRequest(final String url, final RequestType type, final Map<String, String> header, final String body) throws Exception {
         String response = null;
         HttpURLConnection connection = null;
         BufferedReader reader = null;
 
         try {
-            URL reqUrl = new URL(url);
+            final URL reqUrl = new URL(url);
             connection = ((HttpURLConnection) reqUrl.openConnection());
             connection.setRequestMethod(type.name());
             if (header != null) {
-                for (String key : header.keySet()) {
+                for (final String key : header.keySet()) {
                     connection.addRequestProperty(key, header.get(key));
                 }
             }
@@ -60,9 +54,9 @@ public class HttpClient implements IHttpClient {
                 applyBody(connection, body);
             }
 
-            InputStream inputStream;
+            final InputStream inputStream;
 
-            boolean isSuccess = connection.getResponseCode() >= 200 && connection.getResponseCode() < 300;
+            final boolean isSuccess = connection.getResponseCode() >= 200 && connection.getResponseCode() < 300;
             if (isSuccess) {
                 inputStream = connection.getInputStream();
             } else {
@@ -70,7 +64,7 @@ public class HttpClient implements IHttpClient {
             }
 
             reader = new BufferedReader(new InputStreamReader(inputStream));
-            StringBuilder stringBuilder = new StringBuilder();
+            final StringBuilder stringBuilder = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
                 stringBuilder.append(line);
@@ -80,7 +74,6 @@ public class HttpClient implements IHttpClient {
             inputStream.close();
 
             if (!isSuccess) {
-                System.out.println("http exception = " + response);
                 throw new Exception(response);
             }
 
@@ -99,9 +92,9 @@ public class HttpClient implements IHttpClient {
         return response;
     }
 
-    private void applyBody(HttpURLConnection httpURLConnection, String body) throws Exception {
-        byte[] outputInBytes = body.getBytes("UTF-8");
-        OutputStream os = httpURLConnection.getOutputStream();
+    private void applyBody(final HttpURLConnection httpURLConnection, final String body) throws Exception {
+        final byte[] outputInBytes = body.getBytes("UTF-8");
+        final OutputStream os = httpURLConnection.getOutputStream();
         os.write(outputInBytes);
         os.close();
     }

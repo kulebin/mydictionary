@@ -18,6 +18,7 @@ import lab.kulebin.mydictionary.app.Constants;
 import lab.kulebin.mydictionary.db.Contract;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
+import lab.kulebin.mydictionary.http.IHttpClient;
 import lab.kulebin.mydictionary.json.JsonHelper;
 import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
@@ -34,10 +35,10 @@ public class FetchDataService extends IntentService {
 
     @Override
     protected void onHandleIntent(final Intent intent) {
-        SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
+        final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
         final String token = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
-        for (Class model : Contract.MODELS) {
-            String path;
+        for (final Class model : Contract.MODELS) {
+            final String path;
             if (model == Entry.class) {
                 path = Api.ENTRIES;
             } else if (model == Dictionary.class) {
@@ -45,18 +46,18 @@ public class FetchDataService extends IntentService {
             } else {
                 continue;
             }
-            Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
+            final Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
                     .appendPath(path + Api.JSON_FORMAT)
                     .appendQueryParameter(Api.PARAM_AUTH, token)
                     .build();
-            List<?> list = fetchData(uri.toString(), model);
+            final List<?> list = fetchData(uri.toString(), model);
             int storeResult = -1;
-            if (list != null && list.size() > 0) {
+            if (list != null && !list.isEmpty()) {
                 storeResult = storeData(list);
             }
 
             if (storeResult != -1) {
-                Toast toast = Toast.makeText(this,
+                final Toast toast = Toast.makeText(this,
                         "Success! " + storeResult + " entries have been stored.",
                         Toast.LENGTH_SHORT);
                 toast.show();
@@ -67,26 +68,26 @@ public class FetchDataService extends IntentService {
         }
     }
 
-    private List fetchData(String pUrl, Class pClazz) {
-        HttpClient httpClient = new HttpClient();
+    private List fetchData(final String pUrl, final Class pClazz) {
+        final IHttpClient httpClient = new HttpClient();
         try {
             return JsonHelper.parseJson(pClazz, httpClient.get(pUrl));
-        } catch (JSONException pE) {
+        } catch (final JSONException pE) {
             Log.v(TAG, "Parsing error");
-        } catch (Exception e) {
+        } catch (final Exception e) {
             Log.v(TAG, "Fetching data error!");
         }
         return null;
     }
 
-    private int storeData(List<?> pList) {
+    private int storeData(final List<?> pList) {
 
-        Vector<ContentValues> valuesVector = new Vector<>(pList.size());
+        final Vector<ContentValues> valuesVector = new Vector<>(pList.size());
         Class clazz = null;
         if (pList.get(0).getClass() == Entry.class) {
-            for (Entry entry : (List<Entry>) pList) {
+            for (final Entry entry : (List<Entry>) pList) {
                 clazz = Entry.class;
-                ContentValues values = new ContentValues();
+                final ContentValues values = new ContentValues();
                 values.put(Entry.ID, entry.getId());
                 values.put(Entry.DICTIONARY_ID, entry.getDictionaryId());
                 values.put(Entry.VALUE, entry.getValue());
@@ -101,9 +102,9 @@ public class FetchDataService extends IntentService {
             }
 
         } else if (pList.get(0).getClass() == Dictionary.class) {
-            for (Dictionary dictionary : (List<Dictionary>) pList) {
+            for (final Dictionary dictionary : (List<Dictionary>) pList) {
                 clazz = Dictionary.class;
-                ContentValues values = new ContentValues();
+                final ContentValues values = new ContentValues();
                 values.put(Dictionary.ID, dictionary.getId());
                 values.put(Dictionary.NAME, dictionary.getName());
                 values.put(Dictionary.CREATION_DATE, dictionary.getCreationDate());
@@ -112,8 +113,8 @@ public class FetchDataService extends IntentService {
         } else {
             return -1;
         }
-        if (valuesVector.size() > 0) {
-            ContentValues[] valuesArray = new ContentValues[valuesVector.size()];
+        if (!valuesVector.isEmpty()) {
+            final ContentValues[] valuesArray = new ContentValues[valuesVector.size()];
             valuesVector.toArray(valuesArray);
             this.getContentResolver().delete(UriBuilder.getTableUri(clazz), null, null);
             this.getContentResolver().bulkInsert(UriBuilder.getTableUri(clazz), valuesArray);

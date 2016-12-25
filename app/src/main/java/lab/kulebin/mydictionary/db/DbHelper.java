@@ -50,7 +50,7 @@ public class DbHelper extends SQLiteOpenHelper {
                 final Field[] fields = clazz.getFields();
                 boolean isFirstFieldAdded = false;
 
-                for (Field field : fields) {
+                for (final Field field : fields) {
                     final Annotation[] annotations = field.getAnnotations();
                     String type = null;
 

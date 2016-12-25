@@ -1,6 +1,5 @@
 package lab.kulebin.mydictionary.thread;
 
-
 import android.os.Handler;
 
 import java.util.concurrent.ExecutorService;
@@ -44,7 +43,7 @@ public class ThreadManager {
                             onResultCallback.onSuccess(result);
                         }
                     });
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     onResultCallback.onError(e);
                 }
             }

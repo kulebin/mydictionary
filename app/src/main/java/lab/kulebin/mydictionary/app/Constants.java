@@ -1,7 +1,6 @@
 package lab.kulebin.mydictionary.app;
 
-
-public class Constants {
+public final class Constants {
 
     public static final String ANONYMOUS = "Anonymous";
     public static final String APP_PREFERENCES = "AP";

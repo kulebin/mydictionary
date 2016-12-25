@@ -1,6 +1,5 @@
 package lab.kulebin.mydictionary.json;
 
-
 import android.support.annotation.Nullable;
 
 import org.json.JSONArray;
@@ -8,6 +7,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -17,32 +17,30 @@ import lab.kulebin.mydictionary.utils.Converter;
 
 import static lab.kulebin.mydictionary.model.Entry.EMPTY_DATE;
 
-public class JsonHelper {
+public final class JsonHelper {
 
     public static final String TAG = JsonHelper.class.getSimpleName();
 
     @Nullable
-    public static List parseJson(Class<?> clazz, String json) throws JSONException {
-        JSONObject jsonObject = new JSONObject(json);
-        Iterator<String> iterator = jsonObject.keys();
-        List<String> keys = new ArrayList<>();
+    public static List parseJson(final Class<?> clazz, final String json) throws JSONException {
+        final JSONObject jsonObject = new JSONObject(json);
+        final Iterator<String> iterator = jsonObject.keys();
+        final Collection<String> keys = new ArrayList<>();
         while (iterator.hasNext()) {
             keys.add(iterator.next());
         }
         if (clazz == Entry.class) {
-            List<Entry> entryList = new ArrayList<>();
-            for (String key : keys) {
-                JSONObject jsonSubObject = jsonObject.getJSONObject(key);
-                Entry entry = parseEntryJsonObject(jsonSubObject, key);
-                if (entry != null) {
-                    entryList.add(entry);
-                }
+            final List<Entry> entryList = new ArrayList<>();
+            for (final String key : keys) {
+                final JSONObject jsonSubObject = jsonObject.getJSONObject(key);
+                final Entry entry = parseEntryJsonObject(jsonSubObject, key);
+                entryList.add(entry);
             }
             return entryList;
         } else if (clazz == Dictionary.class) {
-            List<Dictionary> dictionariesList = new ArrayList<>();
-            for (String key : keys) {
-                JSONObject jsonSubObject = jsonObject.getJSONObject(key);
+            final List<Dictionary> dictionariesList = new ArrayList<>();
+            for (final String key : keys) {
+                final JSONObject jsonSubObject = jsonObject.getJSONObject(key);
                 dictionariesList.add(parseDictionaryJsonObject(jsonSubObject, key));
             }
             return dictionariesList;
@@ -50,7 +48,7 @@ public class JsonHelper {
         return null;
     }
 
-    private static Entry parseEntryJsonObject(JSONObject pEntryJsonObject, String key) throws JSONException {
+    private static Entry parseEntryJsonObject(final JSONObject pEntryJsonObject, final String key) throws JSONException {
         return new Entry(
                 Long.parseLong(key),
                 pEntryJsonObject.getInt(Entry.DICTIONARY_ID),
@@ -64,7 +62,7 @@ public class JsonHelper {
                 pEntryJsonObject.isNull(Entry.USAGE_CONTEXT) ? null : Converter.convertStringToStringArray(pEntryJsonObject.getString(Entry.USAGE_CONTEXT)));
     }
 
-    private static Dictionary parseDictionaryJsonObject(JSONObject pDictionaryJsonObject, String key) throws JSONException {
+    private static Dictionary parseDictionaryJsonObject(final JSONObject pDictionaryJsonObject, final String key) throws JSONException {
         return new Dictionary(
                 pDictionaryJsonObject.getInt(Dictionary.ID),
                 pDictionaryJsonObject.getString(Dictionary.NAME),
@@ -72,15 +70,15 @@ public class JsonHelper {
     }
 
     @Nullable
-    public static String buildJson(List<?> pList) throws JSONException {
-        JSONArray jsonArray = new JSONArray();
+    public static String buildJson(final List<?> pList) throws JSONException {
+        final JSONArray jsonArray = new JSONArray();
         if (pList.get(0).getClass() == Entry.class) {
-            for (Entry entry : (List<Entry>) pList) {
+            for (final Entry entry : (List<Entry>) pList) {
                 jsonArray.put(buildEntryJsonObject(entry));
             }
             return jsonArray.toString();
         } else if (pList.get(0).getClass() == Dictionary.class) {
-            for (Dictionary dictionary : (List<Dictionary>) pList) {
+            for (final Dictionary dictionary : (List<Dictionary>) pList) {
                 jsonArray.put(buildDictionaryJsonObject(dictionary));
             }
             return jsonArray.toString();
@@ -88,8 +86,8 @@ public class JsonHelper {
         return null;
     }
 
-    public static JSONObject buildEntryJsonObject(Entry pEntry) throws JSONException {
-        JSONObject jsonObject = new JSONObject();
+    public static JSONObject buildEntryJsonObject(final Entry pEntry) throws JSONException {
+        final JSONObject jsonObject = new JSONObject();
         jsonObject.put(Entry.DICTIONARY_ID, pEntry.getDictionaryId());
         jsonObject.put(Entry.VALUE, pEntry.getValue());
         jsonObject.put(Entry.TRANSCRIPTION, pEntry.getTranscription());
@@ -102,20 +100,20 @@ public class JsonHelper {
         return jsonObject;
     }
 
-    public static JSONObject buildDictionaryJsonObject(Dictionary pDictionary) throws JSONException {
-        JSONObject jsonObject = new JSONObject();
+    public static JSONObject buildDictionaryJsonObject(final Dictionary pDictionary) throws JSONException {
+        final JSONObject jsonObject = new JSONObject();
         jsonObject.put(Dictionary.ID, pDictionary.getId());
         jsonObject.put(Dictionary.NAME, pDictionary.getName());
         return jsonObject;
     }
 
-    public static long getEntryIdFromJson(String json) throws JSONException{
-        JSONObject jsonObject = new JSONObject(json);
+    public static long getEntryIdFromJson(final String json) throws JSONException {
+        final JSONObject jsonObject = new JSONObject(json);
         return jsonObject.getLong(Entry.ID);
     }
 
-    public static long getEntryLastEditionDateFromJson(String json) throws JSONException{
-        JSONObject jsonObject = new JSONObject(json);
+    public static long getEntryLastEditionDateFromJson(final String json) throws JSONException {
+        final JSONObject jsonObject = new JSONObject(json);
         return jsonObject.getLong(Entry.LAST_EDITION_DATE);
     }
 }

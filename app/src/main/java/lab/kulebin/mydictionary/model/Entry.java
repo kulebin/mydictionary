@@ -31,7 +31,6 @@ public class Entry {
     @dbString
     public static final String USAGE_CONTEXT = "usageContext";
 
-
     private long mId;
     private int mDictionaryId;
     private String mValue;

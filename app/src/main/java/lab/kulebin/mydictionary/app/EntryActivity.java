@@ -38,40 +38,10 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
     private String mIntentSender;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_entry);
-
-        Intent intent = getIntent();
-
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setTitle(intent.getCharSequenceExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME));
-        }
-
-        mIntentSender = intent.getStringExtra(Constants.EXTRA_INTENT_SENDER);
-        if (mIntentSender.equals(MainActivity.class.getSimpleName())) {
-            mEntryPosition = intent.getIntExtra(Constants.EXTRA_SELECTED_ENTRY_POSITION, 0);
-        } else if (mIntentSender.equals(SearchActivity.class.getSimpleName())) {
-            mEntryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, Constants.ENTRY_ID_EMPTY);
-        }
-        mDictionaryId = intent.getIntExtra(
-                Constants.EXTRA_SELECTED_DICTIONARY_ID,
-                Constants.DEFAULT_SELECTED_DICTIONARY_ID);
-        SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
-        mSortOrder = SortOrder.valueOf(shp.getString(
-                Constants.APP_PREFERENCES_SORT_ORDER,
-                SortOrder.NEWEST.toString()));
-        viewPager = (ViewPager) findViewById(R.id.pager);
-        getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(final MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                EntryActivity.this.finish();
+                this.finish();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -109,5 +79,35 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
     @Override
     public void onLoaderReset(final Loader<Cursor> loader) {
         mEntryPagerAdapter.getCursor().close();
+    }
+
+    @Override
+    protected void onCreate(final Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_entry);
+
+        final Intent intent = getIntent();
+
+        final ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setTitle(intent.getCharSequenceExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME));
+        }
+
+        mIntentSender = intent.getStringExtra(Constants.EXTRA_INTENT_SENDER);
+        if (mIntentSender.equals(MainActivity.class.getSimpleName())) {
+            mEntryPosition = intent.getIntExtra(Constants.EXTRA_SELECTED_ENTRY_POSITION, 0);
+        } else if (mIntentSender.equals(SearchActivity.class.getSimpleName())) {
+            mEntryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, Constants.ENTRY_ID_EMPTY);
+        }
+        mDictionaryId = intent.getIntExtra(
+                Constants.EXTRA_SELECTED_DICTIONARY_ID,
+                Constants.DEFAULT_SELECTED_DICTIONARY_ID);
+        final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
+        mSortOrder = SortOrder.valueOf(shp.getString(
+                Constants.APP_PREFERENCES_SORT_ORDER,
+                SortOrder.NEWEST.toString()));
+        viewPager = (ViewPager) findViewById(R.id.pager);
+        getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
     }
 }

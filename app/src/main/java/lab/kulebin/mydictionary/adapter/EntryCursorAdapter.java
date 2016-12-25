@@ -1,6 +1,5 @@
 package lab.kulebin.mydictionary.adapter;
 
-
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
@@ -25,35 +24,36 @@ public class EntryCursorAdapter extends CursorAdapter {
 
     @Override
     public View newView(final Context context, final Cursor cursor, final ViewGroup parent) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_list_entry, parent, false);
-        EntryViewHolder entryViewHolder = new EntryViewHolder(view);
+        final View view = LayoutInflater.from(context).inflate(R.layout.item_list_entry, parent, false);
+        final EntryViewHolder entryViewHolder = new EntryViewHolder(view);
         view.setTag(entryViewHolder);
         return view;
     }
 
     @Override
     public void bindView(final View view, final Context context, final Cursor cursor) {
-        EntryViewHolder holder = (EntryViewHolder) view.getTag();
+        final EntryViewHolder holder = (EntryViewHolder) view.getTag();
         holder.entryValueTextView.setText(cursor.getString(cursor.getColumnIndex(Entry.VALUE)));
         holder.entryTranslationTextView.setText(cursor.getString(cursor.getColumnIndex(Entry.TRANSLATION)));
-        String url = cursor.getString(cursor.getColumnIndex(Entry.IMAGE_URL));
+        final String url = cursor.getString(cursor.getColumnIndex(Entry.IMAGE_URL));
         if (url != null && !url.isEmpty()) {
             Glide.with(mContext)
                     .load(url)
                     .override(300, 300)
                     .into(holder.entryImageView);
         } else {
-            Drawable entryImageDrawable = VectorDrawableCompat.create(context.getResources(), R.drawable.image_default_entry_96dp, null);
+            final Drawable entryImageDrawable = VectorDrawableCompat.create(context.getResources(), R.drawable.image_default_entry_96dp, null);
             holder.entryImageView.setImageDrawable(entryImageDrawable);
         }
     }
 
     private static class EntryViewHolder {
+
         TextView entryValueTextView;
         TextView entryTranslationTextView;
         ImageView entryImageView;
 
-        public EntryViewHolder(View v) {
+        public EntryViewHolder(final View v) {
             entryValueTextView = (TextView) v.findViewById(R.id.entry_value);
             entryTranslationTextView = (TextView) v.findViewById(R.id.entry_translate);
             entryImageView = (ImageView) v.findViewById(R.id.entry_image);

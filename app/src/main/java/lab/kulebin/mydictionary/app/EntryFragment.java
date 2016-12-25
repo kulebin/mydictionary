@@ -21,6 +21,7 @@ import com.bumptech.glide.Glide;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
+import lab.kulebin.mydictionary.http.IHttpClient;
 import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
@@ -28,29 +29,27 @@ import lab.kulebin.mydictionary.thread.ProgressCallback;
 import lab.kulebin.mydictionary.thread.ThreadManager;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
-
 public class EntryFragment extends Fragment {
 
     private static final String TAG = EntryFragment.class.getSimpleName();
 
     @Override
-    public View onCreateView(LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(final LayoutInflater inflater,
+                             final ViewGroup container, final Bundle savedInstanceState) {
 
-        View rootView = inflater.inflate(
+        final View rootView = inflater.inflate(
                 R.layout.item_pager_entry, container, false);
         final Bundle args = getArguments();
         final long entryId = args.getLong(Constants.EXTRA_ENTRY_ID);
 
-        ImageView imageView = (ImageView) rootView.findViewById(R.id.pager_item_image);
-        String imageUrl = args.getString(Constants.EXTRA_ENTRY_IMAGE_URL);
+        final ImageView imageView = (ImageView) rootView.findViewById(R.id.pager_item_image);
+        final String imageUrl = args.getString(Constants.EXTRA_ENTRY_IMAGE_URL);
         if (imageUrl != null && !imageUrl.isEmpty()) {
             Glide.with(this)
                     .load(imageUrl)
                     .override(300, 300)
                     .into(imageView);
         }
-
 
         ((TextView) rootView.findViewById(R.id.pager_item_value)).setText(
                 args.getString(Constants.EXTRA_ENTRY_VALUE));
@@ -62,34 +61,38 @@ public class EntryFragment extends Fragment {
 
         final ImageView deleteImageView = (ImageView) rootView.findViewById(R.id.pager_delete_icon);
         deleteImageView.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(final View v) {
-                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
+                final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
                 alertDialogBuilder.setTitle(getString(R.string.alert_title_confirm_entry_deletion));
                 alertDialogBuilder
                         .setMessage(getString(R.string.alert_body_confirm_entry_deletion))
                         .setCancelable(true)
                         .setPositiveButton(getString(R.string.alert_positive_button), new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
+
+                            public void onClick(final DialogInterface dialog, final int id) {
                                 deleteEntryTask(entryId);
                             }
                         })
                         .setNegativeButton(getString(R.string.alert_negative_button), new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
+
+                            public void onClick(final DialogInterface dialog, final int id) {
                                 dialog.cancel();
                             }
                         });
 
-                AlertDialog alertDialog = alertDialogBuilder.create();
+                final AlertDialog alertDialog = alertDialogBuilder.create();
                 alertDialog.show();
             }
         });
 
         final ImageView editImageView = (ImageView) rootView.findViewById(R.id.pager_edit_icon);
         editImageView.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(final View v) {
-                Intent intent = new Intent(getContext(), EditActivity.class);
+                final Intent intent = new Intent(getContext(), EditActivity.class);
                 intent.putExtra(Constants.EXTRA_ENTRY_ID, entryId);
                 intent.putExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE, EditActivity.EditActivityMode.EDIT);
                 startActivity(intent);
@@ -102,17 +105,18 @@ public class EntryFragment extends Fragment {
     private void deleteEntryTask(final Long pEntryId) {
         new ThreadManager().execute(
                 new ITask<Long, Void, Void>() {
+
                     @Override
                     public Void perform(final Long pEntryId, final ProgressCallback<Void> progressCallback) throws Exception {
-                        SharedPreferences shp = getActivity().getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
+                        final SharedPreferences shp = getActivity().getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
                         final String token = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
-                        Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
+                        final Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
                                 .appendPath(Api.ENTRIES)
-                                .appendPath(String.valueOf(pEntryId) + Api.JSON_FORMAT)
+                                .appendPath(pEntryId + Api.JSON_FORMAT)
                                 .appendQueryParameter(Api.PARAM_AUTH, token)
                                 .build();
-                        String url = uri.toString() + Api.JSON_FORMAT;
-                        HttpClient httpClient = new HttpClient();
+                        final String url = uri + Api.JSON_FORMAT;
+                        final IHttpClient httpClient = new HttpClient();
                         try {
                             if (httpClient.delete(url).equals(HttpClient.DELETE_RESPONSE_OK)) {
                                 getContext().getContentResolver().delete(
@@ -123,7 +127,7 @@ public class EntryFragment extends Fragment {
                                 Toast.makeText(getContext(),
                                         R.string.ERROR_CONNECTION_DELETE, Toast.LENGTH_SHORT).show();
                             }
-                        } catch (Exception e) {
+                        } catch (final Exception e) {
                             Log.v(TAG, getString(R.string.ERROR_DELETE_REQUEST));
                         }
                         return null;
@@ -131,6 +135,7 @@ public class EntryFragment extends Fragment {
                 },
                 pEntryId,
                 new OnResultCallback<Void, Void>() {
+
                     @Override
                     public void onStart() {
                     }

@@ -10,23 +10,22 @@ import lab.kulebin.mydictionary.app.Constants;
 import lab.kulebin.mydictionary.app.EntryFragment;
 import lab.kulebin.mydictionary.model.Entry;
 
-
 public class EntryPagerAdapter extends FragmentStatePagerAdapter {
 
     private Cursor mCursor;
 
-    public EntryPagerAdapter(FragmentManager pFm, Cursor pCursor) {
+    public EntryPagerAdapter(final FragmentManager pFm, final Cursor pCursor) {
         super(pFm);
         this.mCursor = pCursor;
     }
 
     @Override
-    public Fragment getItem(int position) {
+    public Fragment getItem(final int position) {
 
-        Fragment fragment = new EntryFragment();
+        final Fragment fragment = new EntryFragment();
         mCursor.moveToPosition(position);
 
-        Bundle args = new Bundle();
+        final Bundle args = new Bundle();
         args.putLong(Constants.EXTRA_ENTRY_ID, mCursor.getLong(mCursor.getColumnIndex(Entry.ID)));
         args.putString(Constants.EXTRA_ENTRY_VALUE, mCursor.getString(mCursor.getColumnIndex(Entry.VALUE)));
         args.putString(Constants.EXTRA_ENTRY_TRANSLATION, mCursor.getString(mCursor.getColumnIndex(Entry.TRANSLATION)));

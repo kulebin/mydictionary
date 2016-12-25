@@ -36,46 +36,11 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
     private TextView mNoSearchResultView;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_search);
-
-        ListView listView = (ListView) findViewById(R.id.listview_search_result);
-        mProgressBar = (ProgressBar) findViewById(R.id.search_progressBar);
-        mNoSearchResultView = (TextView) findViewById(R.id.search_no_result);
-        mSearchResultCursorAdapter = new SearchCursorAdapter(this, null, 0);
-        listView.setAdapter(mSearchResultCursorAdapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
-                long selectedEntryId = Constants.ENTRY_ID_EMPTY;
-                int selectedDictionaryId = Constants.DEFAULT_SELECTED_DICTIONARY_ID;
-                String selectedDictionaryName = null;
-                Cursor cursor = (Cursor) parent.getItemAtPosition(position);
-                if (cursor.moveToPosition(position)) {
-                    selectedEntryId = cursor.getLong(cursor.getColumnIndex(Entry.ID));
-                    selectedDictionaryId = cursor.getInt(cursor.getColumnIndex(Entry.DICTIONARY_ID));
-                    selectedDictionaryName = cursor.getString(cursor.getColumnIndex(Dictionary.NAME));
-                }
-
-                Intent intent = new Intent(SearchActivity.this, EntryActivity.class)
-                        .putExtra(Constants.EXTRA_INTENT_SENDER, SearchActivity.class.getSimpleName())
-                        .putExtra(Constants.EXTRA_ENTRY_ID, selectedEntryId)
-                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, selectedDictionaryId)
-                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME, selectedDictionaryName);
-                startActivity(intent);
-                finish();
-            }
-        });
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
+    public boolean onCreateOptionsMenu(final Menu menu) {
+        final MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.activity_search_menu, menu);
 
-
-        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        final SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         final SearchView searchView = (SearchView) menu.findItem(R.id.search_menu_action_search).getActionView();
         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
         searchView.setIconifiedByDefault(false);
@@ -89,9 +54,9 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
 
             @Override
             public boolean onQueryTextChange(final String newText) {
-                Bundle bundle = new Bundle();
+                final Bundle bundle = new Bundle();
                 bundle.putString(SEARCH_QUERY_PARAM, newText);
-                if (!newText.equals("")) {
+                if (!"".equals(newText)) {
                     getSupportLoaderManager().restartLoader(SEARCH_RESULT_LOADER, bundle, SearchActivity.this);
                 } else {
                     mSearchResultCursorAdapter.swapCursor(null);
@@ -100,16 +65,17 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
                 return true;
             }
         });
-        MenuItem searchMenuItem = menu.findItem(R.id.search_menu_action_search);
+        final MenuItem searchMenuItem = menu.findItem(R.id.search_menu_action_search);
         MenuItemCompat.expandActionView(searchMenuItem);
         MenuItemCompat.setOnActionExpandListener(searchMenuItem, new MenuItemCompat.OnActionExpandListener() {
+
             @Override
-            public boolean onMenuItemActionExpand(MenuItem item) {
+            public boolean onMenuItemActionExpand(final MenuItem item) {
                 return true;
             }
 
             @Override
-            public boolean onMenuItemActionCollapse(MenuItem item) {
+            public boolean onMenuItemActionCollapse(final MenuItem item) {
                 SearchActivity.this.finish();
                 return true;
             }
@@ -117,14 +83,13 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
         return true;
     }
 
-
     @Override
     public Loader<Cursor> onCreateLoader(final int id, final Bundle args) {
         mProgressBar.setVisibility(View.VISIBLE);
-        String entryTableName = DbHelper.getTableName(Entry.class);
-        String dictionaryTableName = DbHelper.getTableName(Dictionary.class);
+        final String entryTableName = DbHelper.getTableName(Entry.class);
+        final String dictionaryTableName = DbHelper.getTableName(Dictionary.class);
 
-        String[] projection = {
+        final String[] projection = {
                 entryTableName + "." + Entry.ID,
                 entryTableName + "." + Entry.VALUE,
                 entryTableName + "." + Entry.TRANSLATION,
@@ -133,15 +98,15 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
                 dictionaryTableName + "." + Dictionary.NAME
         };
 
-        String entrySortOrder = entryTableName +
+        final String entrySortOrder = entryTableName +
                 "." + Entry.DICTIONARY_ID + " DESC," +
                 entryTableName +
                 "." + Entry.CREATION_DATE + " DESC";
 
-        String selection = entryTableName + "." + Entry.VALUE + " LIKE ? OR " +
+        final String selection = entryTableName + "." + Entry.VALUE + " LIKE ? OR " +
                 entryTableName + "." + Entry.TRANSLATION + " LIKE ?";
 
-        String queryParam = "%" + args.getString(SEARCH_QUERY_PARAM) + "%";
+        final String queryParam = "%" + args.getString(SEARCH_QUERY_PARAM) + "%";
         return new CursorLoader(
                 this,
                 UriBuilder.getTableUri(Entry.class, Dictionary.class),
@@ -166,5 +131,40 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
     @Override
     public void onLoaderReset(final Loader<Cursor> loader) {
         mSearchResultCursorAdapter.swapCursor(null);
+    }
+
+    @Override
+    protected void onCreate(final Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_search);
+
+        final ListView listView = (ListView) findViewById(R.id.listview_search_result);
+        mProgressBar = (ProgressBar) findViewById(R.id.search_progressBar);
+        mNoSearchResultView = (TextView) findViewById(R.id.search_no_result);
+        mSearchResultCursorAdapter = new SearchCursorAdapter(this, null, 0);
+        listView.setAdapter(mSearchResultCursorAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
+                long selectedEntryId = Constants.ENTRY_ID_EMPTY;
+                int selectedDictionaryId = Constants.DEFAULT_SELECTED_DICTIONARY_ID;
+                String selectedDictionaryName = null;
+                final Cursor cursor = (Cursor) parent.getItemAtPosition(position);
+                if (cursor.moveToPosition(position)) {
+                    selectedEntryId = cursor.getLong(cursor.getColumnIndex(Entry.ID));
+                    selectedDictionaryId = cursor.getInt(cursor.getColumnIndex(Entry.DICTIONARY_ID));
+                    selectedDictionaryName = cursor.getString(cursor.getColumnIndex(Dictionary.NAME));
+                }
+
+                final Intent intent = new Intent(SearchActivity.this, EntryActivity.class)
+                        .putExtra(Constants.EXTRA_INTENT_SENDER, SearchActivity.class.getSimpleName())
+                        .putExtra(Constants.EXTRA_ENTRY_ID, selectedEntryId)
+                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, selectedDictionaryId)
+                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME, selectedDictionaryName);
+                startActivity(intent);
+                finish();
+            }
+        });
     }
 }

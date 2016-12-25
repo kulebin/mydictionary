@@ -17,7 +17,6 @@ import lab.kulebin.mydictionary.utils.UriBuilder;
 
 import static lab.kulebin.mydictionary.utils.UriBuilder.AUTHORITY;
 
-
 public class EntryProvider extends ContentProvider {
 
     private static final int ENTRY = 100;
@@ -59,9 +58,9 @@ public class EntryProvider extends ContentProvider {
     @Nullable
     @Override
     public Cursor query(@NonNull final Uri pUri, final String[] pProjection, final String pSelection, final String[] pSelArgs, final String pSortOrder) {
-        Cursor retCursor;
+        final Cursor retCursor;
         switch (sUriMatcher.match(pUri)) {
-            case ENTRY: {
+            case ENTRY:
                 retCursor = mDbHelper.getReadableDatabase().query(
                         DbHelper.getTableName(Entry.class),
                         pProjection,
@@ -72,8 +71,7 @@ public class EntryProvider extends ContentProvider {
                         pSortOrder
                 );
                 break;
-            }
-            case ENTRY_BY_DICTIONARY_ID: {
+            case ENTRY_BY_DICTIONARY_ID:
                 retCursor = sEntryByDictionaryIdQueryBuilder.query(
                         mDbHelper.getReadableDatabase(),
                         pProjection,
@@ -84,8 +82,7 @@ public class EntryProvider extends ContentProvider {
                         pSortOrder
                 );
                 break;
-            }
-            case DICTIONARY: {
+            case DICTIONARY:
                 retCursor = mDbHelper.getReadableDatabase().query(
                         DbHelper.getTableName(Dictionary.class),
                         pProjection,
@@ -96,7 +93,6 @@ public class EntryProvider extends ContentProvider {
                         pSortOrder
                 );
                 break;
-            }
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + pUri);
         }
@@ -114,12 +110,12 @@ public class EntryProvider extends ContentProvider {
     @Override
     public Uri insert(@NonNull final Uri pUri, final ContentValues pContentValues) {
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        Uri returnUri;
-        Class tableClass = getTable(pUri);
-        long id = db.insert(DbHelper.getTableName(tableClass), null, pContentValues);
-        if (id > 0)
+        final Uri returnUri;
+        final Class tableClass = getTable(pUri);
+        final long id = db.insert(DbHelper.getTableName(tableClass), null, pContentValues);
+        if (id > 0) {
             returnUri = UriBuilder.getItemUri(tableClass, id);
-        else {
+        } else {
             throw new android.database.SQLException("Failed to insert row into " + pUri);
         }
         getContext().getContentResolver().notifyChange(pUri, null);
@@ -127,14 +123,14 @@ public class EntryProvider extends ContentProvider {
     }
 
     @Override
-    public int bulkInsert(@NonNull Uri pUri, ContentValues[] pContentValues) {
+    public int bulkInsert(@NonNull final Uri pUri, @NonNull final ContentValues[] pContentValues) {
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         db.beginTransaction();
         int returnCount = 0;
         try {
-            for (ContentValues value : pContentValues) {
-                long id = db.insert(DbHelper.getTableName(getTable(pUri)), null, value);
+            for (final ContentValues value : pContentValues) {
+                final long id = db.insert(DbHelper.getTableName(getTable(pUri)), null, value);
                 if (id != -1) {
                     returnCount++;
                 }
@@ -153,10 +149,10 @@ public class EntryProvider extends ContentProvider {
         int rowsDeleted;
         switch (sUriMatcher.match(pUri)) {
             case DICTIONARY_BY_DICTIONARY_ID:
-                String dictionaryId = pUri.getLastPathSegment();
+                final String dictionaryId = pUri.getLastPathSegment();
                 db.beginTransaction();
                 try {
-                    int dictionariesDeleted = db.delete(DbHelper.getTableName(Dictionary.class), Dictionary.ID + "=" + dictionaryId, null);
+                    final int dictionariesDeleted = db.delete(DbHelper.getTableName(Dictionary.class), Dictionary.ID + "=" + dictionaryId, null);
                     db.delete(DbHelper.getTableName(Entry.class), Entry.DICTIONARY_ID + "=" + dictionaryId, null);
                     db.setTransactionSuccessful();
                     rowsDeleted = dictionariesDeleted;
@@ -168,7 +164,6 @@ public class EntryProvider extends ContentProvider {
                 rowsDeleted = db.delete(DbHelper.getTableName(getTable(pUri)), pSel, pArgs);
         }
 
-
         if (rowsDeleted != 0) {
             getContext().getContentResolver().notifyChange(pUri, null);
         }
@@ -176,9 +171,9 @@ public class EntryProvider extends ContentProvider {
     }
 
     @Override
-    public int update(@NonNull Uri pUri, ContentValues pValues, String pSelection, String[] pArgs) {
+    public int update(@NonNull final Uri pUri, final ContentValues pValues, final String pSelection, final String[] pArgs) {
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        int rowsUpdated;
+        final int rowsUpdated;
         rowsUpdated = db.update(DbHelper.getTableName(getTable(pUri)), pValues, pSelection, pArgs);
 
         if (rowsUpdated != 0) {

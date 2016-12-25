@@ -6,7 +6,6 @@ import com.facebook.stetho.Stetho;
 
 import lab.kulebin.mydictionary.thread.ThreadManager;
 
-
 public class App extends Application {
 
     private ThreadManager mThreadManager;
