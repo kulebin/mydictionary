@@ -50,6 +50,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.adapter.EntryCursorAdapter;
+import lab.kulebin.mydictionary.db.Contract;
 import lab.kulebin.mydictionary.db.SortOrder;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
@@ -691,7 +692,9 @@ public class MainActivity extends AppCompatActivity
             finish();
         } else {
             mUsername = mFirebaseUser.getDisplayName();
-            mUserPhotoUrl = mFirebaseUser.getPhotoUrl().toString();
+            if(mFirebaseUser.getPhotoUrl()!=null){
+                mUserPhotoUrl = mFirebaseUser.getPhotoUrl().toString();
+            }
             mUserEmail = mFirebaseUser.getEmail();
         }
     }
@@ -701,5 +704,6 @@ public class MainActivity extends AppCompatActivity
         Auth.GoogleSignInApi.signOut(mGoogleApiClient);
         mUsername = ANONYMOUS;
         startActivity(new Intent(this, SignInActivity.class));
+        finish();
     }
 }

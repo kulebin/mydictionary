@@ -24,7 +24,8 @@
             android:screenOrientation="portrait"/>
         <activity
             android:name=".app.SignInActivity"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar"/>
         <activity
             android:name=".app.EditActivity"
             android:screenOrientation="portrait"/>

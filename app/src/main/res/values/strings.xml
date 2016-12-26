@@ -48,4 +48,14 @@
     <string name="sort_by_a_z">A-Z</string>
     <string name="sort_by_z_a">Z-A</string>
     <string name="sort_by">Sort by</string>
+    <string name="emailpassword_title_text">Email and Password</string>
+    <string name="signed_out">Signed Out</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="create_account">Create Account</string>
+    <string name="emailpassword_status_fmt">Email User: %s</string>
+    <string name="firebase_status_fmt">Firebase User: %s</string>
+    <string name="edit_error_required_mark">Required</string>
+    <string name="button_signin_with_goggle">Sign in with Google</string>
+    <string name="error_authentication_failed">Authentication failed.</string>
 </resources>
