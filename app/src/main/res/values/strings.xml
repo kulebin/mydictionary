@@ -59,4 +59,6 @@
     <string name="button_signin_with_goggle">Sign in with Google</string>
     <string name="error_authentication_failed">Authentication failed.</string>
     <string name="error_connection_error">Connection error.</string>
+    <string name="pager_item_label_translation">Translation:</string>
+    <string name="pager_item_label_context_usage">Example:</string>
 </resources>

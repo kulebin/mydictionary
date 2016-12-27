@@ -40,4 +40,9 @@
         <item name="android:textSize">36sp</item>
     </style>
 
+    <style name="ListItemTextAppearance">
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
 </resources>

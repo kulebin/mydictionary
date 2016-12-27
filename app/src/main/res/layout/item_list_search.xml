@@ -4,7 +4,8 @@
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
               android:orientation="horizontal"
-              android:paddingBottom="16dp">
+              android:background="@color/grey_100"
+              android:layout_margin="10dp">
 
     <ImageView
         android:id="@+id/entry_image"
@@ -22,12 +23,16 @@
         <TextView
             android:id="@+id/entry_value"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:theme="@style/ListItemTextAppearance"/>
 
         <TextView
             android:id="@+id/entry_translate"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:theme="@style/ListItemTextAppearance"/>
 
     </LinearLayout>
 

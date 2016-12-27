@@ -6,54 +6,67 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:layout_margin="10dp"
     tools:context="lab.kulebin.mydictionary.app.EditActivity">
 
     <TextView
         android:id="@+id/text_title_value"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:textStyle="italic"
         android:text="@string/text_title_value"/>
 
     <EditText
         android:id="@+id/edit_text_value"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textSize="16sp"
         android:inputType="text"/>
 
     <TextView
         android:id="@+id/text_title_translation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:textStyle="italic"
         android:text="@string/text_title_translation"/>
 
     <EditText
         android:id="@+id/edit_text_translation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textSize="16sp"
         android:inputType="text"/>
 
     <TextView
         android:id="@+id/text_title_context_usage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:textStyle="italic"
         android:text="@string/text_title_context_usage"/>
 
     <EditText
         android:id="@+id/edit_text_context_usage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textSize="16sp"
         android:inputType="text"/>
 
     <TextView
         android:id="@+id/text_title_image_url"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:textStyle="italic"
         android:text="@string/text_title_image_url"/>
 
     <EditText
         android:id="@+id/edit_text_image_url"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textSize="16sp"
         android:inputType="textUri"/>
 
     <Button
@@ -61,6 +74,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:enabled="false"/>
+        android:enabled="false"
+        android:theme="@style/ThemeOverlay.MyDarkButton"/>
 
 </LinearLayout>
