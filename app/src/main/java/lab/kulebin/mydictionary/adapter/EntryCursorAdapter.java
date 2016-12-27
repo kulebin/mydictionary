@@ -2,8 +2,6 @@ package lab.kulebin.mydictionary.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.drawable.Drawable;
-import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +15,9 @@ import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.model.Entry;
 
 public class EntryCursorAdapter extends CursorAdapter {
+
+    private static final int WIDTH = 300;
+    private static final int HEIGHT = 300;
 
     public EntryCursorAdapter(final Context context, final Cursor c, final int flags) {
         super(context, c, flags);
@@ -36,15 +37,11 @@ public class EntryCursorAdapter extends CursorAdapter {
         holder.entryValueTextView.setText(cursor.getString(cursor.getColumnIndex(Entry.VALUE)));
         holder.entryTranslationTextView.setText(cursor.getString(cursor.getColumnIndex(Entry.TRANSLATION)));
         final String url = cursor.getString(cursor.getColumnIndex(Entry.IMAGE_URL));
-        if (url != null && !url.isEmpty()) {
-            Glide.with(mContext)
-                    .load(url)
-                    .override(300, 300)
-                    .into(holder.entryImageView);
-        } else {
-            final Drawable entryImageDrawable = VectorDrawableCompat.create(context.getResources(), R.drawable.image_default_entry_96dp, null);
-            holder.entryImageView.setImageDrawable(entryImageDrawable);
-        }
+        Glide.with(mContext)
+                .load(url)
+                .override(WIDTH, HEIGHT)
+                .error(R.drawable.image_default_entry_96dp)
+                .into(holder.entryImageView);
     }
 
     private static class EntryViewHolder {

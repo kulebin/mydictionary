@@ -34,36 +34,39 @@ import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.db.Contract;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
+import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
 public class SignInActivity extends AppCompatActivity implements
         GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
 
     private static final String TAG = SignInActivity.class.getSimpleName();
-    private static final int RC_SIGN_IN = 9001;
+    private static final int RC_SIGN_IN = 69;
 
-    private GoogleApiClient mGoogleApiClient;
     private FirebaseAuth mFirebaseAuth;
     private EditText mEmailField;
     private EditText mPasswordField;
     private FirebaseAuth.AuthStateListener mAuthListener;
+    private GoogleApiClient mGoogleApiClient;
 
     @Override
     public void onClick(final View v) {
         switch (v.getId()) {
-            case R.id.sign_in_button:
-                signIn();
+            case R.id.sign_in_with_google_button:
+                signInWithGoogle();
                 break;
             case R.id.email_create_account_button:
                 createAccount(mEmailField.getText().toString(), mPasswordField.getText().toString());
                 break;
             case R.id.email_sign_in_button:
-                signIn(mEmailField.getText().toString(), mPasswordField.getText().toString());
+                signInWithEmailPass(mEmailField.getText().toString(), mPasswordField.getText().toString());
         }
     }
 
     @Override
     public void onConnectionFailed(@NonNull final ConnectionResult connectionResult) {
         Log.d(TAG, "onConnectionFailed:" + connectionResult);
-        Toast.makeText(this, "Connection error.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.error_connection_error, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -76,8 +79,22 @@ public class SignInActivity extends AppCompatActivity implements
                 final GoogleSignInAccount account = result.getSignInAccount();
                 firebaseAuthWithGoogle(account);
             } else {
-                Log.e(TAG, "Google Sign In failed.");
+                Log.e(TAG, "Google Sign In failed");
             }
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        mFirebaseAuth.addAuthStateListener(mAuthListener);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (mAuthListener != null) {
+            mFirebaseAuth.removeAuthStateListener(mAuthListener);
         }
     }
 
@@ -86,9 +103,10 @@ public class SignInActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
 
-        final SignInButton signInButton = (SignInButton) findViewById(R.id.sign_in_button);
+        final SignInButton signInButton = (SignInButton) findViewById(R.id.sign_in_with_google_button);
         setSignInGoogleButtonText(signInButton, getString(R.string.button_signin_with_goggle));
         signInButton.setOnClickListener(this);
+
         final GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
@@ -105,7 +123,6 @@ public class SignInActivity extends AppCompatActivity implements
         findViewById(R.id.email_create_account_button).setOnClickListener(this);
 
         mFirebaseAuth = FirebaseAuth.getInstance();
-
         mAuthListener = new FirebaseAuth.AuthStateListener() {
 
             @Override
@@ -114,28 +131,14 @@ public class SignInActivity extends AppCompatActivity implements
                 if (user != null) {
                     clearAllData();
                     storeToken(user);
-                    startActivity(new Intent(SignInActivity.this, MainActivity.class));
+                    startActivity(new Intent(SignInActivity.this, MainActivity.class).setFlags(FLAG_ACTIVITY_CLEAR_TOP | FLAG_ACTIVITY_NEW_TASK));
                     finish();
                 }
             }
         };
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mFirebaseAuth.addAuthStateListener(mAuthListener);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        if (mAuthListener != null) {
-            mFirebaseAuth.removeAuthStateListener(mAuthListener);
-        }
-    }
-
-    protected void setSignInGoogleButtonText(final SignInButton pSignInButton, final String pButtonText) {
+    protected void setSignInGoogleButtonText(final SignInButton pSignInButton, final CharSequence pButtonText) {
         for (int i = 0; i < pSignInButton.getChildCount(); i++) {
             final View v = pSignInButton.getChildAt(i);
 
@@ -151,7 +154,6 @@ public class SignInActivity extends AppCompatActivity implements
         if (!validateForm()) {
             return;
         }
-
         mFirebaseAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
 
@@ -165,16 +167,15 @@ public class SignInActivity extends AppCompatActivity implements
                 });
     }
 
-    private void signIn() {
+    private void signInWithGoogle() {
         final Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
 
-    private void signIn(final String email, final String password) {
+    private void signInWithEmailPass(final String email, final String password) {
         if (!validateForm()) {
             return;
         }
-
         mFirebaseAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
 
@@ -214,7 +215,12 @@ public class SignInActivity extends AppCompatActivity implements
                         final SharedPreferences.Editor editor = appPreferences.edit();
                         editor.putString(Constants.APP_PREFERENCES_USER_TOKEN, token);
                         editor.apply();
+                        startActivity(new Intent(SignInActivity.this, MainActivity.class).setFlags(FLAG_ACTIVITY_CLEAR_TOP | FLAG_ACTIVITY_NEW_TASK));
+                        finish();
                     }
+                } else {
+                    Toast.makeText(SignInActivity.this, R.string.error_authentication_failed,
+                            Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -242,9 +248,9 @@ public class SignInActivity extends AppCompatActivity implements
         return valid;
     }
 
-    private void clearAllData(){
-        for(final Class clazz : Contract.MODELS){
-            this.getContentResolver().delete(UriBuilder.getTableUri(clazz),null,null);
+    private void clearAllData() {
+        for (final Class clazz : Contract.MODELS) {
+            this.getContentResolver().delete(UriBuilder.getTableUri(clazz), null, null);
         }
         final SharedPreferences preferences = getSharedPreferences(Constants.APP_PREFERENCES, 0);
         final SharedPreferences.Editor editor = preferences.edit();

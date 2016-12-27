@@ -33,6 +33,8 @@ import lab.kulebin.mydictionary.utils.UriBuilder;
 public class EntryFragment extends Fragment {
 
     private static final String TAG = EntryFragment.class.getSimpleName();
+    public static final int WIDTH = 500;
+    public static final int HEIGHT = 500;
 
     @Override
     public View onCreateView(final LayoutInflater inflater,
@@ -45,12 +47,11 @@ public class EntryFragment extends Fragment {
 
         final ImageView imageView = (ImageView) rootView.findViewById(R.id.pager_item_image);
         final String imageUrl = args.getString(Constants.EXTRA_ENTRY_IMAGE_URL);
-        if (imageUrl != null && !imageUrl.isEmpty()) {
-            Glide.with(this)
-                    .load(imageUrl)
-                    .override(300, 300)
-                    .into(imageView);
-        }
+        Glide.with(this)
+                .load(imageUrl)
+                .override(WIDTH, HEIGHT)
+                .error(R.drawable.image_default_entry_192dp)
+                .into(imageView);
 
         ((TextView) rootView.findViewById(R.id.pager_item_value)).setText(
                 args.getString(Constants.EXTRA_ENTRY_VALUE));
@@ -116,10 +117,9 @@ public class EntryFragment extends Fragment {
                                 .appendPath(pEntryId + Api.JSON_FORMAT)
                                 .appendQueryParameter(Api.PARAM_AUTH, token)
                                 .build();
-                        final String url = uri + Api.JSON_FORMAT;
                         final IHttpClient httpClient = new HttpClient();
                         try {
-                            if (httpClient.delete(url).equals(HttpClient.DELETE_RESPONSE_OK)) {
+                            if (httpClient.delete(uri.toString()).equals(HttpClient.DELETE_RESPONSE_OK)) {
                                 getContext().getContentResolver().delete(
                                         UriBuilder.getTableUri(Entry.class),
                                         Entry.ID + "=?",

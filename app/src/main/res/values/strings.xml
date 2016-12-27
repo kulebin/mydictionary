@@ -58,4 +58,5 @@
     <string name="edit_error_required_mark">Required</string>
     <string name="button_signin_with_goggle">Sign in with Google</string>
     <string name="error_authentication_failed">Authentication failed.</string>
+    <string name="error_connection_error">Connection error.</string>
 </resources>
