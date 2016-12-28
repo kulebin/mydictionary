@@ -48,6 +48,7 @@ public class EditActivity extends AppCompatActivity {
     private long mCreationDate;
     private EditActivityMode mEditActivityMode;
     private int mDictionaryId;
+    private ThreadManager mThreadManager;
 
     @Override
     public boolean onOptionsItemSelected(final MenuItem item) {
@@ -93,6 +94,8 @@ public class EditActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
+        //noinspection WrongConstant
+        mThreadManager = (ThreadManager) getApplication().getSystemService(ThreadManager.APP_SERVICE_KEY);
         mEditTextValue = (EditText) findViewById(R.id.edit_text_value);
         mEditTextTranslation = (EditText) findViewById(R.id.edit_text_translation);
         mEditTextContextUsage = (EditText) findViewById(R.id.edit_text_context_usage);
@@ -201,7 +204,7 @@ public class EditActivity extends AppCompatActivity {
     }
 
     private void storeDataTask(final Entry pEntry) {
-        new ThreadManager().execute(
+        mThreadManager.execute(
                 new ITask<Entry, Void, Void>() {
 
                     @Override
@@ -279,7 +282,7 @@ public class EditActivity extends AppCompatActivity {
     }
 
     private void fetchEntryTask(final long pEntryId) {
-        new ThreadManager().execute(
+        mThreadManager.execute(
                 new ITask<Long, Void, Cursor>() {
 
                     @Override

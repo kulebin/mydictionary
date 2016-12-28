@@ -16,7 +16,6 @@ public class App extends Application {
         mThreadManager = new ThreadManager();
     }
 
-    // TODO: method does not work, null returns instead of ThreadManager reference
     @Override
     public Object getSystemService(final String pName) {
         if (ThreadManager.APP_SERVICE_KEY.equals(pName)) {

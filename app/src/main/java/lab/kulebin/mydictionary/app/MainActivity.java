@@ -96,6 +96,7 @@ public class MainActivity extends AppCompatActivity
     private TextView mTextViewNoEntry;
     private SortOrder mSortOrder;
     private SwipeRefreshLayout mSwipeRefreshLayout;
+    private ThreadManager mThreadManager;
 
     @Override
     public void onBackPressed() {
@@ -320,6 +321,9 @@ public class MainActivity extends AppCompatActivity
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
 
+        //noinspection WrongConstant
+        mThreadManager = (ThreadManager)getApplication().getSystemService(ThreadManager.APP_SERVICE_KEY);
+
         mUsername = Constants.ANONYMOUS;
         mFirebaseAuth = FirebaseAuth.getInstance();
         mFirebaseUser = mFirebaseAuth.getCurrentUser();
@@ -442,7 +446,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void deleteDictionaryTask() {
-        new ThreadManager().execute(
+        mThreadManager.execute(
                 new ITask<Void, Void, Void>() {
 
                     @Override
@@ -597,7 +601,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void createAndStoreDictionary(final String pDictionaryName) {
-        new ThreadManager().execute(
+        mThreadManager.execute(
                 new ITask<String, Void, Void>() {
 
                     @Override

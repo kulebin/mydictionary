@@ -105,7 +105,9 @@ public class EntryFragment extends Fragment {
     }
 
     private void deleteEntryTask(final Long pEntryId) {
-        new ThreadManager().execute(
+        //noinspection WrongConstant
+        final ThreadManager threadManager = (ThreadManager)getActivity().getApplication().getSystemService(ThreadManager.APP_SERVICE_KEY);
+        threadManager.execute(
                 new ITask<Long, Void, Void>() {
 
                     @Override
