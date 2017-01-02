@@ -239,7 +239,8 @@ public class EditActivity extends AppCompatActivity {
                                             UriBuilder.getTableUri(Entry.class),
                                             values,
                                             Entry.ID + "=?",
-                                            new String[]{String.valueOf(pEntry.getId())});
+                                            new String[]{String.valueOf(pEntry.getId())}
+                                    );
                                 } else {
                                     getContentResolver().insert(
                                             UriBuilder.getTableUri(Entry.class),

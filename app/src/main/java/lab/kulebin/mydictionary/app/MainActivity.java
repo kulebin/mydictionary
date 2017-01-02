@@ -50,7 +50,6 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.adapter.EntryCursorAdapter;
-import lab.kulebin.mydictionary.db.Contract;
 import lab.kulebin.mydictionary.db.SortOrder;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
@@ -322,7 +321,7 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(mToolbar);
 
         //noinspection WrongConstant
-        mThreadManager = (ThreadManager)getApplication().getSystemService(ThreadManager.APP_SERVICE_KEY);
+        mThreadManager = (ThreadManager) getApplication().getSystemService(ThreadManager.APP_SERVICE_KEY);
 
         mUsername = Constants.ANONYMOUS;
         mFirebaseAuth = FirebaseAuth.getInstance();
@@ -696,7 +695,7 @@ public class MainActivity extends AppCompatActivity
             finish();
         } else {
             mUsername = mFirebaseUser.getDisplayName();
-            if(mFirebaseUser.getPhotoUrl()!=null){
+            if (mFirebaseUser.getPhotoUrl() != null) {
                 mUserPhotoUrl = mFirebaseUser.getPhotoUrl().toString();
             }
             mUserEmail = mFirebaseUser.getEmail();

@@ -1,12 +1,20 @@
 package lab.kulebin.mydictionary.app;
 
 import android.app.AlertDialog;
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,6 +25,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.firebase.auth.FirebaseAuth;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
@@ -30,11 +46,17 @@ import lab.kulebin.mydictionary.thread.ProgressCallback;
 import lab.kulebin.mydictionary.thread.ThreadManager;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
+import static android.app.Activity.RESULT_OK;
+
 public class EntryFragment extends Fragment {
 
     private static final String TAG = EntryFragment.class.getSimpleName();
     public static final int WIDTH = 500;
     public static final int HEIGHT = 500;
+    private static final int REQUEST_IMAGE_CAPTURE = 1;
+    private ImageView mImageView;
+    private long mEntryId;
+    private String mPhotoAbsolutePath;
 
     @Override
     public View onCreateView(final LayoutInflater inflater,
@@ -43,15 +65,20 @@ public class EntryFragment extends Fragment {
         final View rootView = inflater.inflate(
                 R.layout.item_pager_entry, container, false);
         final Bundle args = getArguments();
-        final long entryId = args.getLong(Constants.EXTRA_ENTRY_ID);
+        mEntryId = args.getLong(Constants.EXTRA_ENTRY_ID);
 
-        final ImageView imageView = (ImageView) rootView.findViewById(R.id.pager_item_image);
+        mImageView = (ImageView) rootView.findViewById(R.id.pager_item_image);
         final String imageUrl = args.getString(Constants.EXTRA_ENTRY_IMAGE_URL);
-        Glide.with(this)
-                .load(imageUrl)
-                .override(WIDTH, HEIGHT)
-                .error(R.drawable.image_default_entry_192dp)
-                .into(imageView);
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            Glide.with(this)
+                    .load(imageUrl)
+                    .override(WIDTH, HEIGHT)
+                    //.error(R.drawable.image_default_entry_192dp)
+                    .into(mImageView);
+        } else {
+            final Drawable entryImageDrawable = VectorDrawableCompat.create(getContext().getResources(), R.drawable.image_default_entry_192dp, null);
+            mImageView.setImageDrawable(entryImageDrawable);
+        }
 
         ((TextView) rootView.findViewById(R.id.pager_item_value)).setText(
                 args.getString(Constants.EXTRA_ENTRY_VALUE));
@@ -74,7 +101,7 @@ public class EntryFragment extends Fragment {
                         .setPositiveButton(getString(R.string.alert_positive_button), new DialogInterface.OnClickListener() {
 
                             public void onClick(final DialogInterface dialog, final int id) {
-                                deleteEntryTask(entryId);
+                                deleteEntryTask(mEntryId);
                             }
                         })
                         .setNegativeButton(getString(R.string.alert_negative_button), new DialogInterface.OnClickListener() {
@@ -95,18 +122,87 @@ public class EntryFragment extends Fragment {
             @Override
             public void onClick(final View v) {
                 final Intent intent = new Intent(getContext(), EditActivity.class);
-                intent.putExtra(Constants.EXTRA_ENTRY_ID, entryId);
+                intent.putExtra(Constants.EXTRA_ENTRY_ID, mEntryId);
                 intent.putExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE, EditActivity.EditActivityMode.EDIT);
                 startActivity(intent);
             }
         });
 
+        final ImageView photoCameraImageView = (ImageView) rootView.findViewById(R.id.pager_camera_icon);
+        final PackageManager pm = getContext().getPackageManager();
+        if (pm.hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
+            photoCameraImageView.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(final View pView) {
+                    final Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    if (intent.resolveActivity(pm) != null) {
+                        final Uri uir = createImageFile();
+                        intent.putExtra(MediaStore.EXTRA_OUTPUT, uir);
+                        intent.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                        startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
+                    }
+                }
+            });
+        } else {
+            photoCameraImageView.setVisibility(View.GONE);
+        }
+
         return rootView;
+    }
+
+    @Override
+    public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            final ContentValues values = new ContentValues();
+            values.put(Entry.IMAGE_URL, mPhotoAbsolutePath);
+            getContext().getContentResolver().update(
+                    UriBuilder.getTableUri(Entry.class),
+                    values,
+                    Entry.ID + "=?",
+                    new String[]{String.valueOf(mEntryId)}
+            );
+        }
+    }
+
+    private Uri createImageFile() {
+        final File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
+        final String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        final String imageFileName = "JPEG_" + timeStamp + ".jpg";
+        final File photoFile = new File(dir, imageFileName);
+        final Uri contentUri = Uri.fromFile(photoFile);
+        mPhotoAbsolutePath = photoFile.getAbsolutePath();
+        return contentUri;
+    }
+
+    private String savePhotoToInternalStorage(final Bitmap bitmapImage) {
+        final String userUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        final ContextWrapper cw = new ContextWrapper(getContext());
+        final File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+        final String imageFileName = userUid + "_" + System.currentTimeMillis() + ".png";
+        final File imagePath = new File(directory, imageFileName);
+
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(imagePath);
+            bitmapImage.compress(Bitmap.CompressFormat.PNG, 25, fos);
+        } catch (final Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return imagePath.getAbsolutePath();
     }
 
     private void deleteEntryTask(final Long pEntryId) {
         //noinspection WrongConstant
-        final ThreadManager threadManager = (ThreadManager)getActivity().getApplication().getSystemService(ThreadManager.APP_SERVICE_KEY);
+        final ThreadManager threadManager = (ThreadManager) getActivity().getApplication().getSystemService(ThreadManager.APP_SERVICE_KEY);
         threadManager.execute(
                 new ITask<Long, Void, Void>() {
 
