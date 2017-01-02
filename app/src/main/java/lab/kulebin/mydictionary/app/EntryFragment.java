@@ -14,6 +14,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -25,14 +27,24 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
@@ -154,14 +166,7 @@ public class EntryFragment extends Fragment {
     @Override
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            final ContentValues values = new ContentValues();
-            values.put(Entry.IMAGE_URL, mPhotoAbsolutePath);
-            getContext().getContentResolver().update(
-                    UriBuilder.getTableUri(Entry.class),
-                    values,
-                    Entry.ID + "=?",
-                    new String[]{String.valueOf(mEntryId)}
-            );
+            uploadPhotoToFirebase();
         }
     }
 
@@ -173,6 +178,53 @@ public class EntryFragment extends Fragment {
         final Uri contentUri = Uri.fromFile(photoFile);
         mPhotoAbsolutePath = photoFile.getAbsolutePath();
         return contentUri;
+    }
+
+    private void uploadPhotoToFirebase() {
+        final Uri file = Uri.fromFile(new File(mPhotoAbsolutePath));
+        final StorageReference storageRef = FirebaseStorage.getInstance().getReference();
+        final StorageReference riversRef = storageRef.child("images/" + file.getLastPathSegment());
+        final UploadTask uploadTask = riversRef.putFile(file);
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+
+            @Override
+            public void onFailure(@NonNull final Exception exception) {
+                Snackbar.make(getView(), "Error: Photo is not uploaded!", Snackbar.LENGTH_LONG)
+                        .setAction("Ok", null).show();
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+
+            @Override
+            public void onSuccess(final UploadTask.TaskSnapshot taskSnapshot) {
+                Snackbar.make(getView(), "Success! Photo has been uploaded!", Snackbar.LENGTH_LONG)
+                        .setAction("Ok", null).show();
+                final String userUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                final Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                Map<String, Object> childUpdates = new HashMap<>();
+                childUpdates.put(Entry.IMAGE_URL, downloadUrl.toString());
+                DatabaseReference myRef = FirebaseDatabase.getInstance().getReference();
+                myRef.child("users")
+                        .child(userUid)
+                        .child(Api.ENTRIES)
+                        .child(String.valueOf(mEntryId))
+                        .updateChildren(childUpdates, new DatabaseReference.CompletionListener() {
+
+                            @Override
+                            public void onComplete(DatabaseError pDatabaseError, DatabaseReference pDatabaseReference) {
+                                if (pDatabaseError == null && pDatabaseReference != null) {
+                                    final ContentValues values = new ContentValues();
+                                    values.put(Entry.IMAGE_URL, downloadUrl.toString());
+                                    getContext().getContentResolver().update(
+                                            UriBuilder.getTableUri(Entry.class),
+                                            values,
+                                            Entry.ID + "=?",
+                                            new String[]{String.valueOf(mEntryId)}
+                                    );
+                                }
+                            }
+                        });
+            }
+        });
     }
 
     private String savePhotoToInternalStorage(final Bitmap bitmapImage) {
