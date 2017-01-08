@@ -6,9 +6,9 @@
 
     <item
         android:id="@+id/search_menu_action_search"
-        android:hint="@string/search_hint"
+        android:hint="@string/HINT_SEARCH"
         android:icon="@drawable/ic_search"
-        android:title="@string/search_menu_item_title"
+        android:title="@string/MENU_OPTION_SEARCH"
         app:actionViewClass="android.support.v7.widget.SearchView"
         app:showAsAction="ifRoom|collapseActionView"/>
 

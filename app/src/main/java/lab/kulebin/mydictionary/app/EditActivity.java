@@ -14,7 +14,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -56,17 +55,17 @@ public class EditActivity extends AppCompatActivity {
             case android.R.id.home:
                 if (isAnyDataFilled() && mIsDataChanged) {
                     final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-                    alertDialogBuilder.setTitle(getString(R.string.alert_title_data_not_saved));
+                    alertDialogBuilder.setTitle(getString(R.string.TITLE_DIALOG_DATA_NOT_SAVED));
                     alertDialogBuilder
-                            .setMessage(getString(R.string.alert_body_data_not_saved))
+                            .setMessage(getString(R.string.TEXT_DIALOG_DATA_NOT_SAVED))
                             .setCancelable(false)
-                            .setPositiveButton(getString(R.string.alert_positive_button), new DialogInterface.OnClickListener() {
+                            .setPositiveButton(getString(R.string.BUTTON_DIALOG_POSITIVE), new DialogInterface.OnClickListener() {
 
                                 public void onClick(final DialogInterface dialog, final int id) {
                                     finish();
                                 }
                             })
-                            .setNegativeButton(getString(R.string.alert_negative_button), new DialogInterface.OnClickListener() {
+                            .setNegativeButton(getString(R.string.BUTTON_DIALOG_NEGATIVE), new DialogInterface.OnClickListener() {
 
                                 public void onClick(final DialogInterface dialog, final int id) {
                                     dialog.cancel();
@@ -106,9 +105,9 @@ public class EditActivity extends AppCompatActivity {
         if (intent.hasExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE)) {
             mEditActivityMode = (EditActivityMode) intent.getSerializableExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE);
             if (mEditActivityMode == EditActivityMode.EDIT) {
-                mEntryCreateButton.setText(R.string.button_save);
+                mEntryCreateButton.setText(R.string.BUTTON_SAVE);
                 if (actionBar != null) {
-                    actionBar.setTitle(R.string.activity_edit_title_mode_edit);
+                    actionBar.setTitle(R.string.TITLE_ACTIVITY_EDIT_MODE);
                 }
                 mEntryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, Constants.ENTRY_ID_EMPTY);
                 if (mEntryId > 0) {
@@ -116,11 +115,11 @@ public class EditActivity extends AppCompatActivity {
                 }
             } else {
                 if (actionBar != null) {
-                    actionBar.setTitle(R.string.activity_edit_title_mode_create_new);
+                    actionBar.setTitle(R.string.TITLE_ACTIVITY_CREATE_NEW_ENTRY);
                 }
                 mDictionaryId = intent.getIntExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID,
                         Constants.DEFAULT_SELECTED_DICTIONARY_ID);
-                mEntryCreateButton.setText(R.string.button_create);
+                mEntryCreateButton.setText(R.string.BUTTON_CREATE);
             }
 
         }
@@ -249,7 +248,9 @@ public class EditActivity extends AppCompatActivity {
                                 }
                             }
                         } catch (final Exception e) {
-                            Log.v(TAG, getString(R.string.ERROR_DELETE_REQUEST));
+                            Toast.makeText(getApplicationContext(),
+                                    R.string.ERROR_ENTRY_NOT_CREATED_OR_UPDATED,
+                                    Toast.LENGTH_SHORT).show();
                         }
                         return null;
                     }
@@ -265,13 +266,14 @@ public class EditActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(final Void pVoid) {
                         final Toast toast = Toast.makeText(getApplicationContext(),
-                                R.string.RESULT_SUCCESS_ENTRY_STORED,
+                                R.string.TEXT_RESULT_SUCCESS_ENTRY_STORED,
                                 Toast.LENGTH_SHORT);
                         toast.show();
                     }
 
                     @Override
                     public void onError(final Exception e) {
+
                     }
 
                     @Override
@@ -314,7 +316,7 @@ public class EditActivity extends AppCompatActivity {
 
                     @Override
                     public void onError(final Exception e) {
-                        final Toast toast = Toast.makeText(EditActivity.this, R.string.ERROR_FETCHING_ENTRY_FROM_DB, Toast.LENGTH_SHORT);
+                        final Toast toast = Toast.makeText(EditActivity.this, R.string.ERROR_ENTRY_NOT_FOUND, Toast.LENGTH_SHORT);
                         toast.show();
                     }
 

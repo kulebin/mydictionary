@@ -17,7 +17,6 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -105,17 +104,17 @@ public class EntryFragment extends Fragment {
             @Override
             public void onClick(final View v) {
                 final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
-                alertDialogBuilder.setTitle(getString(R.string.alert_title_confirm_entry_deletion));
+                alertDialogBuilder.setTitle(getString(R.string.TITLE_DIALOG_CONFIRM_ENTRY_DELETION));
                 alertDialogBuilder
-                        .setMessage(getString(R.string.alert_body_confirm_entry_deletion))
+                        .setMessage(getString(R.string.TEXT_DIALOG_CONFIRM_ENTRY_DELETION))
                         .setCancelable(true)
-                        .setPositiveButton(getString(R.string.alert_positive_button), new DialogInterface.OnClickListener() {
+                        .setPositiveButton(getString(R.string.BUTTON_DIALOG_POSITIVE), new DialogInterface.OnClickListener() {
 
                             public void onClick(final DialogInterface dialog, final int id) {
                                 deleteEntryTask(mEntryId);
                             }
                         })
-                        .setNegativeButton(getString(R.string.alert_negative_button), new DialogInterface.OnClickListener() {
+                        .setNegativeButton(getString(R.string.BUTTON_DIALOG_NEGATIVE), new DialogInterface.OnClickListener() {
 
                             public void onClick(final DialogInterface dialog, final int id) {
                                 dialog.cancel();
@@ -350,7 +349,9 @@ public class EntryFragment extends Fragment {
                                         R.string.ERROR_NO_CONNECTION, Toast.LENGTH_SHORT).show();
                             }
                         } catch (final Exception e) {
-                            Log.v(TAG, getString(R.string.ERROR_DELETE_REQUEST));
+                            Toast.makeText(getContext(),
+                                    R.string.ERROR_ENTRY_NOT_DELETED,
+                                    Toast.LENGTH_SHORT).show();
                         }
                         return null;
                     }

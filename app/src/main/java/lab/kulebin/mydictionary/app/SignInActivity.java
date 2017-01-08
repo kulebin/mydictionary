@@ -66,7 +66,7 @@ public class SignInActivity extends AppCompatActivity implements
     @Override
     public void onConnectionFailed(@NonNull final ConnectionResult connectionResult) {
         Log.d(TAG, "onConnectionFailed:" + connectionResult);
-        Toast.makeText(this, R.string.error_connection_error, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.ERROR_NO_CONNECTION, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -104,7 +104,7 @@ public class SignInActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_sign_in);
 
         final SignInButton signInButton = (SignInButton) findViewById(R.id.sign_in_with_google_button);
-        setSignInGoogleButtonText(signInButton, getString(R.string.button_signin_with_goggle));
+        setSignInGoogleButtonText(signInButton, getString(R.string.BUTTON_SIGN_IN_WITH_GOGGLE));
         signInButton.setOnClickListener(this);
 
         final GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -160,7 +160,7 @@ public class SignInActivity extends AppCompatActivity implements
                     @Override
                     public void onComplete(@NonNull final Task<AuthResult> task) {
                         if (!task.isSuccessful()) {
-                            Toast.makeText(SignInActivity.this, R.string.error_authentication_failed,
+                            Toast.makeText(SignInActivity.this, R.string.ERROR_AUTHENTICATION_FAILED,
                                     Toast.LENGTH_SHORT).show();
                         }
                     }
@@ -182,7 +182,7 @@ public class SignInActivity extends AppCompatActivity implements
                     @Override
                     public void onComplete(@NonNull final Task<AuthResult> task) {
                         if (!task.isSuccessful()) {
-                            Toast.makeText(SignInActivity.this, R.string.error_authentication_failed,
+                            Toast.makeText(SignInActivity.this, R.string.ERROR_AUTHENTICATION_FAILED,
                                     Toast.LENGTH_SHORT).show();
                         }
                     }
@@ -197,7 +197,7 @@ public class SignInActivity extends AppCompatActivity implements
                     @Override
                     public void onComplete(@NonNull final Task<AuthResult> task) {
                         if (!task.isSuccessful()) {
-                            Toast.makeText(SignInActivity.this, R.string.error_authentication_failed,
+                            Toast.makeText(SignInActivity.this, R.string.ERROR_AUTHENTICATION_FAILED,
                                     Toast.LENGTH_SHORT).show();
                         }
                     }
@@ -219,7 +219,7 @@ public class SignInActivity extends AppCompatActivity implements
                         finish();
                     }
                 } else {
-                    Toast.makeText(SignInActivity.this, R.string.error_authentication_failed,
+                    Toast.makeText(SignInActivity.this, R.string.ERROR_AUTHENTICATION_FAILED,
                             Toast.LENGTH_SHORT).show();
                 }
             }
@@ -231,7 +231,7 @@ public class SignInActivity extends AppCompatActivity implements
 
         final String email = mEmailField.getText().toString();
         if (TextUtils.isEmpty(email)) {
-            mEmailField.setError(getString(R.string.edit_error_required_mark));
+            mEmailField.setError(getString(R.string.HINT_ERROR_REQUIRED_FILLED_IN_FIELD));
             valid = false;
         } else {
             mEmailField.setError(null);
@@ -239,7 +239,7 @@ public class SignInActivity extends AppCompatActivity implements
 
         final String password = mPasswordField.getText().toString();
         if (TextUtils.isEmpty(password)) {
-            mPasswordField.setError(getString(R.string.edit_error_required_mark));
+            mPasswordField.setError(getString(R.string.HINT_ERROR_REQUIRED_FILLED_IN_FIELD));
             valid = false;
         } else {
             mPasswordField.setError(null);

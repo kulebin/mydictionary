@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:gravity="center_horizontal"
-        android:text="@string/no_search_results"
+        android:text="@string/TEXT_NO_SEARCH_RESULTS"
         android:visibility="gone"/>
 
     <ProgressBar

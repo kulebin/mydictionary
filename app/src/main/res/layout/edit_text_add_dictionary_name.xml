@@ -13,7 +13,7 @@
         android:layout_marginLeft="@dimen/alert_edit_add_dictionary_name"
         android:layout_marginRight="@dimen/alert_edit_add_dictionary_name"
         android:layout_marginStart="@dimen/alert_edit_add_dictionary_name"
-        android:hint="@string/dialog_hint_add_dictionary"
+        android:hint="@string/HINT_DICTIONARY_NAME"
         android:inputType="text">
 
     </EditText>

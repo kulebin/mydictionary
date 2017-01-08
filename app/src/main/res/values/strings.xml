@@ -1,66 +1,64 @@
 <resources>
-    <string name="app_name">My Dictionary</string>
+    <string name="APP_NAME">My Dictionary</string>
 
-    <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="sign_in">Sign In</string>
-    <string name="sign_out">Sign Out</string>
+    <string name="DESCRIPTION_NAVIGATION_DRAWER_OPEN">Open navigation drawer</string>
+    <string name="DESCRIPTION_NAVIGATION_DRAWER_CLOSE">Close navigation drawer</string>
 
-    <string name="action_delete_dictionary">Delete dictionary</string>
-    <string name="text_title_value">Entry value</string>
-    <string name="text_title_translation">Translation</string>
-    <string name="text_title_context_usage" translatable="false">Context usage</string>
-    <string name="text_title_image_url">Image URL</string>
-    <string name="button_create">Create</string>
-    <string name="alert_title_data_not_saved">Data not saved</string>
-    <string name="alert_body_data_not_saved">Do you want to leave without data saving?</string>
-    <string name="alert_body_confirm_entry_deletion">Do you want to delete this entry?</string>
-    <string name="alert_body_confirm_dictionary_deletion">All your entries for this dictionary will
+    <string name="ERROR_NO_CONNECTION">Connection Error!</string>
+    <string name="ERROR_FILE_NOT_FOUND">Error: File not found!</string>
+    <string name="ERROR_FILE_NOT_UPLOADED">Error: Photo is not uploaded!</string>
+    <string name="ERROR_AUTHENTICATION_FAILED">Authentication failed.</string>
+    <string name="ERROR_DICTIONARY_NOT_CREATED">Dictionary is not created!</string>
+    <string name="ERROR_ENTRY_NOT_DELETED">Error! The Entry has not been deleted.</string>
+    <string name="ERROR_DICTIONARY_NOT_DELETED">Error! The Dictionary has not been deleted.</string>
+    <string name="ERROR_ENTRY_NOT_FOUND">Oops! Entry not found!</string>
+    <string name="ERROR_ENTRY_NOT_CREATED_OR_UPDATED">Error! Entry has not been created or updated!</string>
+
+    <string name="TITLE_ENTRY_VALUE">Entry value</string>
+    <string name="TITLE_ENTRY_TRANSLATION">Translation:</string>
+    <string name="TITLE_ENTRY_CONTEXT_USAGE">Example:</string>
+    <string name="TITLE_ENTRY_IMAGE_URL">Image URL</string>
+    <string name="TITLE_DIALOG_CONFIRM_ENTRY_DELETION">Confirm deletion</string>
+    <string name="TITLE_DIALOG_DATA_NOT_SAVED">Data not saved</string>
+    <string name="TITLE_DIALOG_ADD_DICTIONARY">New dictionary name</string>
+    <string name="TITLE_ACTIVITY_EDIT_MODE">Edit entry</string>
+    <string name="TITLE_ACTIVITY_CREATE_NEW_ENTRY">New entry</string>
+    <string name="TITLE_EMAIL_PASSWORD_BLOCK">Email and Password</string>
+
+    <string name="TEXT_RESULT_SUCCESS_ENTRY_STORED">Success! Entry have been stored.</string>
+    <string name="TEXT_RESULT_SUCCESS_DICTIONARY_STORED">Success! Dictionary have been created.</string>
+    <string name="TEXT_DIALOG_DATA_NOT_SAVED">Do you want to leave without data saving?</string>
+    <string name="TEXT_DIALOG_CONFIRM_ENTRY_DELETION">Do you want to delete this entry?</string>
+    <string name="TEXT_DIALOG_CONFIRM_DICTIONARY_DELETION">All your entries for this dictionary will
         be deleted.\nDo you want to proceed?
     </string>
-    <string name="alert_positive_button">Ok</string>
-    <string name="alert_negative_button">Cancel</string>
-    <string name="ERROR_NO_CONNECTION">Connection Error!</string>
-    <string name="ERROR_DELETE_REQUEST">Delete request error!</string>
-    <string name="ERROR_ENTRY_NOT_DELETED">Error! The Entry has not been deleted.</string>
-    <string name="ERROR_DELETE_DICTIONARY">Error! The Dictionary has not been deleted.</string>
-    <string name="ERROR_PARSING">Parsing error</string>
-    <string name="ERROR_FETCHING_ENTRY_FROM_DB">Oops! Entry not found!</string>
-    <string name="RESULT_SUCCESS_ENTRY_STORED">Success! Entry have been stored.</string>
-    <string name="RESULT_SUCCESS_DICTIONARY_STORED">Success! Dictionary have been created.</string>
-    <string name="button_save">Save</string>
-    <string name="alert_title_confirm_entry_deletion">Confirm deletion</string>
-    <string name="menu_title_add_dictionary">Add dictionary</string>
-    <string name="dialog_title_add_dictionary">New dictionary name</string>
-    <string name="dialog_hint_add_dictionary">Dictionary name</string>
-    <string name="ERROR_CREATE_DICTIONARY">Dictionary is not created!</string>
-    <string name="search_hint">Search entry</string>
-    <string name="search_menu_item_title">Search</string>
-    <string name="nav_header_user_name_anonymous">Anonymous</string>
-    <string name="no_search_results">No search results</string>
-    <string name="alert_body_no_dictionary_added">Please add at least one dictionary</string>
-    <string name="activity_edit_title_mode_edit">Edit entry</string>
-    <string name="activity_edit_title_mode_create_new">New entry</string>
-    <string name="no_entry_in_dictionary">There is not any entry in this dictionary</string>
-    <string name="sort_by_newest">Newest</string>
-    <string name="sort_by_oldest">Oldest</string>
-    <string name="sort_by_a_z">A-Z</string>
-    <string name="sort_by_z_a">Z-A</string>
-    <string name="sort_by">Sort by</string>
-    <string name="emailpassword_title_text">Email and Password</string>
-    <string name="signed_out">Signed Out</string>
-    <string name="hint_email">Email</string>
-    <string name="hint_password">Password</string>
-    <string name="create_account">Create Account</string>
-    <string name="emailpassword_status_fmt">Email User: %s</string>
-    <string name="firebase_status_fmt">Firebase User: %s</string>
-    <string name="edit_error_required_mark">Required</string>
-    <string name="button_signin_with_goggle">Sign in with Google</string>
-    <string name="error_authentication_failed">Authentication failed.</string>
-    <string name="error_connection_error">Connection error.</string>
-    <string name="pager_item_label_translation">Translation:</string>
-    <string name="pager_item_label_context_usage">Example:</string>
-    <string name="ERROR_FILE_NOT_FOUND">Error: File not found!</string>
+    <string name="TEXT_NO_ENTRY_IN_DICTIONARY">There is not any entry in this dictionary</string>
+    <string name="TEXT_DIALOG_NO_DICTIONARY_ADDED">Please add at least one dictionary</string>
+    <string name="TEXT_USER_NAME_ANONYMOUS">Anonymous</string>
+    <string name="TEXT_NO_SEARCH_RESULTS">No search results</string>
+
+    <string name="MENU_OPTION_SORT_BY_NEWEST">Newest</string>
+    <string name="MENU_OPTION_SORT_BY_OLDEST">Oldest</string>
+    <string name="MENU_OPTION_SORT_BY_A_Z">A-Z</string>
+    <string name="MENU_OPTION_SORT_BY_Z_A">Z-A</string>
+    <string name="MENU_OPTION_SORT_BY">Sort by</string>
+    <string name="MENU_OPTION_DELETE_DICTIONARY">Delete dictionary</string>
+    <string name="MENU_OPTION_SIGN_OUT">Sign Out</string>
+    <string name="MENU_OPTION_ADD_DICTIONARY">Add dictionary</string>
+    <string name="MENU_OPTION_SEARCH">Search</string>
+
     <string name="BUTTON_OK">Ok</string>
-    <string name="ERROR_FILE_NOT_UPLOADED">Error: Photo is not uploaded!</string>
+    <string name="BUTTON_SAVE">Save</string>
+    <string name="BUTTON_CREATE">Create</string>
+    <string name="BUTTON_DIALOG_POSITIVE">Ok</string>
+    <string name="BUTTON_DIALOG_NEGATIVE">Cancel</string>
+    <string name="BUTTON_SIGN_IN">Sign In</string>
+    <string name="BUTTON_SIGN_IN_WITH_GOGGLE">Sign in with Google</string>
+    <string name="BUTTON_CREATE_ACCOUNT">Create Account</string>
+
+    <string name="HINT_DICTIONARY_NAME">Dictionary name</string>
+    <string name="HINT_SEARCH">Search entry</string>
+    <string name="HINT_EMAIL">Email</string>
+    <string name="HINT_PASSWORD">Password</string>
+    <string name="HINT_ERROR_REQUIRED_FILLED_IN_FIELD">Required</string>
 </resources>

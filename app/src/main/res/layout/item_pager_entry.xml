@@ -60,7 +60,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingLeft="16dp"
-            android:text="@string/pager_item_label_translation"
+            android:text="@string/TITLE_ENTRY_TRANSLATION"
             android:textSize="18sp"
             android:textStyle="italic"/>
 
@@ -76,7 +76,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingLeft="16dp"
-            android:text="@string/pager_item_label_context_usage"
+            android:text="@string/TITLE_ENTRY_CONTEXT_USAGE"
             android:textSize="18sp"
             android:textStyle="italic"/>
 

@@ -165,17 +165,17 @@ public class MainActivity extends AppCompatActivity
                 return true;
             case R.id.action_delete_dictionary:
                 final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-                alertDialogBuilder.setTitle(getString(R.string.alert_title_confirm_entry_deletion));
+                alertDialogBuilder.setTitle(getString(R.string.TITLE_DIALOG_CONFIRM_ENTRY_DELETION));
                 alertDialogBuilder
-                        .setMessage(getString(R.string.alert_body_confirm_dictionary_deletion))
+                        .setMessage(getString(R.string.TEXT_DIALOG_CONFIRM_DICTIONARY_DELETION))
                         .setCancelable(true)
-                        .setPositiveButton(getString(R.string.alert_positive_button), new DialogInterface.OnClickListener() {
+                        .setPositiveButton(getString(R.string.BUTTON_DIALOG_POSITIVE), new DialogInterface.OnClickListener() {
 
                             public void onClick(final DialogInterface dialog, final int id) {
                                 deleteDictionaryTask();
                             }
                         })
-                        .setNegativeButton(getString(R.string.alert_negative_button), new DialogInterface.OnClickListener() {
+                        .setNegativeButton(getString(R.string.BUTTON_DIALOG_NEGATIVE), new DialogInterface.OnClickListener() {
 
                             public void onClick(final DialogInterface dialog, final int id) {
                                 dialog.cancel();
@@ -341,9 +341,9 @@ public class MainActivity extends AppCompatActivity
                 if (mSelectedDictionaryId == Constants.DEFAULT_SELECTED_DICTIONARY_ID) {
                     final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
                     alertDialogBuilder
-                            .setMessage(getString(R.string.alert_body_no_dictionary_added))
+                            .setMessage(getString(R.string.TEXT_DIALOG_NO_DICTIONARY_ADDED))
                             .setCancelable(true)
-                            .setPositiveButton(getString(R.string.alert_positive_button), new DialogInterface.OnClickListener() {
+                            .setPositiveButton(getString(R.string.BUTTON_DIALOG_POSITIVE), new DialogInterface.OnClickListener() {
 
                                 public void onClick(final DialogInterface dialog, final int id) {
                                     dialog.dismiss();
@@ -365,7 +365,7 @@ public class MainActivity extends AppCompatActivity
         mTextViewNoEntry = (TextView) findViewById(R.id.text_no_entry_in_dictionary);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         final ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, mDrawerLayout, mToolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+                this, mDrawerLayout, mToolbar, R.string.DESCRIPTION_NAVIGATION_DRAWER_OPEN, R.string.DESCRIPTION_NAVIGATION_DRAWER_CLOSE);
         mDrawerLayout.addDrawerListener(toggle);
         toggle.syncState();
 
@@ -510,7 +510,9 @@ public class MainActivity extends AppCompatActivity
                                         R.string.ERROR_NO_CONNECTION, Toast.LENGTH_SHORT).show();
                             }
                         } catch (final Exception e) {
-                            Log.v(TAG, getString(R.string.ERROR_DELETE_REQUEST));
+                            Toast.makeText(getApplicationContext(),
+                                    R.string.ERROR_DICTIONARY_NOT_DELETED,
+                                    Toast.LENGTH_SHORT).show();
                         } finally {
                             if (entryIdsCursor != null) {
                                 entryIdsCursor.close();
@@ -534,7 +536,7 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onError(final Exception e) {
                         Toast.makeText(MainActivity.this,
-                                R.string.ERROR_DELETE_DICTIONARY, Toast.LENGTH_SHORT).show();
+                                R.string.ERROR_DICTIONARY_NOT_DELETED, Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
@@ -546,21 +548,21 @@ public class MainActivity extends AppCompatActivity
 
     private void startCreateDictionaryDialog() {
         final AlertDialog.Builder addDictionaryDialogBuilder = new AlertDialog.Builder(this);
-        addDictionaryDialogBuilder.setTitle(R.string.dialog_title_add_dictionary);
+        addDictionaryDialogBuilder.setTitle(R.string.TITLE_DIALOG_ADD_DICTIONARY);
 
         final LayoutInflater inflater = LayoutInflater.from(this);
         final View dialogView = inflater.inflate(R.layout.edit_text_add_dictionary_name, null);
         final EditText inputDictionaryName = (EditText) dialogView.findViewById(R.id.edit_text_add_dictionary);
 
         addDictionaryDialogBuilder.setView(dialogView)
-                .setPositiveButton(R.string.alert_positive_button, new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.BUTTON_DIALOG_POSITIVE, new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(final DialogInterface dialog, final int which) {
                         createAndStoreDictionary(inputDictionaryName.getText().toString());
                     }
                 })
-                .setNegativeButton(R.string.alert_negative_button, new DialogInterface.OnClickListener() {
+                .setNegativeButton(R.string.BUTTON_DIALOG_NEGATIVE, new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(final DialogInterface dialog, final int which) {
@@ -651,7 +653,9 @@ public class MainActivity extends AppCompatActivity
                             );
                             mSelectedDictionaryId = dictionaryId;
                         } catch (final Exception e) {
-                            Log.v(TAG, getString(R.string.ERROR_CREATE_DICTIONARY));
+                            Toast.makeText(getApplicationContext(),
+                                    R.string.ERROR_DICTIONARY_NOT_CREATED,
+                                    Toast.LENGTH_SHORT).show();
                         }
                         return null;
                     }
@@ -668,7 +672,7 @@ public class MainActivity extends AppCompatActivity
                     public void onSuccess(final Void pVoid) {
                         getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, MainActivity.this);
                         final Toast toast = Toast.makeText(getApplicationContext(),
-                                R.string.RESULT_SUCCESS_DICTIONARY_STORED,
+                                R.string.TEXT_RESULT_SUCCESS_DICTIONARY_STORED,
                                 Toast.LENGTH_SHORT);
                         toast.show();
                     }

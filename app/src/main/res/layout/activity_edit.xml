@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:textSize="18sp"
         android:textStyle="italic"
-        android:text="@string/text_title_value"/>
+        android:text="@string/TITLE_ENTRY_VALUE"/>
 
     <EditText
         android:id="@+id/edit_text_value"
@@ -30,7 +30,7 @@
         android:layout_height="wrap_content"
         android:textSize="18sp"
         android:textStyle="italic"
-        android:text="@string/text_title_translation"/>
+        android:text="@string/TITLE_ENTRY_TRANSLATION"/>
 
     <EditText
         android:id="@+id/edit_text_translation"
@@ -45,7 +45,7 @@
         android:layout_height="wrap_content"
         android:textSize="18sp"
         android:textStyle="italic"
-        android:text="@string/text_title_context_usage"/>
+        android:text="@string/TITLE_ENTRY_CONTEXT_USAGE"/>
 
     <EditText
         android:id="@+id/edit_text_context_usage"
@@ -60,7 +60,7 @@
         android:layout_height="wrap_content"
         android:textSize="18sp"
         android:textStyle="italic"
-        android:text="@string/text_title_image_url"/>
+        android:text="@string/TITLE_ENTRY_IMAGE_URL"/>
 
     <EditText
         android:id="@+id/edit_text_image_url"
