@@ -10,7 +10,9 @@ public final class Api {
     public static final String DICTIONARIES = "dictionaries";
     public static final String JSON_FORMAT = ".json";
     public static final String PARAM_AUTH = "auth";
+    public static final String IMAGES_FOLDER = "images/";
     private static final String BASE_URL = "https://my-dictionary-a2be8.firebaseio.com/users";
+    public static final String USERS = "users";
 
     public static String getBaseUrl() {
         final String userUid = FirebaseAuth.getInstance().getCurrentUser().getUid();

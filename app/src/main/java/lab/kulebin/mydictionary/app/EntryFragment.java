@@ -3,13 +3,12 @@ package lab.kulebin.mydictionary.app;
 import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -23,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,13 +37,10 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import lab.kulebin.mydictionary.Constants;
@@ -56,6 +53,7 @@ import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
 import lab.kulebin.mydictionary.thread.ProgressCallback;
 import lab.kulebin.mydictionary.thread.ThreadManager;
+import lab.kulebin.mydictionary.utils.NameUtils;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
 import static android.app.Activity.RESULT_OK;
@@ -66,10 +64,14 @@ public class EntryFragment extends Fragment {
     public static final int WIDTH = 500;
     public static final int HEIGHT = 500;
     private static final int REQUEST_IMAGE_CAPTURE = 1;
-    private ImageView mImageView;
-    private long mEntryId;
-    private String mPhotoAbsolutePath;
+    private static final int MAX_UPLOAD_PHOTO_SIZE = 2 * 1000 * 1000;
 
+    private long mEntryId;
+    private File mPhotoFile;
+    private ThreadManager mThreadManager;
+    private ProgressBar mProgressBar;
+
+    @SuppressWarnings("WrongConstant")
     @Override
     public View onCreateView(final LayoutInflater inflater,
                              final ViewGroup container, final Bundle savedInstanceState) {
@@ -78,19 +80,16 @@ public class EntryFragment extends Fragment {
                 R.layout.item_pager_entry, container, false);
         final Bundle args = getArguments();
         mEntryId = args.getLong(Constants.EXTRA_ENTRY_ID);
+        mThreadManager = (ThreadManager) getActivity().getApplication().getSystemService(ThreadManager.APP_SERVICE_KEY);
+        mProgressBar = (ProgressBar) rootView.findViewById(R.id.progressBar);
 
-        mImageView = (ImageView) rootView.findViewById(R.id.pager_item_image);
+        final ImageView imageView = (ImageView) rootView.findViewById(R.id.pager_item_image);
         final String imageUrl = args.getString(Constants.EXTRA_ENTRY_IMAGE_URL);
-        if (imageUrl != null && !imageUrl.isEmpty()) {
-            Glide.with(this)
-                    .load(imageUrl)
-                    .override(WIDTH, HEIGHT)
-                    //.error(R.drawable.image_default_entry_192dp)
-                    .into(mImageView);
-        } else {
-            final Drawable entryImageDrawable = VectorDrawableCompat.create(getContext().getResources(), R.drawable.image_default_entry_192dp, null);
-            mImageView.setImageDrawable(entryImageDrawable);
-        }
+        Glide.with(this)
+                .load(imageUrl)
+                .override(WIDTH, HEIGHT)
+                .error(VectorDrawableCompat.create(getContext().getResources(), R.drawable.image_default_entry_192dp, null))
+                .into(imageView);
 
         ((TextView) rootView.findViewById(R.id.pager_item_value)).setText(
                 args.getString(Constants.EXTRA_ENTRY_VALUE));
@@ -149,7 +148,9 @@ public class EntryFragment extends Fragment {
                 public void onClick(final View pView) {
                     final Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                     if (intent.resolveActivity(pm) != null) {
-                        final Uri uir = createImageFile();
+                        final File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
+                        mPhotoFile = new File(dir, NameUtils.createImageFileName());
+                        final Uri uir = Uri.fromFile(mPhotoFile);
                         intent.putExtra(MediaStore.EXTRA_OUTPUT, uir);
                         intent.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                         startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
@@ -170,92 +171,162 @@ public class EntryFragment extends Fragment {
         }
     }
 
-    private Uri createImageFile() {
-        final File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
-        final String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
-        final String imageFileName = "JPEG_" + timeStamp + ".jpg";
-        final File photoFile = new File(dir, imageFileName);
-        final Uri contentUri = Uri.fromFile(photoFile);
-        mPhotoAbsolutePath = photoFile.getAbsolutePath();
-        return contentUri;
-    }
-
     private void uploadPhotoToFirebase() {
-        final Uri file = Uri.fromFile(new File(mPhotoAbsolutePath));
-        final StorageReference storageRef = FirebaseStorage.getInstance().getReference();
-        final StorageReference riversRef = storageRef.child("images/" + file.getLastPathSegment());
-        final UploadTask uploadTask = riversRef.putFile(file);
-        uploadTask.addOnFailureListener(new OnFailureListener() {
+        mThreadManager.execute(new ITask<Void, Void, byte[]>() {
 
-            @Override
-            public void onFailure(@NonNull final Exception exception) {
-                Snackbar.make(getView(), "Error: Photo is not uploaded!", Snackbar.LENGTH_LONG)
-                        .setAction("Ok", null).show();
-            }
-        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                   @Override
+                                   public byte[] perform(final Void pVoid, final ProgressCallback<Void> progressCallback) throws FileNotFoundException {
 
-            @Override
-            public void onSuccess(final UploadTask.TaskSnapshot taskSnapshot) {
-                Snackbar.make(getView(), "Success! Photo has been uploaded!", Snackbar.LENGTH_LONG)
-                        .setAction("Ok", null).show();
-                final String userUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                final Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                Map<String, Object> childUpdates = new HashMap<>();
-                childUpdates.put(Entry.IMAGE_URL, downloadUrl.toString());
-                DatabaseReference myRef = FirebaseDatabase.getInstance().getReference();
-                myRef.child("users")
-                        .child(userUid)
-                        .child(Api.ENTRIES)
-                        .child(String.valueOf(mEntryId))
-                        .updateChildren(childUpdates, new DatabaseReference.CompletionListener() {
+                                       final BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+                                       Bitmap bitmap = BitmapFactory.decodeFile(mPhotoFile.getAbsolutePath(), bmOptions);
+
+                                       while (bitmap.getByteCount() > MAX_UPLOAD_PHOTO_SIZE) {
+                                           final int width = bitmap.getWidth();
+                                           final int height = bitmap.getHeight();
+
+                                           final int halfWidth = width / 2;
+                                           final int halfHeight = height / 2;
+
+                                           bitmap = Bitmap.createScaledBitmap(bitmap, halfWidth,
+                                                   halfHeight, false);
+                                       }
+
+                                       final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                       bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+
+                                       if (!mPhotoFile.delete()) {
+                                           throw new FileNotFoundException();
+                                       }
+
+                                       return baos.toByteArray();
+                                   }
+                               },
+                null,
+                new OnResultCallback<byte[], Void>() {
+
+                    @Override
+                    public void onStart() {
+                        mProgressBar.setVisibility(View.VISIBLE);
+                    }
+
+                    @Override
+                    public void onSuccess(final byte[] pBytes) {
+                        final StorageReference storageRef = FirebaseStorage.getInstance().getReference();
+                        final StorageReference riversRef = storageRef.child(Api.IMAGES_FOLDER + mPhotoFile.getName());
+
+                        final UploadTask uploadTask = riversRef.putBytes(pBytes);
+                        uploadTask.addOnFailureListener(new OnFailureListener() {
 
                             @Override
-                            public void onComplete(DatabaseError pDatabaseError, DatabaseReference pDatabaseReference) {
-                                if (pDatabaseError == null && pDatabaseReference != null) {
-                                    final ContentValues values = new ContentValues();
-                                    values.put(Entry.IMAGE_URL, downloadUrl.toString());
-                                    getContext().getContentResolver().update(
-                                            UriBuilder.getTableUri(Entry.class),
-                                            values,
-                                            Entry.ID + "=?",
-                                            new String[]{String.valueOf(mEntryId)}
-                                    );
+                            public void onFailure(@NonNull final Exception exception) {
+                                if (getView() != null) {
+                                    Snackbar.make(getView(), R.string.ERROR_FILE_NOT_UPLOADED, Snackbar.LENGTH_LONG)
+                                            .setAction(R.string.BUTTON_OK, null).show();
+                                }
+                                if (mProgressBar.isShown()) {
+                                    mProgressBar.setVisibility(View.GONE);
+                                }
+                            }
+                        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+
+                            @Override
+                            public void onSuccess(final UploadTask.TaskSnapshot taskSnapshot) {
+
+                                if (taskSnapshot.getDownloadUrl() != null) {
+                                    final String userUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                                    final Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                                    final Map<String, Object> childUpdates = new HashMap<>();
+                                    childUpdates.put(Entry.IMAGE_URL, downloadUrl.toString());
+                                    final DatabaseReference myRef = FirebaseDatabase.getInstance().getReference();
+                                    myRef.child(Api.USERS)
+                                            .child(userUid)
+                                            .child(Api.ENTRIES)
+                                            .child(String.valueOf(mEntryId))
+                                            .updateChildren(childUpdates, new DatabaseReference.CompletionListener() {
+
+                                                @Override
+                                                public void onComplete(final DatabaseError pDatabaseError, final DatabaseReference pDatabaseReference) {
+                                                    if (pDatabaseError == null && pDatabaseReference != null) {
+                                                        updateEntryUriTask(downloadUrl.toString());
+                                                    }
+                                                }
+                                            });
                                 }
                             }
                         });
-            }
-        });
+
+                    }
+
+                    @Override
+                    public void onError(final Exception e) {
+                        mProgressBar.setVisibility(View.GONE);
+                        if (getView() != null) {
+                            Snackbar.make(getView(), R.string.ERROR_FILE_NOT_FOUND, Snackbar.LENGTH_LONG)
+                                    .setAction(R.string.BUTTON_OK, null).show();
+                        }
+                    }
+
+                    @Override
+                    public void onProgressChanged(final Void pVoid) {
+
+                    }
+                });
     }
 
-    private String savePhotoToInternalStorage(final Bitmap bitmapImage) {
-        final String userUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        final ContextWrapper cw = new ContextWrapper(getContext());
-        final File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-        final String imageFileName = userUid + "_" + System.currentTimeMillis() + ".png";
-        final File imagePath = new File(directory, imageFileName);
+    @SuppressWarnings("MethodOnlyUsedFromInnerClass")
+    private void updateEntryUriTask(final String pDownloadUrl) {
+        mThreadManager.execute(new ITask<String, Void, Void>() {
 
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(imagePath);
-            bitmapImage.compress(Bitmap.CompressFormat.PNG, 25, fos);
-        } catch (final Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (final IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return imagePath.getAbsolutePath();
+                                   @Override
+                                   public Void perform(final String pS, final ProgressCallback<Void> progressCallback) throws Exception {
+                                       final ContentValues values = new ContentValues();
+                                       values.put(Entry.IMAGE_URL, pDownloadUrl);
+                                       getContext().getContentResolver().update(
+                                               UriBuilder.getTableUri(Entry.class),
+                                               values,
+                                               Entry.ID + "=?",
+                                               new String[]{String.valueOf(mEntryId)}
+                                       );
+                                       return null;
+                                   }
+                               },
+                pDownloadUrl,
+                new OnResultCallback<Void, Void>() {
+
+                    @Override
+                    public void onStart() {
+
+                    }
+
+                    @Override
+                    public void onSuccess(final Void pVoid) {
+                        if (mProgressBar.isShown()) {
+                            mProgressBar.setVisibility(View.GONE);
+                        }
+                    }
+
+                    @Override
+                    public void onError(final Exception e) {
+                        if (mProgressBar.isShown()) {
+                            mProgressBar.setVisibility(View.GONE);
+                        }
+                        if (getView() != null) {
+                            Snackbar.make(getView(), R.string.ERROR_FILE_NOT_UPLOADED, Snackbar.LENGTH_LONG)
+                                    .setAction(R.string.BUTTON_OK, null).show();
+                        }
+
+                    }
+
+                    @Override
+                    public void onProgressChanged(final Void pVoid) {
+
+                    }
+                });
     }
 
+    @SuppressWarnings("MethodOnlyUsedFromInnerClass")
     private void deleteEntryTask(final Long pEntryId) {
-        //noinspection WrongConstant
-        final ThreadManager threadManager = (ThreadManager) getActivity().getApplication().getSystemService(ThreadManager.APP_SERVICE_KEY);
-        threadManager.execute(
+        mThreadManager.execute(
                 new ITask<Long, Void, Void>() {
 
                     @Override
@@ -276,7 +347,7 @@ public class EntryFragment extends Fragment {
                                         new String[]{String.valueOf(pEntryId)});
                             } else {
                                 Toast.makeText(getContext(),
-                                        R.string.ERROR_CONNECTION_DELETE, Toast.LENGTH_SHORT).show();
+                                        R.string.ERROR_NO_CONNECTION, Toast.LENGTH_SHORT).show();
                             }
                         } catch (final Exception e) {
                             Log.v(TAG, getString(R.string.ERROR_DELETE_REQUEST));
@@ -289,16 +360,19 @@ public class EntryFragment extends Fragment {
 
                     @Override
                     public void onStart() {
+                        mProgressBar.setVisibility(View.VISIBLE);
                     }
 
                     @Override
                     public void onSuccess(final Void pVoid) {
+                        mProgressBar.setVisibility(View.GONE);
                     }
 
                     @Override
                     public void onError(final Exception e) {
+                        mProgressBar.setVisibility(View.GONE);
                         Toast.makeText(getContext(),
-                                R.string.ERROR_DELETE_ENTRY, Toast.LENGTH_SHORT).show();
+                                R.string.ERROR_ENTRY_NOT_DELETED, Toast.LENGTH_SHORT).show();
                     }
 
                     @Override

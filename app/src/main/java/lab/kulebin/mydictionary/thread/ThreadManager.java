@@ -44,7 +44,13 @@ public class ThreadManager {
                         }
                     });
                 } catch (final Exception e) {
-                    onResultCallback.onError(e);
+                    handler.post(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            onResultCallback.onError(e);
+                        }
+                    });
                 }
             }
         });

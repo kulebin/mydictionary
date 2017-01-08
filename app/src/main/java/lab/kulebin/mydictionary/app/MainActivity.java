@@ -507,7 +507,7 @@ public class MainActivity extends AppCompatActivity
                                 }
                             } else {
                                 Toast.makeText(MainActivity.this,
-                                        R.string.ERROR_CONNECTION_DELETE, Toast.LENGTH_SHORT).show();
+                                        R.string.ERROR_NO_CONNECTION, Toast.LENGTH_SHORT).show();
                             }
                         } catch (final Exception e) {
                             Log.v(TAG, getString(R.string.ERROR_DELETE_REQUEST));

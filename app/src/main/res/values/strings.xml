@@ -9,7 +9,7 @@
     <string name="action_delete_dictionary">Delete dictionary</string>
     <string name="text_title_value">Entry value</string>
     <string name="text_title_translation">Translation</string>
-    <string name="text_title_context_usage">Context usage</string>
+    <string name="text_title_context_usage" translatable="false">Context usage</string>
     <string name="text_title_image_url">Image URL</string>
     <string name="button_create">Create</string>
     <string name="alert_title_data_not_saved">Data not saved</string>
@@ -20,10 +20,9 @@
     </string>
     <string name="alert_positive_button">Ok</string>
     <string name="alert_negative_button">Cancel</string>
-    <string name="ERROR_CONNECTION_DELETE">Connection Error! The Entry has not been deleted.
-    </string>
+    <string name="ERROR_NO_CONNECTION">Connection Error!</string>
     <string name="ERROR_DELETE_REQUEST">Delete request error!</string>
-    <string name="ERROR_DELETE_ENTRY">Error! The Entry has not been deleted.</string>
+    <string name="ERROR_ENTRY_NOT_DELETED">Error! The Entry has not been deleted.</string>
     <string name="ERROR_DELETE_DICTIONARY">Error! The Dictionary has not been deleted.</string>
     <string name="ERROR_PARSING">Parsing error</string>
     <string name="ERROR_FETCHING_ENTRY_FROM_DB">Oops! Entry not found!</string>
@@ -61,4 +60,7 @@
     <string name="error_connection_error">Connection error.</string>
     <string name="pager_item_label_translation">Translation:</string>
     <string name="pager_item_label_context_usage">Example:</string>
+    <string name="ERROR_FILE_NOT_FOUND">Error: File not found!</string>
+    <string name="BUTTON_OK">Ok</string>
+    <string name="ERROR_FILE_NOT_UPLOADED">Error: Photo is not uploaded!</string>
 </resources>
