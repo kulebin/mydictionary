@@ -48,6 +48,8 @@ public class SignInActivity extends AppCompatActivity implements
     private EditText mPasswordField;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private GoogleApiClient mGoogleApiClient;
+    //temporary solution, flag will be deleted when firebase fixes its bug;
+    private boolean isAuthStateChanged = true;
 
     @Override
     public void onClick(final View v) {
@@ -128,11 +130,10 @@ public class SignInActivity extends AppCompatActivity implements
             @Override
             public void onAuthStateChanged(@NonNull final FirebaseAuth firebaseAuth) {
                 final FirebaseUser user = firebaseAuth.getCurrentUser();
-                if (user != null) {
+                if (user != null && isAuthStateChanged) {
+                    isAuthStateChanged = false;
                     clearAllData();
                     storeToken(user);
-                    startActivity(new Intent(SignInActivity.this, MainActivity.class).setFlags(FLAG_ACTIVITY_CLEAR_TOP | FLAG_ACTIVITY_NEW_TASK));
-                    finish();
                 }
             }
         };
