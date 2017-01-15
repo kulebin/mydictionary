@@ -22,6 +22,7 @@ import android.widget.Toast;
 
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
+import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
 import lab.kulebin.mydictionary.http.IHttpClient;
@@ -44,9 +45,8 @@ public class EditActivity extends AppCompatActivity {
     private Button mEntryCreateButton;
     private boolean mIsDataChanged;
     private long mEntryId;
-    private long mCreationDate;
     private EditActivityMode mEditActivityMode;
-    private int mDictionaryId;
+    private int mDictionaryMenuId;
     private ThreadManager mThreadManager;
 
     @Override
@@ -117,7 +117,7 @@ public class EditActivity extends AppCompatActivity {
                 if (actionBar != null) {
                     actionBar.setTitle(R.string.TITLE_ACTIVITY_CREATE_NEW_ENTRY);
                 }
-                mDictionaryId = intent.getIntExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID,
+                mDictionaryMenuId = intent.getIntExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID,
                         Constants.DEFAULT_SELECTED_DICTIONARY_ID);
                 mEntryCreateButton.setText(R.string.BUTTON_CREATE);
             }
@@ -164,20 +164,16 @@ public class EditActivity extends AppCompatActivity {
             public void onClick(final View arg0) {
                 final long entryId;
                 final long systemTimeStamp = System.currentTimeMillis();
-                final long entryCreationDate;
                 if (mEditActivityMode == EditActivityMode.CREATE) {
                     entryId = systemTimeStamp;
-                    entryCreationDate = systemTimeStamp;
                 } else {
                     entryId = mEntryId;
-                    entryCreationDate = mCreationDate;
                 }
                 final Entry entry = new Entry(
                         entryId,
-                        mDictionaryId,
+                        mDictionaryMenuId,
                         mEditTextValue.getText().toString(),
                         null,
-                        entryCreationDate,
                         systemTimeStamp,
                         mEditTextImageUrl.getText().toString(),
                         null,
@@ -214,7 +210,6 @@ public class EditActivity extends AppCompatActivity {
                         values.put(Entry.DICTIONARY_ID, pEntry.getDictionaryId());
                         values.put(Entry.VALUE, pEntry.getValue());
                         values.put(Entry.TRANSCRIPTION, pEntry.getTranscription());
-                        values.put(Entry.CREATION_DATE, pEntry.getCreationDate());
                         values.put(Entry.LAST_EDITION_DATE, pEntry.getLastEditionDate());
                         values.put(Entry.IMAGE_URL, pEntry.getImageUrl());
                         values.put(Entry.SOUND_URL, pEntry.getSoundUrl());
@@ -225,13 +220,13 @@ public class EditActivity extends AppCompatActivity {
                         final String token = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
 
                         final Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
-                                .appendPath(Api.ENTRIES)
+                                .appendPath(DbHelper.getTableName(Entry.class))
                                 .appendPath(pEntry.getId() + Api.JSON_FORMAT)
                                 .appendQueryParameter(Api.PARAM_AUTH, token)
                                 .build();
                         final IHttpClient httpClient = new HttpClient();
                         try {
-                            final String response = httpClient.put(uri.toString(), null, JsonHelper.buildEntryJsonObject(pEntry).toString());
+                            final String response = httpClient.put(uri.toString(), null, pEntry.toJson());
                             if (pEntry.getLastEditionDate() == JsonHelper.getEntryLastEditionDateFromJson(response)) {
                                 if (mEditActivityMode == EditActivityMode.EDIT) {
                                     getContentResolver().update(
@@ -308,8 +303,7 @@ public class EditActivity extends AppCompatActivity {
                             mEditTextTranslation.setText(pCursor.getString(pCursor.getColumnIndex(Entry.TRANSLATION)));
                             mEditTextImageUrl.setText(pCursor.getString(pCursor.getColumnIndex(Entry.IMAGE_URL)));
                             mEditTextContextUsage.setText(pCursor.getString(pCursor.getColumnIndex(Entry.USAGE_CONTEXT)));
-                            mCreationDate = pCursor.getLong(pCursor.getColumnIndex(Entry.CREATION_DATE));
-                            mDictionaryId = pCursor.getInt(pCursor.getColumnIndex(Entry.DICTIONARY_ID));
+                            mDictionaryMenuId = pCursor.getInt(pCursor.getColumnIndex(Entry.DICTIONARY_ID));
                             mIsDataChanged = false;
                         }
                     }

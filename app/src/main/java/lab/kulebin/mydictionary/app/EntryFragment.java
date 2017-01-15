@@ -44,6 +44,7 @@ import java.util.Map;
 
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
+import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
 import lab.kulebin.mydictionary.http.IHttpClient;
@@ -239,7 +240,7 @@ public class EntryFragment extends Fragment {
                                     final DatabaseReference myRef = FirebaseDatabase.getInstance().getReference();
                                     myRef.child(Api.USERS)
                                             .child(userUid)
-                                            .child(Api.ENTRIES)
+                                            .child(DbHelper.getTableName(Entry.class))
                                             .child(String.valueOf(mEntryId))
                                             .updateChildren(childUpdates, new DatabaseReference.CompletionListener() {
 
@@ -333,7 +334,7 @@ public class EntryFragment extends Fragment {
                         final SharedPreferences shp = getActivity().getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
                         final String token = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
                         final Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
-                                .appendPath(Api.ENTRIES)
+                                .appendPath(DbHelper.getTableName(Entry.class))
                                 .appendPath(pEntryId + Api.JSON_FORMAT)
                                 .appendQueryParameter(Api.PARAM_AUTH, token)
                                 .build();

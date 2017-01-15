@@ -20,6 +20,7 @@ public final class Constants {
     public static final String EXTRA_SELECTED_DICTIONARY_NAME = "EXTRA_SELECTED_DICTIONARY_NAME";
     public static final String APP_PREFERENCES_SORT_ORDER = "AP_SORT_ORDER";
 
+    public static final String ID_COLUMN = "_id";
     public static final String SQL_SORT_QUERY_DESC = " DESC";
     public static final String SQL_SORT_QUERY_ASC = " ASC";
     public static final String EXTRA_SELECTED_ENTRY_POSITION = "EXTRA_SELECTED_ENTRY_POSITION";

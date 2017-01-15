@@ -1,25 +1,26 @@
 package lab.kulebin.mydictionary.model;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.db.annotations.Table;
-import lab.kulebin.mydictionary.db.annotations.dbInteger;
 import lab.kulebin.mydictionary.db.annotations.dbLong;
 import lab.kulebin.mydictionary.db.annotations.dbString;
+import lab.kulebin.mydictionary.json.IJsonBuildable;
+import lab.kulebin.mydictionary.utils.Converter;
 
-@Table(name = "entry")
-public class Entry {
-
-    public static final int EMPTY_DATE = -1;
+@Table(name = "entries")
+public class Entry implements IJsonBuildable {
 
     @dbLong
-    public static final String ID = "_id";
-    @dbInteger
+    public static final String ID = Constants.ID_COLUMN;
+    @dbLong
     public static final String DICTIONARY_ID = "dictionaryId";
     @dbString
     public static final String VALUE = "value";
     @dbString
     public static final String TRANSCRIPTION = "transcription";
-    @dbLong
-    public static final String CREATION_DATE = "creationDate";
     @dbLong
     public static final String LAST_EDITION_DATE = "lastEditionDate";
     @dbString
@@ -32,10 +33,9 @@ public class Entry {
     public static final String USAGE_CONTEXT = "usageContext";
 
     private long mId;
-    private int mDictionaryId;
+    private long mDictionaryId;
     private String mValue;
     private String mTranscription;
-    private long mCreationDate;
     private long mLastEditionDate;
     private String mImageUrl;
     private String mSoundUrl;
@@ -43,10 +43,9 @@ public class Entry {
     private String[] mUsageContext;
 
     public Entry(final long pId,
-                 final int pDictionaryId,
+                 final long pDictionaryId,
                  final String pValue,
                  final String pTranscription,
-                 final long pCreationDate,
                  final long pLastEditionDate,
                  final String pImageUrl,
                  final String pSoundUrl,
@@ -56,7 +55,6 @@ public class Entry {
         mDictionaryId = pDictionaryId;
         mValue = pValue;
         mTranscription = pTranscription;
-        mCreationDate = pCreationDate;
         mLastEditionDate = pLastEditionDate;
         mImageUrl = pImageUrl;
         mSoundUrl = pSoundUrl;
@@ -72,11 +70,11 @@ public class Entry {
         mId = pId;
     }
 
-    public int getDictionaryId() {
+    public long getDictionaryId() {
         return mDictionaryId;
     }
 
-    public void setDictionaryId(final int pDictionaryId) {
+    public void setDictionaryId(final long pDictionaryId) {
         mDictionaryId = pDictionaryId;
     }
 
@@ -94,14 +92,6 @@ public class Entry {
 
     public void setTranscription(final String pTranscription) {
         mTranscription = pTranscription;
-    }
-
-    public long getCreationDate() {
-        return mCreationDate;
-    }
-
-    public void setCreationDate(final long pCreationDate) {
-        mCreationDate = pCreationDate;
     }
 
     public long getLastEditionDate() {
@@ -144,4 +134,17 @@ public class Entry {
         mUsageContext = pUsageContext;
     }
 
+    @Override
+    public String toJson() throws JSONException {
+        final JSONObject jsonObject = new JSONObject();
+        jsonObject.put(DICTIONARY_ID, getDictionaryId());
+        jsonObject.put(VALUE, getValue());
+        jsonObject.put(TRANSCRIPTION, getTranscription());
+        jsonObject.put(LAST_EDITION_DATE, getLastEditionDate());
+        jsonObject.put(IMAGE_URL, getImageUrl());
+        jsonObject.put(SOUND_URL, getSoundUrl());
+        jsonObject.put(TRANSLATION, Converter.convertStringArrayToString(getTranslation()));
+        jsonObject.put(USAGE_CONTEXT, Converter.convertStringArrayToString(getUsageContext()));
+        return jsonObject.toString();
+    }
 }

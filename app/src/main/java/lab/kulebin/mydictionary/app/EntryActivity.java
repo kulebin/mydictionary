@@ -34,7 +34,7 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
     private ViewPager viewPager;
     private EntryPagerAdapter mEntryPagerAdapter;
     private long mEntryId;
-    private int mDictionaryId;
+    private int mDictionaryMenuId;
     private SortOrder mSortOrder;
     private int mEntryPosition;
     private String mIntentSender;
@@ -57,7 +57,7 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
                 UriBuilder.getTableUri(Entry.class),
                 ENTRY_PROJECTION,
                 Entry.DICTIONARY_ID + "=?",
-                new String[]{String.valueOf(mDictionaryId)},
+                new String[]{String.valueOf(mDictionaryMenuId)},
                 mSortOrder.getEntrySortOrderQueryParam());
     }
 
@@ -102,7 +102,7 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
         } else if (mIntentSender.equals(SearchActivity.class.getSimpleName())) {
             mEntryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, Constants.ENTRY_ID_EMPTY);
         }
-        mDictionaryId = intent.getIntExtra(
+        mDictionaryMenuId = intent.getIntExtra(
                 Constants.EXTRA_SELECTED_DICTIONARY_ID,
                 Constants.DEFAULT_SELECTED_DICTIONARY_ID);
         final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);

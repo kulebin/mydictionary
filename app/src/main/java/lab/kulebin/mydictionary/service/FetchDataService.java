@@ -10,19 +10,18 @@ import android.util.Log;
 
 import org.json.JSONException;
 
+import java.lang.reflect.AnnotatedElement;
+import java.util.Collection;
 import java.util.List;
-import java.util.Vector;
 
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.db.Contract;
+import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
 import lab.kulebin.mydictionary.http.IHttpClient;
 import lab.kulebin.mydictionary.json.JsonHelper;
 import lab.kulebin.mydictionary.model.DataCache;
-import lab.kulebin.mydictionary.model.Dictionary;
-import lab.kulebin.mydictionary.model.Entry;
-import lab.kulebin.mydictionary.utils.Converter;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
 public class FetchDataService extends IntentService {
@@ -42,17 +41,10 @@ public class FetchDataService extends IntentService {
         }
         final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
         final String token = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
-        for (final Class model : Contract.MODELS) {
-            final String path;
-            if (model == Entry.class) {
-                path = Api.ENTRIES;
-            } else if (model == Dictionary.class) {
-                path = Api.DICTIONARIES;
-            } else {
-                continue;
-            }
+        for (final Class model : Contract.FETCH_DATA_SET) {
+
             final String url = Uri.parse(Api.getBaseUrl()).buildUpon()
-                    .appendPath(path + Api.JSON_FORMAT)
+                    .appendPath(DbHelper.getTableName(model) + Api.JSON_FORMAT)
                     .build()
                     .toString();
             if (DataCache.isDataRefreshNeeded(this, url) || serviceMode == FetchDataServiceMode.REFRESH) {
@@ -60,10 +52,10 @@ public class FetchDataService extends IntentService {
                         .appendQueryParameter(Api.PARAM_AUTH, token)
                         .build()
                         .toString();
-                final List<?> list = fetchData(fullUrl, model);
+                final List<ContentValues> list = fetchData(fullUrl, model);
                 int storeResult = -1;
                 if (list != null && !list.isEmpty()) {
-                    storeResult = storeData(list);
+                    storeResult = storeData(list, model);
                 }
 
                 if (storeResult != -1) {
@@ -76,7 +68,7 @@ public class FetchDataService extends IntentService {
         }
     }
 
-    private List fetchData(final String pUrl, final Class pClazz) {
+    private List<ContentValues> fetchData(final String pUrl, final Class pClazz) {
         final IHttpClient httpClient = new HttpClient();
         try {
             return JsonHelper.parseJson(pClazz, httpClient.get(pUrl));
@@ -88,46 +80,16 @@ public class FetchDataService extends IntentService {
         return null;
     }
 
-    private int storeData(final List<?> pList) {
+    private int storeData(final Collection<ContentValues> pList, final AnnotatedElement pClazz) {
 
-        final Vector<ContentValues> valuesVector = new Vector<>(pList.size());
-        Class clazz = null;
-        if (pList.get(0).getClass() == Entry.class) {
-            for (final Entry entry : (List<Entry>) pList) {
-                clazz = Entry.class;
-                final ContentValues values = new ContentValues();
-                values.put(Entry.ID, entry.getId());
-                values.put(Entry.DICTIONARY_ID, entry.getDictionaryId());
-                values.put(Entry.VALUE, entry.getValue());
-                values.put(Entry.TRANSCRIPTION, entry.getTranscription());
-                values.put(Entry.CREATION_DATE, entry.getCreationDate());
-                values.put(Entry.LAST_EDITION_DATE, entry.getLastEditionDate());
-                values.put(Entry.IMAGE_URL, entry.getImageUrl());
-                values.put(Entry.SOUND_URL, entry.getSoundUrl());
-                values.put(Entry.TRANSLATION, Converter.convertStringArrayToString(entry.getTranslation()));
-                values.put(Entry.USAGE_CONTEXT, Converter.convertStringArrayToString(entry.getUsageContext()));
-                valuesVector.add(values);
-            }
-
-        } else if (pList.get(0).getClass() == Dictionary.class) {
-            for (final Dictionary dictionary : (List<Dictionary>) pList) {
-                clazz = Dictionary.class;
-                final ContentValues values = new ContentValues();
-                values.put(Dictionary.ID, dictionary.getId());
-                values.put(Dictionary.NAME, dictionary.getName());
-                values.put(Dictionary.CREATION_DATE, dictionary.getCreationDate());
-                valuesVector.add(values);
-            }
-        } else {
-            return -1;
+        if (pList != null) {
+            final ContentValues[] valuesArray = new ContentValues[pList.size()];
+            pList.toArray(valuesArray);
+            this.getContentResolver().delete(UriBuilder.getTableUri(pClazz), null, null);
+            this.getContentResolver().bulkInsert(UriBuilder.getTableUri(pClazz), valuesArray);
+            return pList.size();
         }
-        if (!valuesVector.isEmpty()) {
-            final ContentValues[] valuesArray = new ContentValues[valuesVector.size()];
-            valuesVector.toArray(valuesArray);
-            this.getContentResolver().delete(UriBuilder.getTableUri(clazz), null, null);
-            this.getContentResolver().bulkInsert(UriBuilder.getTableUri(clazz), valuesArray);
-        }
-        return valuesVector.size();
+        return -1;
     }
 
     public enum FetchDataServiceMode {SYNCHRONIZE, REFRESH}

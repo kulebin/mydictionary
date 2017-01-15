@@ -1,115 +1,69 @@
 package lab.kulebin.mydictionary.json;
 
+import android.content.ContentValues;
 import android.support.annotation.Nullable;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import lab.kulebin.mydictionary.model.Dictionary;
+import lab.kulebin.mydictionary.Constants;
+import lab.kulebin.mydictionary.db.annotations.dbInteger;
+import lab.kulebin.mydictionary.db.annotations.dbLong;
+import lab.kulebin.mydictionary.db.annotations.dbString;
 import lab.kulebin.mydictionary.model.Entry;
-import lab.kulebin.mydictionary.utils.Converter;
-
-import static lab.kulebin.mydictionary.model.Entry.EMPTY_DATE;
 
 public final class JsonHelper {
 
-    public static final String TAG = JsonHelper.class.getSimpleName();
-
     @Nullable
-    public static List parseJson(final Class<?> clazz, final String json) throws JSONException {
+    public static List<ContentValues> parseJson(final Class<?> clazz, final String json) throws JSONException, IllegalAccessException {
         final JSONObject jsonObject = new JSONObject(json);
         final Iterator<String> iterator = jsonObject.keys();
         final Collection<String> keys = new ArrayList<>();
         while (iterator.hasNext()) {
             keys.add(iterator.next());
         }
-        if (clazz == Entry.class) {
-            final List<Entry> entryList = new ArrayList<>();
+        if (!keys.isEmpty()) {
+            final List<ContentValues> valuesList = new ArrayList<>();
             for (final String key : keys) {
                 final JSONObject jsonSubObject = jsonObject.getJSONObject(key);
-                final Entry entry = parseEntryJsonObject(jsonSubObject, key);
-                entryList.add(entry);
+                final ContentValues values = new ContentValues();
+
+                final Field[] fields = clazz.getFields();
+
+                for (final Field field : fields) {
+                    final Annotation[] annotations = field.getAnnotations();
+
+                    for (final Annotation annotation : annotations) {
+                        final String fieldName;
+                        if (annotation instanceof dbInteger) {
+                            fieldName = (String) field.get(null);
+                            values.put(fieldName, jsonSubObject.getInt(fieldName));
+                        } else if (annotation instanceof dbString) {
+                            fieldName = (String) field.get(null);
+                            values.put(fieldName, jsonSubObject.isNull(fieldName) ? null : jsonSubObject.getString(fieldName));
+                        } else if (annotation instanceof dbLong) {
+                            fieldName = (String) field.get(null);
+                            if (fieldName.equals(Constants.ID_COLUMN)) {
+                                values.put(fieldName, key);
+                            } else {
+                                values.put(fieldName, jsonSubObject.getLong(fieldName));
+                            }
+                        }
+                    }
+                }
+                valuesList.add(values);
             }
-            return entryList;
-        } else if (clazz == Dictionary.class) {
-            final List<Dictionary> dictionariesList = new ArrayList<>();
-            for (final String key : keys) {
-                final JSONObject jsonSubObject = jsonObject.getJSONObject(key);
-                dictionariesList.add(parseDictionaryJsonObject(jsonSubObject, key));
-            }
-            return dictionariesList;
+            return valuesList;
+        } else {
+            return null;
         }
-        return null;
-    }
-
-    private static Entry parseEntryJsonObject(final JSONObject pEntryJsonObject, final String key) throws JSONException {
-        return new Entry(
-                Long.parseLong(key),
-                pEntryJsonObject.getInt(Entry.DICTIONARY_ID),
-                pEntryJsonObject.getString(Entry.VALUE),
-                pEntryJsonObject.isNull(Entry.TRANSCRIPTION) ? null : pEntryJsonObject.getString(Entry.TRANSCRIPTION),
-                pEntryJsonObject.getLong(Entry.CREATION_DATE),
-                pEntryJsonObject.isNull(Entry.LAST_EDITION_DATE) ? EMPTY_DATE : pEntryJsonObject.getLong(Entry.LAST_EDITION_DATE),
-                pEntryJsonObject.isNull(Entry.IMAGE_URL) ? null : pEntryJsonObject.getString(Entry.IMAGE_URL),
-                pEntryJsonObject.isNull(Entry.SOUND_URL) ? null : pEntryJsonObject.getString(Entry.SOUND_URL),
-                pEntryJsonObject.isNull(Entry.TRANSLATION) ? null : Converter.convertStringToStringArray(pEntryJsonObject.getString(Entry.TRANSLATION)),
-                pEntryJsonObject.isNull(Entry.USAGE_CONTEXT) ? null : Converter.convertStringToStringArray(pEntryJsonObject.getString(Entry.USAGE_CONTEXT)));
-    }
-
-    private static Dictionary parseDictionaryJsonObject(final JSONObject pDictionaryJsonObject, final String key) throws JSONException {
-        return new Dictionary(
-                pDictionaryJsonObject.getInt(Dictionary.ID),
-                pDictionaryJsonObject.getString(Dictionary.NAME),
-                Long.valueOf(key));
-    }
-
-    @Nullable
-    public static String buildJson(final List<?> pList) throws JSONException {
-        final JSONArray jsonArray = new JSONArray();
-        if (pList.get(0).getClass() == Entry.class) {
-            for (final Entry entry : (List<Entry>) pList) {
-                jsonArray.put(buildEntryJsonObject(entry));
-            }
-            return jsonArray.toString();
-        } else if (pList.get(0).getClass() == Dictionary.class) {
-            for (final Dictionary dictionary : (List<Dictionary>) pList) {
-                jsonArray.put(buildDictionaryJsonObject(dictionary));
-            }
-            return jsonArray.toString();
-        }
-        return null;
-    }
-
-    public static JSONObject buildEntryJsonObject(final Entry pEntry) throws JSONException {
-        final JSONObject jsonObject = new JSONObject();
-        jsonObject.put(Entry.DICTIONARY_ID, pEntry.getDictionaryId());
-        jsonObject.put(Entry.VALUE, pEntry.getValue());
-        jsonObject.put(Entry.TRANSCRIPTION, pEntry.getTranscription());
-        jsonObject.put(Entry.CREATION_DATE, pEntry.getCreationDate());
-        jsonObject.put(Entry.LAST_EDITION_DATE, pEntry.getLastEditionDate());
-        jsonObject.put(Entry.IMAGE_URL, pEntry.getImageUrl());
-        jsonObject.put(Entry.SOUND_URL, pEntry.getSoundUrl());
-        jsonObject.put(Entry.TRANSLATION, Converter.convertStringArrayToString(pEntry.getTranslation()));
-        jsonObject.put(Entry.USAGE_CONTEXT, Converter.convertStringArrayToString(pEntry.getUsageContext()));
-        return jsonObject;
-    }
-
-    public static JSONObject buildDictionaryJsonObject(final Dictionary pDictionary) throws JSONException {
-        final JSONObject jsonObject = new JSONObject();
-        jsonObject.put(Dictionary.ID, pDictionary.getId());
-        jsonObject.put(Dictionary.NAME, pDictionary.getName());
-        return jsonObject;
-    }
-
-    public static long getEntryIdFromJson(final String json) throws JSONException {
-        final JSONObject jsonObject = new JSONObject(json);
-        return jsonObject.getLong(Entry.ID);
     }
 
     public static long getEntryLastEditionDateFromJson(final String json) throws JSONException {

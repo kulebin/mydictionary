@@ -102,7 +102,7 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
         final String entrySortOrder = entryTableName +
                 "." + Entry.DICTIONARY_ID + " DESC," +
                 entryTableName +
-                "." + Entry.CREATION_DATE + " DESC";
+                "." + Entry.ID + " DESC";
 
         final String selection = entryTableName + "." + Entry.VALUE + " LIKE ? OR " +
                 entryTableName + "." + Entry.TRANSLATION + " LIKE ?";

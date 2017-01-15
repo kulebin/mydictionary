@@ -6,8 +6,6 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public final class Api {
 
-    public static final String ENTRIES = "entries";
-    public static final String DICTIONARIES = "dictionaries";
     public static final String JSON_FORMAT = ".json";
     public static final String PARAM_AUTH = "auth";
     public static final String IMAGES_FOLDER = "images/";

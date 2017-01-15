@@ -1,44 +1,49 @@
 package lab.kulebin.mydictionary.model;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.db.annotations.Table;
 import lab.kulebin.mydictionary.db.annotations.dbInteger;
 import lab.kulebin.mydictionary.db.annotations.dbLong;
 import lab.kulebin.mydictionary.db.annotations.dbString;
+import lab.kulebin.mydictionary.json.IJsonBuildable;
 
-@Table(name = "dictionary")
-public class Dictionary {
+@Table(name = "dictionaries")
+public class Dictionary implements IJsonBuildable {
 
-    @dbInteger
-    public static final String ID = "_id";
+    @dbLong
+    public static final String ID = Constants.ID_COLUMN;
     @dbString
     public static final String NAME = "name";
-    @dbLong
-    public static final String CREATION_DATE = "creationDate";
+    @dbInteger
+    public static final String MENU_ID = "menuId";
 
-    private int mId;
+    private long mId;
     private String mName;
-    private long mCreationDate;
+    private int mMenuId;
 
-    public Dictionary(final int pId, final String pName, final long pCreationDate) {
+    public Dictionary(final long pId, final String pName, final int pMenuId) {
         mId = pId;
         mName = pName;
-        mCreationDate = pCreationDate;
+        mMenuId = pMenuId;
     }
 
-    public long getCreationDate() {
-        return mCreationDate;
-    }
-
-    public void setCreationDate(final long pCreationDate) {
-        mCreationDate = pCreationDate;
-    }
-
-    public int getId() {
+    public long getId() {
         return mId;
     }
 
-    public void setId(final int pId) {
+    public void setId(long pId) {
         mId = pId;
+    }
+
+    public int getMenuId() {
+        return mMenuId;
+    }
+
+    public void setMenuId(int pMenuId) {
+        mMenuId = pMenuId;
     }
 
     public String getName() {
@@ -47,5 +52,13 @@ public class Dictionary {
 
     public void setName(final String pName) {
         mName = pName;
+    }
+
+    @Override
+    public String toJson() throws JSONException {
+        final JSONObject jsonObject = new JSONObject();
+        jsonObject.put(MENU_ID, getMenuId());
+        jsonObject.put(NAME, getName());
+        return jsonObject.toString();
     }
 }

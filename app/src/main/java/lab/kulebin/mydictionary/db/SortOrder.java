@@ -9,9 +9,9 @@ public enum SortOrder {
     public String getEntrySortOrderQueryParam() {
         switch (this) {
             case NEWEST:
-                return Entry.CREATION_DATE + Constants.SQL_SORT_QUERY_DESC;
+                return Entry.ID + Constants.SQL_SORT_QUERY_DESC;
             case OLDEST:
-                return Entry.CREATION_DATE + Constants.SQL_SORT_QUERY_ASC;
+                return Entry.ID + Constants.SQL_SORT_QUERY_ASC;
             case A_Z:
                 return Entry.VALUE + Constants.SQL_SORT_QUERY_ASC;
             case Z_A:
