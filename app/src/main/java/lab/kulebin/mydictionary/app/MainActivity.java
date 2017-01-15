@@ -50,13 +50,16 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.adapter.EntryCursorAdapter;
+import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.db.SortOrder;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
 import lab.kulebin.mydictionary.http.IHttpClient;
+import lab.kulebin.mydictionary.json.IJsonBuildable;
 import lab.kulebin.mydictionary.json.JsonHelper;
 import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
+import lab.kulebin.mydictionary.model.Tag;
 import lab.kulebin.mydictionary.service.FetchDataService;
 import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
@@ -218,7 +221,7 @@ public class MainActivity extends AppCompatActivity
     public Loader<Cursor> onCreateLoader(final int pId, final Bundle pArgs) {
 
         mProgressBar.setVisibility(View.VISIBLE);
-        final String dictionarySortOrder = Dictionary.CREATION_DATE + Constants.SQL_SORT_QUERY_DESC;
+        final String dictionarySortOrder = Dictionary.ID + Constants.SQL_SORT_QUERY_DESC;
 
         switch (pId) {
             case ENTRY_LOADER:
@@ -264,24 +267,24 @@ public class MainActivity extends AppCompatActivity
                     final Menu menu = mNavigationView.getMenu();
                     menu.removeGroup(R.id.dictionary_group_navigation_menu);
                     boolean isMenuItemSelected = false;
-                    final int dictionaryIdColumnIndex = pCursor.getColumnIndex(Dictionary.ID);
+                    final int dictionaryMenuIdColumnIndex = pCursor.getColumnIndex(Dictionary.MENU_ID);
                     final int dictionaryNameColumnIndex = pCursor.getColumnIndex(Dictionary.NAME);
                     while (pCursor.moveToNext()) {
-                        final int dictionaryId = pCursor.getInt(dictionaryIdColumnIndex);
+                        final int dictionaryMenuId = pCursor.getInt(dictionaryMenuIdColumnIndex);
                         menu.add(
                                 R.id.dictionary_group_navigation_menu,
-                                dictionaryId,
+                                dictionaryMenuId,
                                 Menu.NONE,
                                 pCursor.getString(dictionaryNameColumnIndex));
-                        if (dictionaryId == mSelectedDictionaryId) {
-                            menu.findItem(dictionaryId).setChecked(true);
+                        if (dictionaryMenuId == mSelectedDictionaryId) {
+                            menu.findItem(dictionaryMenuId).setChecked(true);
                             mToolbar.setTitle(pCursor.getString(dictionaryNameColumnIndex));
                             isMenuItemSelected = true;
                         }
                     }
                     if (!isMenuItemSelected) {
                         pCursor.moveToFirst();
-                        final int firstMenuItemId = pCursor.getInt(dictionaryIdColumnIndex);
+                        final int firstMenuItemId = pCursor.getInt(dictionaryMenuIdColumnIndex);
                         menu.findItem(firstMenuItemId).setChecked(true);
                         mToolbar.setTitle(pCursor.getString(dictionaryNameColumnIndex));
                         mSelectedDictionaryId = firstMenuItemId;
@@ -453,14 +456,14 @@ public class MainActivity extends AppCompatActivity
 
                         final Cursor dictionaryCursor = getContentResolver().query(
                                 UriBuilder.getTableUri(Dictionary.class),
-                                new String[]{Dictionary.CREATION_DATE},
-                                Dictionary.ID + "=?",
+                                new String[]{Dictionary.ID},
+                                Dictionary.MENU_ID + "=?",
                                 new String[]{String.valueOf(mSelectedDictionaryId)},
                                 null);
                         final long dictionaryCreationDate;
                         if (dictionaryCursor != null) {
                             dictionaryCursor.moveToFirst();
-                            dictionaryCreationDate = dictionaryCursor.getLong(dictionaryCursor.getColumnIndex(Dictionary.CREATION_DATE));
+                            dictionaryCreationDate = dictionaryCursor.getLong(dictionaryCursor.getColumnIndex(Dictionary.ID));
                             dictionaryCursor.close();
                         } else {
                             throw new Exception("Dictionary cursor is null");
@@ -469,7 +472,7 @@ public class MainActivity extends AppCompatActivity
                         final Uri dictionaryUri;
                         if (mToken != null) {
                             dictionaryUri = Uri.parse(Api.getBaseUrl()).buildUpon()
-                                    .appendPath(Api.DICTIONARIES)
+                                    .appendPath(DbHelper.getTableName(Dictionary.class))
                                     .appendPath(dictionaryCreationDate + Api.JSON_FORMAT)
                                     .appendQueryParameter(Api.PARAM_AUTH, mToken)
                                     .build();
@@ -492,7 +495,7 @@ public class MainActivity extends AppCompatActivity
                                 if (entryIdsCursor != null) {
                                     while (entryIdsCursor.moveToNext()) {
                                         final Uri entryUri = Uri.parse(Api.getBaseUrl()).buildUpon()
-                                                .appendPath(Api.ENTRIES)
+                                                .appendPath(DbHelper.getTableName(Entry.class))
                                                 .appendPath(entryIdsCursor.getLong(entryIdsCursor.getColumnIndex(Entry.ID))
                                                         + Api.JSON_FORMAT)
                                                 .appendQueryParameter(Api.PARAM_AUTH, mToken)
@@ -615,13 +618,13 @@ public class MainActivity extends AppCompatActivity
                                 null,
                                 Dictionary.ID + " ASC");
 
-                        int dictionaryId = 0;
+                        int menuId = 0;
                         if (cursor != null && cursor.getCount() > 0) {
                             while (cursor.moveToNext()) {
-                                if (dictionaryId != cursor.getInt(cursor.getColumnIndex(Dictionary.ID))) {
+                                if (menuId != cursor.getInt(cursor.getColumnIndex(Dictionary.MENU_ID))) {
                                     break;
                                 }
-                                dictionaryId++;
+                                menuId++;
                             }
                         }
                         if (cursor != null) {
@@ -629,29 +632,29 @@ public class MainActivity extends AppCompatActivity
                         }
 
                         final long creationDate = System.currentTimeMillis();
-                        final Dictionary dictionary = new Dictionary(
-                                dictionaryId,
+                        final IJsonBuildable dictionary = new Dictionary(
+                                creationDate,
                                 pDictionaryName,
-                                creationDate);
+                                menuId);
 
                         final ContentValues values = new ContentValues();
-                        values.put(Dictionary.ID, dictionaryId);
+                        values.put(Dictionary.MENU_ID, menuId);
                         values.put(Dictionary.NAME, pDictionaryName);
-                        values.put(Dictionary.CREATION_DATE, creationDate);
+                        values.put(Dictionary.ID, creationDate);
 
                         final Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
-                                .appendPath(Api.DICTIONARIES)
+                                .appendPath(DbHelper.getTableName(Dictionary.class))
                                 .appendPath(creationDate + Api.JSON_FORMAT)
                                 .appendQueryParameter(Api.PARAM_AUTH, mToken)
                                 .build();
                         final IHttpClient httpClient = new HttpClient();
                         try {
-                            httpClient.put(uri.toString(), null, JsonHelper.buildDictionaryJsonObject(dictionary).toString());
+                            httpClient.put(uri.toString(), null, dictionary.toJson());
                             getContentResolver().insert(
                                     UriBuilder.getTableUri(Dictionary.class),
                                     values
                             );
-                            mSelectedDictionaryId = dictionaryId;
+                            mSelectedDictionaryId = menuId;
                         } catch (final Exception e) {
                             Toast.makeText(getApplicationContext(),
                                     R.string.ERROR_DICTIONARY_NOT_CREATED,
