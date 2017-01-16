@@ -16,7 +16,7 @@ public class Entry implements IJsonBuildable {
     @dbLong
     public static final String ID = Constants.ID_COLUMN;
     @dbLong
-    public static final String DICTIONARY_ID = "dictionaryId";
+    public static final String DICTIONARY_MENU_ID = "dictionaryId";
     @dbString
     public static final String VALUE = "value";
     @dbString
@@ -33,7 +33,7 @@ public class Entry implements IJsonBuildable {
     public static final String USAGE_CONTEXT = "usageContext";
 
     private long mId;
-    private long mDictionaryId;
+    private long mDictionaryMenuId;
     private String mValue;
     private String mTranscription;
     private long mLastEditionDate;
@@ -43,7 +43,7 @@ public class Entry implements IJsonBuildable {
     private String[] mUsageContext;
 
     public Entry(final long pId,
-                 final long pDictionaryId,
+                 final long pDictionaryMenuId,
                  final String pValue,
                  final String pTranscription,
                  final long pLastEditionDate,
@@ -52,7 +52,7 @@ public class Entry implements IJsonBuildable {
                  final String[] pTranslation,
                  final String[] pUsageContext) {
         mId = pId;
-        mDictionaryId = pDictionaryId;
+        mDictionaryMenuId = pDictionaryMenuId;
         mValue = pValue;
         mTranscription = pTranscription;
         mLastEditionDate = pLastEditionDate;
@@ -70,12 +70,12 @@ public class Entry implements IJsonBuildable {
         mId = pId;
     }
 
-    public long getDictionaryId() {
-        return mDictionaryId;
+    public long getDictionaryMenuId() {
+        return mDictionaryMenuId;
     }
 
-    public void setDictionaryId(final long pDictionaryId) {
-        mDictionaryId = pDictionaryId;
+    public void setDictionaryMenuId(final long pDictionaryMenuId) {
+        mDictionaryMenuId = pDictionaryMenuId;
     }
 
     public String getValue() {
@@ -137,7 +137,7 @@ public class Entry implements IJsonBuildable {
     @Override
     public String toJson() throws JSONException {
         final JSONObject jsonObject = new JSONObject();
-        jsonObject.put(DICTIONARY_ID, getDictionaryId());
+        jsonObject.put(DICTIONARY_MENU_ID, getDictionaryMenuId());
         jsonObject.put(VALUE, getValue());
         jsonObject.put(TRANSCRIPTION, getTranscription());
         jsonObject.put(LAST_EDITION_DATE, getLastEditionDate());

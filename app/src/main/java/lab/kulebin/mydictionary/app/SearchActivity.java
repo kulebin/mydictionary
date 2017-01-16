@@ -95,12 +95,12 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
                 entryTableName + "." + Entry.VALUE,
                 entryTableName + "." + Entry.TRANSLATION,
                 entryTableName + "." + Entry.IMAGE_URL,
-                entryTableName + "." + Entry.DICTIONARY_ID,
+                entryTableName + "." + Entry.DICTIONARY_MENU_ID,
                 dictionaryTableName + "." + Dictionary.NAME
         };
 
         final String entrySortOrder = entryTableName +
-                "." + Entry.DICTIONARY_ID + " DESC," +
+                "." + Entry.DICTIONARY_MENU_ID + " DESC," +
                 entryTableName +
                 "." + Entry.ID + " DESC";
 
@@ -154,7 +154,7 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
                 final Cursor cursor = (Cursor) parent.getItemAtPosition(position);
                 if (cursor.moveToPosition(position)) {
                     selectedEntryId = cursor.getLong(cursor.getColumnIndex(Entry.ID));
-                    selectedDictionaryId = cursor.getInt(cursor.getColumnIndex(Entry.DICTIONARY_ID));
+                    selectedDictionaryId = cursor.getInt(cursor.getColumnIndex(Entry.DICTIONARY_MENU_ID));
                     selectedDictionaryName = cursor.getString(cursor.getColumnIndex(Dictionary.NAME));
                 }
 

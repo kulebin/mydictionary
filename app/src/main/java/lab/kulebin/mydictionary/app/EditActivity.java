@@ -207,7 +207,7 @@ public class EditActivity extends AppCompatActivity {
 
                         final ContentValues values = new ContentValues();
                         values.put(Entry.ID, pEntry.getId());
-                        values.put(Entry.DICTIONARY_ID, pEntry.getDictionaryId());
+                        values.put(Entry.DICTIONARY_MENU_ID, pEntry.getDictionaryMenuId());
                         values.put(Entry.VALUE, pEntry.getValue());
                         values.put(Entry.TRANSCRIPTION, pEntry.getTranscription());
                         values.put(Entry.LAST_EDITION_DATE, pEntry.getLastEditionDate());
@@ -303,7 +303,7 @@ public class EditActivity extends AppCompatActivity {
                             mEditTextTranslation.setText(pCursor.getString(pCursor.getColumnIndex(Entry.TRANSLATION)));
                             mEditTextImageUrl.setText(pCursor.getString(pCursor.getColumnIndex(Entry.IMAGE_URL)));
                             mEditTextContextUsage.setText(pCursor.getString(pCursor.getColumnIndex(Entry.USAGE_CONTEXT)));
-                            mDictionaryMenuId = pCursor.getInt(pCursor.getColumnIndex(Entry.DICTIONARY_ID));
+                            mDictionaryMenuId = pCursor.getInt(pCursor.getColumnIndex(Entry.DICTIONARY_MENU_ID));
                             mIsDataChanged = false;
                         }
                     }

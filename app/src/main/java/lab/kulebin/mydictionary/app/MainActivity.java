@@ -56,10 +56,8 @@ import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
 import lab.kulebin.mydictionary.http.IHttpClient;
 import lab.kulebin.mydictionary.json.IJsonBuildable;
-import lab.kulebin.mydictionary.json.JsonHelper;
 import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
-import lab.kulebin.mydictionary.model.Tag;
 import lab.kulebin.mydictionary.service.FetchDataService;
 import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
@@ -88,7 +86,7 @@ public class MainActivity extends AppCompatActivity
     private EntryCursorAdapter mEntryCursorAdapter;
     private NavigationView mNavigationView;
     private Cursor mDictionaryMenuCursor;
-    private int mSelectedDictionaryId;
+    private int mSelectedDictionaryMenuId;
     private Toolbar mToolbar;
     private ProgressBar mProgressBar;
     private String mUserPhotoUrl;
@@ -99,6 +97,109 @@ public class MainActivity extends AppCompatActivity
     private SortOrder mSortOrder;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private ThreadManager mThreadManager;
+
+    @Override
+    protected void onCreate(final Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
+
+        //noinspection WrongConstant
+        mThreadManager = (ThreadManager) getApplication().getSystemService(ThreadManager.APP_SERVICE_KEY);
+
+        mUsername = Constants.ANONYMOUS;
+        mFirebaseAuth = FirebaseAuth.getInstance();
+        mFirebaseUser = mFirebaseAuth.getCurrentUser();
+        signIn();
+
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this, this)
+                .addApi(Auth.GOOGLE_SIGN_IN_API)
+                .build();
+
+        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(final View view) {
+                if (mSelectedDictionaryMenuId == Constants.DEFAULT_SELECTED_DICTIONARY_ID) {
+                    final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+                    alertDialogBuilder
+                            .setMessage(getString(R.string.TEXT_DIALOG_NO_DICTIONARY_ADDED))
+                            .setCancelable(true)
+                            .setPositiveButton(getString(R.string.BUTTON_DIALOG_POSITIVE), new DialogInterface.OnClickListener() {
+
+                                public void onClick(final DialogInterface dialog, final int id) {
+                                    dialog.dismiss();
+                                }
+                            });
+
+                    final AlertDialog alertDialog = alertDialogBuilder.create();
+                    alertDialog.show();
+                } else {
+                    final Intent intent = new Intent(MainActivity.this, EditActivity.class);
+                    intent.putExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE, EditActivity.EditActivityMode.CREATE)
+                            .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
+                    startActivity(intent);
+                }
+            }
+        });
+
+        mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
+        mTextViewNoEntry = (TextView) findViewById(R.id.text_no_entry_in_dictionary);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        final ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, mDrawerLayout, mToolbar, R.string.DESCRIPTION_NAVIGATION_DRAWER_OPEN, R.string.DESCRIPTION_NAVIGATION_DRAWER_CLOSE);
+        mDrawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
+
+        final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
+        mSelectedDictionaryMenuId = shp.getInt(
+                Constants.APP_PREFERENCES_SELECTED_DICTIONARY_ID,
+                Constants.DEFAULT_SELECTED_DICTIONARY_ID);
+        mSortOrder = SortOrder.valueOf(shp.getString(Constants.APP_PREFERENCES_SORT_ORDER, SortOrder.NEWEST.toString()));
+
+        mNavigationView = (NavigationView) findViewById(R.id.nav_view);
+        final View navigationHeaderLayout = mNavigationView.getHeaderView(0);
+        final TextView userNameTextView = (TextView) navigationHeaderLayout.findViewById(R.id.nav_header_user_name);
+        userNameTextView.setText(mUsername);
+        final TextView userEmailTextView = (TextView) navigationHeaderLayout.findViewById(R.id.nav_header_email);
+        userEmailTextView.setText(mUserEmail);
+        final CircleImageView userPhotoImageView = (CircleImageView) navigationHeaderLayout.findViewById(R.id.user_imageView);
+        if (mUserPhotoUrl != null) {
+            Glide.with(this)
+                    .load(mUserPhotoUrl)
+                    .into(userPhotoImageView);
+        } else {
+            final Drawable userPhotoDrawable = VectorDrawableCompat.create(this.getResources(), R.drawable.ic_account_circle_76dp, null);
+            userPhotoImageView.setImageDrawable(userPhotoDrawable);
+        }
+        mNavigationView.setNavigationItemSelectedListener(this);
+
+        getSupportLoaderManager().initLoader(DICTIONARY_LOADER, null, this);
+
+        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
+        mSwipeRefreshLayout.setOnRefreshListener(this);
+
+        final ListView listView = (ListView) findViewById(R.id.listview_entry);
+        mEntryCursorAdapter = new EntryCursorAdapter(this, null, 0);
+        listView.setAdapter(mEntryCursorAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
+                final Intent intent = new Intent(MainActivity.this, EntryActivity.class)
+                        .putExtra(Constants.EXTRA_INTENT_SENDER, MainActivity.class.getSimpleName())
+                        .putExtra(Constants.EXTRA_SELECTED_ENTRY_POSITION, position)
+                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId)
+                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME, mToolbar.getTitle());
+                startActivity(intent);
+            }
+        });
+        getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
+    }
 
     @Override
     public void onBackPressed() {
@@ -200,10 +301,10 @@ public class MainActivity extends AppCompatActivity
                 startCreateDictionaryDialog();
                 break;
             default:
-                mNavigationView.getMenu().findItem(mSelectedDictionaryId).setChecked(false);
+                mNavigationView.getMenu().findItem(mSelectedDictionaryMenuId).setChecked(false);
                 pItem.setChecked(true);
                 mToolbar.setTitle(pItem.getTitle());
-                mSelectedDictionaryId = pItem.getItemId();
+                mSelectedDictionaryMenuId = pItem.getItemId();
                 getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, this);
         }
         mDrawerLayout.closeDrawer(GravityCompat.START);
@@ -229,8 +330,8 @@ public class MainActivity extends AppCompatActivity
                         this,
                         UriBuilder.getTableUri(Entry.class),
                         ENTRY_PROJECTION,
-                        Entry.DICTIONARY_ID + "=?",
-                        new String[]{String.valueOf(mSelectedDictionaryId)},
+                        Entry.DICTIONARY_MENU_ID + "=?",
+                        new String[]{String.valueOf(mSelectedDictionaryMenuId)},
                         mSortOrder.getEntrySortOrderQueryParam());
             case DICTIONARY_LOADER:
                 return new CursorLoader(
@@ -276,7 +377,7 @@ public class MainActivity extends AppCompatActivity
                                 dictionaryMenuId,
                                 Menu.NONE,
                                 pCursor.getString(dictionaryNameColumnIndex));
-                        if (dictionaryMenuId == mSelectedDictionaryId) {
+                        if (dictionaryMenuId == mSelectedDictionaryMenuId) {
                             menu.findItem(dictionaryMenuId).setChecked(true);
                             mToolbar.setTitle(pCursor.getString(dictionaryNameColumnIndex));
                             isMenuItemSelected = true;
@@ -287,7 +388,7 @@ public class MainActivity extends AppCompatActivity
                         final int firstMenuItemId = pCursor.getInt(dictionaryMenuIdColumnIndex);
                         menu.findItem(firstMenuItemId).setChecked(true);
                         mToolbar.setTitle(pCursor.getString(dictionaryNameColumnIndex));
-                        mSelectedDictionaryId = firstMenuItemId;
+                        mSelectedDictionaryMenuId = firstMenuItemId;
                         getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, this);
                     }
                 }
@@ -316,109 +417,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onCreate(final Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(mToolbar);
-
-        //noinspection WrongConstant
-        mThreadManager = (ThreadManager) getApplication().getSystemService(ThreadManager.APP_SERVICE_KEY);
-
-        mUsername = Constants.ANONYMOUS;
-        mFirebaseAuth = FirebaseAuth.getInstance();
-        mFirebaseUser = mFirebaseAuth.getCurrentUser();
-        signIn();
-
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .enableAutoManage(this, this)
-                .addApi(Auth.GOOGLE_SIGN_IN_API)
-                .build();
-
-        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(final View view) {
-                if (mSelectedDictionaryId == Constants.DEFAULT_SELECTED_DICTIONARY_ID) {
-                    final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
-                    alertDialogBuilder
-                            .setMessage(getString(R.string.TEXT_DIALOG_NO_DICTIONARY_ADDED))
-                            .setCancelable(true)
-                            .setPositiveButton(getString(R.string.BUTTON_DIALOG_POSITIVE), new DialogInterface.OnClickListener() {
-
-                                public void onClick(final DialogInterface dialog, final int id) {
-                                    dialog.dismiss();
-                                }
-                            });
-
-                    final AlertDialog alertDialog = alertDialogBuilder.create();
-                    alertDialog.show();
-                } else {
-                    final Intent intent = new Intent(MainActivity.this, EditActivity.class);
-                    intent.putExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE, EditActivity.EditActivityMode.CREATE)
-                            .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryId);
-                    startActivity(intent);
-                }
-            }
-        });
-
-        mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
-        mTextViewNoEntry = (TextView) findViewById(R.id.text_no_entry_in_dictionary);
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        final ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, mDrawerLayout, mToolbar, R.string.DESCRIPTION_NAVIGATION_DRAWER_OPEN, R.string.DESCRIPTION_NAVIGATION_DRAWER_CLOSE);
-        mDrawerLayout.addDrawerListener(toggle);
-        toggle.syncState();
-
-        final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
-        mSelectedDictionaryId = shp.getInt(
-                Constants.APP_PREFERENCES_SELECTED_DICTIONARY_ID,
-                Constants.DEFAULT_SELECTED_DICTIONARY_ID);
-        mSortOrder = SortOrder.valueOf(shp.getString(Constants.APP_PREFERENCES_SORT_ORDER, SortOrder.NEWEST.toString()));
-
-        mNavigationView = (NavigationView) findViewById(R.id.nav_view);
-        final View navigationHeaderLayout = mNavigationView.getHeaderView(0);
-        final TextView userNameTextView = (TextView) navigationHeaderLayout.findViewById(R.id.nav_header_user_name);
-        userNameTextView.setText(mUsername);
-        final TextView userEmailTextView = (TextView) navigationHeaderLayout.findViewById(R.id.nav_header_email);
-        userEmailTextView.setText(mUserEmail);
-        final CircleImageView userPhotoImageView = (CircleImageView) navigationHeaderLayout.findViewById(R.id.user_imageView);
-        if (mUserPhotoUrl != null) {
-            Glide.with(this)
-                    .load(mUserPhotoUrl)
-                    .into(userPhotoImageView);
-        } else {
-            final Drawable userPhotoDrawable = VectorDrawableCompat.create(this.getResources(), R.drawable.ic_account_circle_76dp, null);
-            userPhotoImageView.setImageDrawable(userPhotoDrawable);
-        }
-        mNavigationView.setNavigationItemSelectedListener(this);
-
-        getSupportLoaderManager().initLoader(DICTIONARY_LOADER, null, this);
-
-        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
-        mSwipeRefreshLayout.setOnRefreshListener(this);
-
-        final ListView listView = (ListView) findViewById(R.id.listview_entry);
-        mEntryCursorAdapter = new EntryCursorAdapter(this, null, 0);
-        listView.setAdapter(mEntryCursorAdapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            @Override
-            public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
-                final Intent intent = new Intent(MainActivity.this, EntryActivity.class)
-                        .putExtra(Constants.EXTRA_INTENT_SENDER, MainActivity.class.getSimpleName())
-                        .putExtra(Constants.EXTRA_SELECTED_ENTRY_POSITION, position)
-                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryId)
-                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME, mToolbar.getTitle());
-                startActivity(intent);
-            }
-        });
-        getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
-    }
-
-    @Override
     protected void onStart() {
         super.onStart();
         final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
@@ -434,7 +432,7 @@ public class MainActivity extends AppCompatActivity
         super.onStop();
         final SharedPreferences appPreferences = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
         final SharedPreferences.Editor editor = appPreferences.edit();
-        editor.putInt(Constants.APP_PREFERENCES_SELECTED_DICTIONARY_ID, mSelectedDictionaryId);
+        editor.putInt(Constants.APP_PREFERENCES_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
         editor.putString(Constants.APP_PREFERENCES_SORT_ORDER, mSortOrder.toString());
         editor.apply();
     }
@@ -458,7 +456,7 @@ public class MainActivity extends AppCompatActivity
                                 UriBuilder.getTableUri(Dictionary.class),
                                 new String[]{Dictionary.ID},
                                 Dictionary.MENU_ID + "=?",
-                                new String[]{String.valueOf(mSelectedDictionaryId)},
+                                new String[]{String.valueOf(mSelectedDictionaryMenuId)},
                                 null);
                         final long dictionaryCreationDate;
                         if (dictionaryCursor != null) {
@@ -489,8 +487,8 @@ public class MainActivity extends AppCompatActivity
                                 entryIdsCursor = getContentResolver().query(
                                         UriBuilder.getTableUri(Entry.class),
                                         new String[]{Entry.ID},
-                                        Entry.DICTIONARY_ID + "=?",
-                                        new String[]{String.valueOf(mSelectedDictionaryId)},
+                                        Entry.DICTIONARY_MENU_ID + "=?",
+                                        new String[]{String.valueOf(mSelectedDictionaryMenuId)},
                                         null);
                                 if (entryIdsCursor != null) {
                                     while (entryIdsCursor.moveToNext()) {
@@ -503,7 +501,7 @@ public class MainActivity extends AppCompatActivity
                                         httpClient.delete(entryUri.toString());
                                     }
                                     getContentResolver().delete(
-                                            UriBuilder.getTableUri(Dictionary.class, String.valueOf(mSelectedDictionaryId)),
+                                            UriBuilder.getTableUri(Dictionary.class, String.valueOf(mSelectedDictionaryMenuId)),
                                             null,
                                             null
                                     );
@@ -613,10 +611,10 @@ public class MainActivity extends AppCompatActivity
 
                         final Cursor cursor = getContentResolver().query(
                                 UriBuilder.getTableUri(Dictionary.class),
-                                new String[]{Dictionary.ID},
+                                new String[]{Dictionary.MENU_ID},
                                 null,
                                 null,
-                                Dictionary.ID + " ASC");
+                                Dictionary.MENU_ID + " ASC");
 
                         int menuId = 0;
                         if (cursor != null && cursor.getCount() > 0) {
@@ -654,7 +652,7 @@ public class MainActivity extends AppCompatActivity
                                     UriBuilder.getTableUri(Dictionary.class),
                                     values
                             );
-                            mSelectedDictionaryId = menuId;
+                            mSelectedDictionaryMenuId = menuId;
                         } catch (final Exception e) {
                             Toast.makeText(getApplicationContext(),
                                     R.string.ERROR_DICTIONARY_NOT_CREATED,
@@ -674,18 +672,16 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onSuccess(final Void pVoid) {
                         getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, MainActivity.this);
-                        final Toast toast = Toast.makeText(getApplicationContext(),
+                        Toast.makeText(getApplicationContext(),
                                 R.string.TEXT_RESULT_SUCCESS_DICTIONARY_STORED,
-                                Toast.LENGTH_SHORT);
-                        toast.show();
+                                Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onError(final Exception e) {
-                        final Toast toast = Toast.makeText(getApplicationContext(),
+                        Toast.makeText(getApplicationContext(),
                                 "Error! Dictionary has not been created!",
-                                Toast.LENGTH_SHORT);
-                        toast.show();
+                                Toast.LENGTH_SHORT).show();
                     }
 
                     @Override

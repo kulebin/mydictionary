@@ -72,9 +72,9 @@ public class SearchCursorAdapter extends CursorAdapter {
     public int getItemViewType(final int pPosition) {
         if (mCursor != null && pPosition > 0) {
             mCursor.moveToPosition(pPosition);
-            final int dictionaryId = mCursor.getInt(mCursor.getColumnIndex(Entry.DICTIONARY_ID));
+            final int dictionaryId = mCursor.getInt(mCursor.getColumnIndex(Entry.DICTIONARY_MENU_ID));
             mCursor.moveToPosition(pPosition - 1);
-            if (mCursor.getInt(mCursor.getColumnIndex(Entry.DICTIONARY_ID)) == dictionaryId) {
+            if (mCursor.getInt(mCursor.getColumnIndex(Entry.DICTIONARY_MENU_ID)) == dictionaryId) {
                 mCursor.moveToNext();
                 return VIEW_TYPE_SEARCH;
             }

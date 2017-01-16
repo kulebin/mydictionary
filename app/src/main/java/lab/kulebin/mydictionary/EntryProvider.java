@@ -22,7 +22,7 @@ import static lab.kulebin.mydictionary.utils.UriBuilder.AUTHORITY;
 public class EntryProvider extends ContentProvider {
 
     private static final int ENTRY = 100;
-    private static final int DICTIONARY_BY_DICTIONARY_ID = 101;
+    private static final int DICTIONARY_BY_DICTIONARY_MENU_ID = 101;
     private static final int DICTIONARY = 200;
     private static final int ENTRY_BY_DICTIONARY_ID = 300;
     private static final int DATA_CACHE = 400;
@@ -36,7 +36,7 @@ public class EntryProvider extends ContentProvider {
                 DbHelper.getTableName(Entry.class) + " INNER JOIN " +
                         DbHelper.getTableName(Dictionary.class) +
                         " ON " + DbHelper.getTableName(Entry.class) +
-                        "." + Entry.DICTIONARY_ID +
+                        "." + Entry.DICTIONARY_MENU_ID +
                         " = " + DbHelper.getTableName(Dictionary.class) +
                         "." + Dictionary.ID);
     }
@@ -47,7 +47,7 @@ public class EntryProvider extends ContentProvider {
         final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
         matcher.addURI(AUTHORITY, DbHelper.getTableName(Entry.class), ENTRY);
         matcher.addURI(AUTHORITY, DbHelper.getTableName(Entry.class) + "/" + DbHelper.getTableName(Dictionary.class), ENTRY_BY_DICTIONARY_ID);
-        matcher.addURI(AUTHORITY, DbHelper.getTableName(Dictionary.class) + "/#", DICTIONARY_BY_DICTIONARY_ID);
+        matcher.addURI(AUTHORITY, DbHelper.getTableName(Dictionary.class) + "/#", DICTIONARY_BY_DICTIONARY_MENU_ID);
         matcher.addURI(AUTHORITY, DbHelper.getTableName(Dictionary.class), DICTIONARY);
         matcher.addURI(AUTHORITY, DbHelper.getTableName(DataCache.class), DATA_CACHE);
         return matcher;
@@ -150,12 +150,12 @@ public class EntryProvider extends ContentProvider {
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
         int rowsDeleted;
         switch (sUriMatcher.match(pUri)) {
-            case DICTIONARY_BY_DICTIONARY_ID:
-                final String dictionaryId = pUri.getLastPathSegment();
+            case DICTIONARY_BY_DICTIONARY_MENU_ID:
+                final String dictionaryMenuId = pUri.getLastPathSegment();
                 db.beginTransaction();
                 try {
-                    final int dictionariesDeleted = db.delete(DbHelper.getTableName(Dictionary.class), Dictionary.ID + "=" + dictionaryId, null);
-                    db.delete(DbHelper.getTableName(Entry.class), Entry.DICTIONARY_ID + "=" + dictionaryId, null);
+                    final int dictionariesDeleted = db.delete(DbHelper.getTableName(Dictionary.class), Dictionary.MENU_ID + "=" + dictionaryMenuId, null);
+                    db.delete(DbHelper.getTableName(Entry.class), Entry.DICTIONARY_MENU_ID + "=" + dictionaryMenuId, null);
                     db.setTransactionSuccessful();
                     rowsDeleted = dictionariesDeleted;
                 } finally {

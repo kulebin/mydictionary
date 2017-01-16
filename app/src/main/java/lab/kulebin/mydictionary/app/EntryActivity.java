@@ -40,50 +40,6 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
     private String mIntentSender;
 
     @Override
-    public boolean onOptionsItemSelected(final MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                this.finish();
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public Loader<Cursor> onCreateLoader(final int id, final Bundle args) {
-
-        return new CursorLoader(
-                this,
-                UriBuilder.getTableUri(Entry.class),
-                ENTRY_PROJECTION,
-                Entry.DICTIONARY_ID + "=?",
-                new String[]{String.valueOf(mDictionaryMenuId)},
-                mSortOrder.getEntrySortOrderQueryParam());
-    }
-
-    @Override
-    public void onLoadFinished(final Loader<Cursor> loader, final Cursor cursor) {
-
-        mEntryPagerAdapter = new EntryPagerAdapter(getSupportFragmentManager(), cursor);
-        viewPager.setAdapter(mEntryPagerAdapter);
-
-        if (mIntentSender.equals(SearchActivity.class.getSimpleName())) {
-            while (cursor.moveToNext()) {
-                if (cursor.getLong(cursor.getColumnIndex(Entry.ID)) == mEntryId) {
-                    mEntryPosition = cursor.getPosition();
-                    break;
-                }
-            }
-        }
-        viewPager.setCurrentItem(mEntryPosition);
-    }
-
-    @Override
-    public void onLoaderReset(final Loader<Cursor> loader) {
-        mEntryPagerAdapter.getCursor().close();
-    }
-
-    @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_entry);
@@ -111,5 +67,49 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
                 SortOrder.NEWEST.toString()));
         viewPager = (ViewPager) findViewById(R.id.pager);
         getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(final MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                this.finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(final int id, final Bundle args) {
+
+        return new CursorLoader(
+                this,
+                UriBuilder.getTableUri(Entry.class),
+                ENTRY_PROJECTION,
+                Entry.DICTIONARY_MENU_ID + "=?",
+                new String[]{String.valueOf(mDictionaryMenuId)},
+                mSortOrder.getEntrySortOrderQueryParam());
+    }
+
+    @Override
+    public void onLoadFinished(final Loader<Cursor> loader, final Cursor cursor) {
+
+        mEntryPagerAdapter = new EntryPagerAdapter(getSupportFragmentManager(), cursor);
+        viewPager.setAdapter(mEntryPagerAdapter);
+
+        if (mIntentSender.equals(SearchActivity.class.getSimpleName())) {
+            while (cursor.moveToNext()) {
+                if (cursor.getLong(cursor.getColumnIndex(Entry.ID)) == mEntryId) {
+                    mEntryPosition = cursor.getPosition();
+                    break;
+                }
+            }
+        }
+        viewPager.setCurrentItem(mEntryPosition);
+    }
+
+    @Override
+    public void onLoaderReset(final Loader<Cursor> loader) {
+        mEntryPagerAdapter.getCursor().close();
     }
 }
