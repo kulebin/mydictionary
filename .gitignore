@@ -38,6 +38,3 @@ captures/
 
 # Keystore files
 *.jks
-
-# Google-services congig file
-app/google-services.json
