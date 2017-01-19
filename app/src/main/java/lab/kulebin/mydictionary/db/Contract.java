@@ -3,6 +3,7 @@ package lab.kulebin.mydictionary.db;
 import lab.kulebin.mydictionary.model.DataCache;
 import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
+import lab.kulebin.mydictionary.model.EntryTagMap;
 import lab.kulebin.mydictionary.model.Tag;
 
 public final class Contract {
@@ -11,12 +12,14 @@ public final class Contract {
             Entry.class,
             Dictionary.class,
             DataCache.class,
-            Tag.class
+            Tag.class,
+            EntryTagMap.class
     };
 
     public static final Class<?>[] FETCH_DATA_SET = {
-            Entry.class,
+            Tag.class,
+            EntryTagMap.class,
             Dictionary.class,
-            Tag.class
+            Entry.class
     };
 }

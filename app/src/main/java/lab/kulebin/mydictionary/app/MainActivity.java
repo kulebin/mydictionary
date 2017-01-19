@@ -58,6 +58,7 @@ import lab.kulebin.mydictionary.http.IHttpClient;
 import lab.kulebin.mydictionary.json.IJsonBuildable;
 import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
+import lab.kulebin.mydictionary.model.Tag;
 import lab.kulebin.mydictionary.service.FetchDataService;
 import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
@@ -73,12 +74,7 @@ public class MainActivity extends AppCompatActivity
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int DICTIONARY_LOADER = 0;
     private static final int ENTRY_LOADER = 1;
-    private static final String[] ENTRY_PROJECTION = {
-            Entry.ID,
-            Entry.VALUE,
-            Entry.TRANSLATION,
-            Entry.IMAGE_URL
-    };
+
     DrawerLayout mDrawerLayout;
     private GoogleApiClient mGoogleApiClient;
     private FirebaseAuth mFirebaseAuth;
@@ -328,11 +324,12 @@ public class MainActivity extends AppCompatActivity
             case ENTRY_LOADER:
                 return new CursorLoader(
                         this,
-                        UriBuilder.getTableUri(Entry.class),
-                        ENTRY_PROJECTION,
-                        Entry.DICTIONARY_MENU_ID + "=?",
+                        UriBuilder.getTableUri(Entry.class, Tag.class),
+                        null,
+                        null,
                         new String[]{String.valueOf(mSelectedDictionaryMenuId)},
-                        mSortOrder.getEntrySortOrderQueryParam());
+                        mSortOrder.getEntrySortOrderQueryParam()
+                );
             case DICTIONARY_LOADER:
                 return new CursorLoader(
                         this,
@@ -340,7 +337,8 @@ public class MainActivity extends AppCompatActivity
                         null,
                         null,
                         null,
-                        dictionarySortOrder);
+                        dictionarySortOrder
+                );
             default:
                 return null;
         }

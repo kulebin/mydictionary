@@ -14,6 +14,8 @@ import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.model.DataCache;
 import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
+import lab.kulebin.mydictionary.model.EntryTagMap;
+import lab.kulebin.mydictionary.model.Tag;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
 import static android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE;
@@ -22,10 +24,13 @@ import static lab.kulebin.mydictionary.utils.UriBuilder.AUTHORITY;
 public class EntryProvider extends ContentProvider {
 
     private static final int ENTRY = 100;
-    private static final int DICTIONARY_BY_DICTIONARY_MENU_ID = 101;
+    private static final int ENTRY_BY_DICTIONARY_ID = 101;
+    private static final int ENTRY_WITH_TAGS_RAW_QUERY = 102;
     private static final int DICTIONARY = 200;
-    private static final int ENTRY_BY_DICTIONARY_ID = 300;
-    private static final int DATA_CACHE = 400;
+    private static final int DICTIONARY_BY_DICTIONARY_MENU_ID = 201;
+    private static final int DATA_CACHE = 300;
+    private static final int ENTRY_TAG = 400;
+    private static final int TAG = 500;
     private static final UriMatcher sUriMatcher = buildUriMatcher();
     private static final SQLiteQueryBuilder sEntryByDictionaryIdQueryBuilder;
 
@@ -41,15 +46,38 @@ public class EntryProvider extends ContentProvider {
                         "." + Dictionary.ID);
     }
 
+    public static final String SQL_ENTRY_WITH_TAGS_WITHOUT_SORT_PARAM = "SELECT " +
+            "e." + Entry.ID + ", " +
+            "e." + Entry.VALUE + ", " +
+            "e." + Entry.TRANSLATION + ", " +
+            "e." + Entry.IMAGE_URL + ", " +
+            "GROUP_CONCAT(" +
+            "t." + Tag.NAME + ") AS " + Constants.CURSOR_COLUMN_TAGS +
+            " FROM " +
+            DbHelper.getTableName(Entry.class) + " AS e " +
+            "LEFT JOIN " + DbHelper.getTableName(EntryTagMap.class) + " AS et " +
+            "ON e." + Entry.ID + " = et." + EntryTagMap.ENTRY_ID +
+            " LEFT JOIN " + DbHelper.getTableName(Tag.class) + " AS t " +
+            "ON et." + EntryTagMap.TAG_ID + " = t." + Tag.ID +
+            " WHERE e." + Entry.DICTIONARY_MENU_ID + "=?" +
+            " GROUP BY " +
+            "e." + Entry.ID +
+            " ORDER BY " +
+            "e.";
+
     private DbHelper mDbHelper;
 
     private static UriMatcher buildUriMatcher() {
         final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
         matcher.addURI(AUTHORITY, DbHelper.getTableName(Entry.class), ENTRY);
         matcher.addURI(AUTHORITY, DbHelper.getTableName(Entry.class) + "/" + DbHelper.getTableName(Dictionary.class), ENTRY_BY_DICTIONARY_ID);
+        matcher.addURI(AUTHORITY, DbHelper.getTableName(Entry.class) +
+                "/" + DbHelper.getTableName(Tag.class), ENTRY_WITH_TAGS_RAW_QUERY);
         matcher.addURI(AUTHORITY, DbHelper.getTableName(Dictionary.class) + "/#", DICTIONARY_BY_DICTIONARY_MENU_ID);
         matcher.addURI(AUTHORITY, DbHelper.getTableName(Dictionary.class), DICTIONARY);
         matcher.addURI(AUTHORITY, DbHelper.getTableName(DataCache.class), DATA_CACHE);
+        matcher.addURI(AUTHORITY, DbHelper.getTableName(EntryTagMap.class), ENTRY_TAG);
+        matcher.addURI(AUTHORITY, DbHelper.getTableName(Tag.class), TAG);
         return matcher;
     }
 
@@ -73,6 +101,12 @@ public class EntryProvider extends ContentProvider {
                         null,
                         null,
                         pSortOrder
+                );
+                break;
+            case ENTRY_WITH_TAGS_RAW_QUERY:
+                retCursor = mDbHelper.getReadableDatabase().rawQuery(
+                        SQL_ENTRY_WITH_TAGS_WITHOUT_SORT_PARAM + pSortOrder,
+                        pSelArgs
                 );
                 break;
             default:
@@ -193,6 +227,10 @@ public class EntryProvider extends ContentProvider {
                 return Dictionary.class;
             case DATA_CACHE:
                 return DataCache.class;
+            case TAG:
+                return Tag.class;
+            case ENTRY_TAG:
+                return EntryTagMap.class;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + pUri);
         }

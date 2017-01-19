@@ -27,7 +27,10 @@ public final class UriBuilder {
     }
 
     public static Uri getTableUri(final AnnotatedElement pClazz, final String pParam) {
-        return BASE_CONTENT_URI.buildUpon().appendPath(DbHelper.getTableName(pClazz)).appendPath(pParam).build();
+        return BASE_CONTENT_URI.buildUpon()
+                .appendPath(DbHelper.getTableName(pClazz))
+                .appendPath(pParam)
+                .build();
     }
 
     public static Uri getItemUri(final AnnotatedElement pClazz, final long pId) {

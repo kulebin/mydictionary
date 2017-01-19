@@ -12,9 +12,7 @@ public class EntryTagMap {
     @dbLong
     public static final String ID = Constants.ID_COLUMN;
     @dbLong
-    @dbUnique
     public static final String ENTRY_ID = "entryId";
-    @dbUnique
     @dbLong
     public static final String TAG_ID = "tagId";
 

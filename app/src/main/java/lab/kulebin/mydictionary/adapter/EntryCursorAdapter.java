@@ -8,12 +8,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
+import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.model.Entry;
+import lab.kulebin.mydictionary.model.Tag;
+import lab.kulebin.mydictionary.utils.Converter;
 
 public class EntryCursorAdapter extends CursorAdapter {
 
@@ -37,6 +41,18 @@ public class EntryCursorAdapter extends CursorAdapter {
         final EntryViewHolder holder = (EntryViewHolder) view.getTag();
         holder.entryValueTextView.setText(cursor.getString(cursor.getColumnIndex(Entry.VALUE)));
         holder.entryTranslationTextView.setText(cursor.getString(cursor.getColumnIndex(Entry.TRANSLATION)));
+        holder.entryTagList.removeAllViews();
+        final String tagsStr = cursor.getString(cursor.getColumnIndex(Constants.CURSOR_COLUMN_TAGS));
+        if(tagsStr!=null){
+            final String[] tagList = tagsStr.split(",");
+            final LayoutInflater inflater = LayoutInflater.from(context);
+            for (final String tag : tagList) {
+                final TextView tagView = (TextView) inflater.inflate(R.layout.view_tag, holder.entryTagList, false);
+                tagView.setText(tag);
+                holder.entryTagList.addView(tagView);
+            }
+        }
+
         final String url = cursor.getString(cursor.getColumnIndex(Entry.IMAGE_URL));
         Glide.with(mContext)
                 .load(url)
@@ -50,11 +66,13 @@ public class EntryCursorAdapter extends CursorAdapter {
         TextView entryValueTextView;
         TextView entryTranslationTextView;
         ImageView entryImageView;
+        LinearLayout entryTagList;
 
         public EntryViewHolder(final View v) {
             entryValueTextView = (TextView) v.findViewById(R.id.entry_value);
             entryTranslationTextView = (TextView) v.findViewById(R.id.entry_translate);
             entryImageView = (ImageView) v.findViewById(R.id.entry_image);
+            entryTagList = (LinearLayout) v.findViewById(R.id.entry_tag_list);
         }
     }
 }
