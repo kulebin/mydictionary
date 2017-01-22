@@ -20,7 +20,7 @@ public final class DataCache {
     @dbLong
     public static final String LAST_REQUESTED_TIME = "lastRequestedTime";
 
-    private static final long LIVE_TIME = DateUtils.MINUTE_IN_MILLIS * 120;
+    private static final long LIFE_TIME = DateUtils.MINUTE_IN_MILLIS * 120;
 
     public static boolean isDataRefreshNeeded(final Context pContext, final String pUrl) {
         final Cursor cursor = pContext.getContentResolver().query(
@@ -33,7 +33,7 @@ public final class DataCache {
         if (cursor != null && cursor.moveToFirst()) {
             final long lastRequestedTime = cursor.getLong(cursor.getColumnIndex(DataCache.LAST_REQUESTED_TIME));
             cursor.close();
-            return (System.currentTimeMillis() - lastRequestedTime) > LIVE_TIME;
+            return (System.currentTimeMillis() - lastRequestedTime) > LIFE_TIME;
         } else if (cursor != null) {
             cursor.close();
         }

@@ -8,7 +8,7 @@
     <string name="ERROR_FILE_NOT_FOUND">Error: File not found!</string>
     <string name="ERROR_FILE_NOT_UPLOADED">Error: Photo is not uploaded!</string>
     <string name="ERROR_AUTHENTICATION_FAILED">Authentication failed.</string>
-    <string name="ERROR_DICTIONARY_NOT_CREATED">Dictionary is not created!</string>
+    <string name="ERROR_DICTIONARY_NOT_CREATED">Error! Dictionary is not created!</string>
     <string name="ERROR_ENTRY_NOT_DELETED">Error! The Entry has not been deleted.</string>
     <string name="ERROR_DICTIONARY_NOT_DELETED">Error! The Dictionary has not been deleted.</string>
     <string name="ERROR_ENTRY_NOT_FOUND">Oops! Entry not found!</string>

@@ -40,7 +40,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.firebase.auth.FirebaseAuth;
@@ -66,8 +65,6 @@ import lab.kulebin.mydictionary.thread.ProgressCallback;
 import lab.kulebin.mydictionary.thread.ThreadManager;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
-import static lab.kulebin.mydictionary.Constants.ANONYMOUS;
-
 public class MainActivity extends AppCompatActivity
         implements LoaderManager.LoaderCallbacks<Cursor>, NavigationView.OnNavigationItemSelectedListener, SwipeRefreshLayout.OnRefreshListener, GoogleApiClient.OnConnectionFailedListener {
 
@@ -75,10 +72,8 @@ public class MainActivity extends AppCompatActivity
     private static final int DICTIONARY_LOADER = 0;
     private static final int ENTRY_LOADER = 1;
 
-    DrawerLayout mDrawerLayout;
-    private GoogleApiClient mGoogleApiClient;
+    private DrawerLayout mDrawerLayout;
     private FirebaseAuth mFirebaseAuth;
-    private FirebaseUser mFirebaseUser;
     private EntryCursorAdapter mEntryCursorAdapter;
     private NavigationView mNavigationView;
     private Cursor mDictionaryMenuCursor;
@@ -86,8 +81,6 @@ public class MainActivity extends AppCompatActivity
     private Toolbar mToolbar;
     private ProgressBar mProgressBar;
     private String mUserPhotoUrl;
-    private String mUsername;
-    private String mUserEmail;
     private String mToken;
     private TextView mTextViewNoEntry;
     private SortOrder mSortOrder;
@@ -105,41 +98,23 @@ public class MainActivity extends AppCompatActivity
         //noinspection WrongConstant
         mThreadManager = (ThreadManager) getApplication().getSystemService(ThreadManager.APP_SERVICE_KEY);
 
-        mUsername = Constants.ANONYMOUS;
         mFirebaseAuth = FirebaseAuth.getInstance();
-        mFirebaseUser = mFirebaseAuth.getCurrentUser();
-        signIn();
-
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .enableAutoManage(this, this)
-                .addApi(Auth.GOOGLE_SIGN_IN_API)
-                .build();
+        final FirebaseUser firebaseUser = mFirebaseAuth.getCurrentUser();
+        String username = firebaseUser.getDisplayName();
+        if (username == null) {
+            username = Constants.ANONYMOUS;
+        }
+        if (firebaseUser.getPhotoUrl() != null) {
+            mUserPhotoUrl = firebaseUser.getPhotoUrl().toString();
+        }
+        final String userEmail = firebaseUser.getEmail();
 
         final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(final View view) {
-                if (mSelectedDictionaryMenuId == Constants.DEFAULT_SELECTED_DICTIONARY_ID) {
-                    final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
-                    alertDialogBuilder
-                            .setMessage(getString(R.string.TEXT_DIALOG_NO_DICTIONARY_ADDED))
-                            .setCancelable(true)
-                            .setPositiveButton(getString(R.string.BUTTON_DIALOG_POSITIVE), new DialogInterface.OnClickListener() {
-
-                                public void onClick(final DialogInterface dialog, final int id) {
-                                    dialog.dismiss();
-                                }
-                            });
-
-                    final AlertDialog alertDialog = alertDialogBuilder.create();
-                    alertDialog.show();
-                } else {
-                    final Intent intent = new Intent(MainActivity.this, EditActivity.class);
-                    intent.putExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE, EditActivity.EditActivityMode.CREATE)
-                            .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
-                    startActivity(intent);
-                }
+                onFabClick();
             }
         });
 
@@ -160,9 +135,9 @@ public class MainActivity extends AppCompatActivity
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         final View navigationHeaderLayout = mNavigationView.getHeaderView(0);
         final TextView userNameTextView = (TextView) navigationHeaderLayout.findViewById(R.id.nav_header_user_name);
-        userNameTextView.setText(mUsername);
+        userNameTextView.setText(username);
         final TextView userEmailTextView = (TextView) navigationHeaderLayout.findViewById(R.id.nav_header_email);
-        userEmailTextView.setText(mUserEmail);
+        userEmailTextView.setText(userEmail);
         final CircleImageView userPhotoImageView = (CircleImageView) navigationHeaderLayout.findViewById(R.id.user_imageView);
         if (mUserPhotoUrl != null) {
             Glide.with(this)
@@ -186,15 +161,42 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
-                final Intent intent = new Intent(MainActivity.this, EntryActivity.class)
-                        .putExtra(Constants.EXTRA_INTENT_SENDER, MainActivity.class.getSimpleName())
-                        .putExtra(Constants.EXTRA_SELECTED_ENTRY_POSITION, position)
-                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId)
-                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME, mToolbar.getTitle());
-                startActivity(intent);
+                onEntryListItemClick(position);
             }
         });
         getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
+    }
+
+    private void onEntryListItemClick(int position) {
+        final Intent intent = new Intent(MainActivity.this, EntryActivity.class)
+                .putExtra(Constants.EXTRA_INTENT_SENDER, MainActivity.class.getSimpleName())
+                .putExtra(Constants.EXTRA_SELECTED_ENTRY_POSITION, position)
+                .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId)
+                .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME, mToolbar.getTitle());
+        startActivity(intent);
+    }
+
+    private void onFabClick() {
+        if (mSelectedDictionaryMenuId == Constants.DEFAULT_SELECTED_DICTIONARY_ID) {
+            final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+            alertDialogBuilder
+                    .setMessage(getString(R.string.TEXT_DIALOG_NO_DICTIONARY_ADDED))
+                    .setCancelable(true)
+                    .setPositiveButton(getString(R.string.BUTTON_DIALOG_POSITIVE), new DialogInterface.OnClickListener() {
+
+                        public void onClick(final DialogInterface dialog, final int id) {
+                            dialog.dismiss();
+                        }
+                    });
+
+            final AlertDialog alertDialog = alertDialogBuilder.create();
+            alertDialog.show();
+        } else {
+            final Intent intent = new Intent(MainActivity.this, EditActivity.class);
+            intent.putExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE, EditActivity.EditActivityMode.CREATE)
+                    .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
+            startActivity(intent);
+        }
     }
 
     @Override
@@ -233,61 +235,54 @@ public class MainActivity extends AppCompatActivity
                 startActivity(intent);
                 return true;
             case R.id.sort_by_newest:
-                if (mSortOrder != SortOrder.NEWEST) {
-                    mSortOrder = SortOrder.NEWEST;
-                    pItem.setChecked(true);
-                    getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, this);
-                }
-                return true;
+                return onSortMenuOptionSelected(pItem, SortOrder.NEWEST);
             case R.id.sort_by_oldest:
-                if (mSortOrder != SortOrder.OLDEST) {
-                    mSortOrder = SortOrder.OLDEST;
-                    pItem.setChecked(true);
-                    getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, this);
-                }
-                return true;
+                return onSortMenuOptionSelected(pItem, SortOrder.OLDEST);
             case R.id.sort_by_a_z:
-                if (mSortOrder != SortOrder.A_Z) {
-                    mSortOrder = SortOrder.A_Z;
-                    pItem.setChecked(true);
-                    getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, this);
-                }
-                return true;
+                return onSortMenuOptionSelected(pItem, SortOrder.A_Z);
             case R.id.sort_by_z_a:
-                if (mSortOrder != SortOrder.Z_A) {
-                    mSortOrder = SortOrder.Z_A;
-                    pItem.setChecked(true);
-                    getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, this);
-                }
-                return true;
+                return onSortMenuOptionSelected(pItem, SortOrder.Z_A);
             case R.id.action_sign_out:
                 signOut();
                 return true;
             case R.id.action_delete_dictionary:
-                final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-                alertDialogBuilder.setTitle(getString(R.string.TITLE_DIALOG_CONFIRM_ENTRY_DELETION));
-                alertDialogBuilder
-                        .setMessage(getString(R.string.TEXT_DIALOG_CONFIRM_DICTIONARY_DELETION))
-                        .setCancelable(true)
-                        .setPositiveButton(getString(R.string.BUTTON_DIALOG_POSITIVE), new DialogInterface.OnClickListener() {
-
-                            public void onClick(final DialogInterface dialog, final int id) {
-                                deleteDictionaryTask();
-                            }
-                        })
-                        .setNegativeButton(getString(R.string.BUTTON_DIALOG_NEGATIVE), new DialogInterface.OnClickListener() {
-
-                            public void onClick(final DialogInterface dialog, final int id) {
-                                dialog.cancel();
-                            }
-                        });
-
-                final AlertDialog alertDialog = alertDialogBuilder.create();
-                alertDialog.show();
-                return true;
+                return onDeleteDictionaryMenuOptionSelected();
             default:
                 return super.onOptionsItemSelected(pItem);
         }
+    }
+
+    private boolean onDeleteDictionaryMenuOptionSelected() {
+        final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setTitle(getString(R.string.TITLE_DIALOG_CONFIRM_ENTRY_DELETION));
+        alertDialogBuilder
+                .setMessage(getString(R.string.TEXT_DIALOG_CONFIRM_DICTIONARY_DELETION))
+                .setCancelable(true)
+                .setPositiveButton(getString(R.string.BUTTON_DIALOG_POSITIVE), new DialogInterface.OnClickListener() {
+
+                    public void onClick(final DialogInterface dialog, final int id) {
+                        deleteDictionaryTask();
+                    }
+                })
+                .setNegativeButton(getString(R.string.BUTTON_DIALOG_NEGATIVE), new DialogInterface.OnClickListener() {
+
+                    public void onClick(final DialogInterface dialog, final int id) {
+                        dialog.cancel();
+                    }
+                });
+
+        final AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
+        return true;
+    }
+
+    private boolean onSortMenuOptionSelected(final MenuItem pItem, final SortOrder pSortOrder) {
+        if (mSortOrder != pSortOrder) {
+            mSortOrder = pSortOrder;
+            pItem.setChecked(true);
+            getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, this);
+        }
+        return true;
     }
 
     @Override
@@ -318,7 +313,7 @@ public class MainActivity extends AppCompatActivity
     public Loader<Cursor> onCreateLoader(final int pId, final Bundle pArgs) {
 
         mProgressBar.setVisibility(View.VISIBLE);
-        final String dictionarySortOrder = Dictionary.ID + Constants.SQL_SORT_QUERY_DESC;
+        final String dictionarySortOrder = Dictionary.ID + SortOrder.SQL_SORT_QUERY_DESC;
 
         switch (pId) {
             case ENTRY_LOADER:
@@ -678,7 +673,7 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onError(final Exception e) {
                         Toast.makeText(getApplicationContext(),
-                                "Error! Dictionary has not been created!",
+                                R.string.ERROR_DICTIONARY_NOT_CREATED,
                                 Toast.LENGTH_SHORT).show();
                     }
 
@@ -690,23 +685,8 @@ public class MainActivity extends AppCompatActivity
         );
     }
 
-    private void signIn() {
-        if (mFirebaseUser == null) {
-            startActivity(new Intent(this, SignInActivity.class));
-            finish();
-        } else {
-            mUsername = mFirebaseUser.getDisplayName();
-            if (mFirebaseUser.getPhotoUrl() != null) {
-                mUserPhotoUrl = mFirebaseUser.getPhotoUrl().toString();
-            }
-            mUserEmail = mFirebaseUser.getEmail();
-        }
-    }
-
     private void signOut() {
         mFirebaseAuth.signOut();
-        Auth.GoogleSignInApi.signOut(mGoogleApiClient);
-        mUsername = ANONYMOUS;
         startActivity(new Intent(this, SignInActivity.class));
         finish();
     }

@@ -1,80 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    android:id="@+id/activity_edit"
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    tools:context="lab.kulebin.mydictionary.app.EditActivity"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:layout_margin="10dp"
-    tools:context="lab.kulebin.mydictionary.app.EditActivity">
+    android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/text_title_value"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:textStyle="italic"
-        android:text="@string/TITLE_ENTRY_VALUE"/>
-
-    <EditText
-        android:id="@+id/edit_text_value"
+    <LinearLayout
+        android:id="@+id/activity_edit"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:inputType="text"/>
+        android:orientation="vertical"
+        android:layout_margin="10dp">
 
-    <TextView
-        android:id="@+id/text_title_translation"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:textStyle="italic"
-        android:text="@string/TITLE_ENTRY_TRANSLATION"/>
+        <TextView
+            android:id="@+id/text_title_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="italic"
+            android:text="@string/TITLE_ENTRY_VALUE"/>
 
-    <EditText
-        android:id="@+id/edit_text_translation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:inputType="text"/>
+        <EditText
+            android:id="@+id/edit_text_value"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:inputType="text"/>
 
-    <TextView
-        android:id="@+id/text_title_context_usage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:textStyle="italic"
-        android:text="@string/TITLE_ENTRY_CONTEXT_USAGE"/>
+        <TextView
+            android:id="@+id/text_title_translation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="italic"
+            android:text="@string/TITLE_ENTRY_TRANSLATION"/>
 
-    <EditText
-        android:id="@+id/edit_text_context_usage"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:inputType="text"/>
+        <EditText
+            android:id="@+id/edit_text_translation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:inputType="text"/>
 
-    <TextView
-        android:id="@+id/text_title_image_url"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:textStyle="italic"
-        android:text="@string/TITLE_ENTRY_IMAGE_URL"/>
+        <TextView
+            android:id="@+id/text_title_context_usage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="italic"
+            android:text="@string/TITLE_ENTRY_CONTEXT_USAGE"/>
 
-    <EditText
-        android:id="@+id/edit_text_image_url"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:inputType="textUri"/>
+        <EditText
+            android:id="@+id/edit_text_context_usage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:inputType="text"/>
 
-    <Button
-        android:id="@+id/button_create"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:enabled="false"
-        android:theme="@style/ThemeOverlay.MyDarkButton"/>
+        <TextView
+            android:id="@+id/text_title_image_url"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="italic"
+            android:text="@string/TITLE_ENTRY_IMAGE_URL"/>
 
-</LinearLayout>
+        <EditText
+            android:id="@+id/edit_text_image_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:inputType="textUri"/>
+
+        <Button
+            android:id="@+id/button_create"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:enabled="false"
+            android:theme="@style/ThemeOverlay.MyDarkButton"/>
+
+    </LinearLayout>
+
+</ScrollView>
