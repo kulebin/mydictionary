@@ -57,7 +57,7 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
             public boolean onQueryTextChange(final String newText) {
                 final Bundle bundle = new Bundle();
                 bundle.putString(SEARCH_QUERY_PARAM, newText);
-                if (!"".equals(newText)) {
+                if (!"".equals(newText)) {  //TODO we have TextUtils.isEmpty() method to check
                     getSupportLoaderManager().restartLoader(SEARCH_RESULT_LOADER, bundle, SearchActivity.this);
                 } else {
                     mSearchResultCursorAdapter.swapCursor(null);
@@ -151,13 +151,13 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
                 long selectedEntryId = Constants.ENTRY_ID_EMPTY;
                 int selectedDictionaryId = Constants.DEFAULT_SELECTED_DICTIONARY_ID;
                 String selectedDictionaryName = null;
-                final Cursor cursor = (Cursor) parent.getItemAtPosition(position);
+                final Cursor cursor = (Cursor) parent.getItemAtPosition(position); //TODO getItemAtPosition returns cursor already at requested position
                 if (cursor.moveToPosition(position)) {
                     selectedEntryId = cursor.getLong(cursor.getColumnIndex(Entry.ID));
                     selectedDictionaryId = cursor.getInt(cursor.getColumnIndex(Entry.DICTIONARY_MENU_ID));
                     selectedDictionaryName = cursor.getString(cursor.getColumnIndex(Dictionary.NAME));
                 }
-
+                //TODO if you have some logic at if ... else block, be shure that default behavior is expected
                 final Intent intent = new Intent(SearchActivity.this, EntryActivity.class)
                         .putExtra(Constants.EXTRA_INTENT_SENDER, SearchActivity.class.getSimpleName())
                         .putExtra(Constants.EXTRA_ENTRY_ID, selectedEntryId)

@@ -35,6 +35,7 @@ import lab.kulebin.mydictionary.thread.ThreadManager;
 import lab.kulebin.mydictionary.utils.Converter;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
+//TODO let this activity have base part, and one child to edit, other to create new item
 public class EditActivity extends AppCompatActivity {
 
     public static final String TAG = EditActivity.class.getSimpleName();
@@ -83,6 +84,7 @@ public class EditActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    //TODO method is too long
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -101,6 +103,7 @@ public class EditActivity extends AppCompatActivity {
         mEditTextImageUrl = (EditText) findViewById(R.id.edit_text_image_url);
         mEntryCreateButton = (Button) findViewById(R.id.button_create);
 
+        //TODO update logic
         final Intent intent = getIntent();
         if (intent.hasExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE)) {
             mEditActivityMode = (EditActivityMode) intent.getSerializableExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE);
@@ -325,5 +328,6 @@ public class EditActivity extends AppCompatActivity {
         );
     }
 
+    //TODO you can check if you edit or create item if you have id in intent
     public enum EditActivityMode {CREATE, EDIT}
 }

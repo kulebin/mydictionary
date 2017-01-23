@@ -37,6 +37,7 @@ import lab.kulebin.mydictionary.utils.UriBuilder;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
+//TODO check for duplicates
 public class SignInActivity extends AppCompatActivity implements
         GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
 
@@ -95,11 +96,13 @@ public class SignInActivity extends AppCompatActivity implements
     @Override
     public void onStop() {
         super.onStop();
+        //TODO can mAuthListener be null?
         if (mAuthListener != null) {
             mFirebaseAuth.removeAuthStateListener(mAuthListener);
         }
     }
 
+    //TODO better style if the order of methods is the same as they are called (onCreate is called before onStop, etc.)
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -109,6 +112,7 @@ public class SignInActivity extends AppCompatActivity implements
         setSignInGoogleButtonText(signInButton, getString(R.string.BUTTON_SIGN_IN_WITH_GOGGLE));
         signInButton.setOnClickListener(this);
 
+        //TODO we need GoogleApiClient only when we click sign in with google
         final GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
@@ -132,6 +136,7 @@ public class SignInActivity extends AppCompatActivity implements
                 final FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null && isAuthStateChanged) {
                     isAuthStateChanged = false;
+                    //TODO better approach to clear data when user logouts
                     clearAllData();
                     storeToken(user);
                 }

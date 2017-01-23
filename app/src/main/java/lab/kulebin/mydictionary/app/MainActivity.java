@@ -423,6 +423,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onStop() {
         super.onStop();
+        //TODO is it ok to store preferences only onStop()? what if we change order and open entry details.
+        //http://startandroid.ru/ru/uroki/vse-uroki-spiskom/61-urok-24-activity-lifecycle-primer-smeny-sostojanij-s-dvumja-activity.html
         final SharedPreferences appPreferences = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
         final SharedPreferences.Editor editor = appPreferences.edit();
         editor.putInt(Constants.APP_PREFERENCES_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);

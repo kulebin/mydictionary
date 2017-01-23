@@ -58,9 +58,12 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
         } else if (mIntentSender.equals(SearchActivity.class.getSimpleName())) {
             mEntryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, Constants.ENTRY_ID_EMPTY);
         }
+        // TODO params are used only once, you don't need to create fields for them
         mDictionaryMenuId = intent.getIntExtra(
                 Constants.EXTRA_SELECTED_DICTIONARY_ID,
                 Constants.DEFAULT_SELECTED_DICTIONARY_ID);
+
+        //TODO we get saved order here and in main activity, it's a good point to move this lines to one place
         final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
         mSortOrder = SortOrder.valueOf(shp.getString(
                 Constants.APP_PREFERENCES_SORT_ORDER,
@@ -69,6 +72,7 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
         getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
     }
 
+    //TODO isn't it default behaviour?
     @Override
     public boolean onOptionsItemSelected(final MenuItem item) {
         switch (item.getItemId()) {
@@ -97,6 +101,7 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
         mEntryPagerAdapter = new EntryPagerAdapter(getSupportFragmentManager(), cursor);
         viewPager.setAdapter(mEntryPagerAdapter);
 
+        //TODO check if mEntryId exists and is valid, try to use as less params, as possible
         if (mIntentSender.equals(SearchActivity.class.getSimpleName())) {
             while (cursor.moveToNext()) {
                 if (cursor.getLong(cursor.getColumnIndex(Entry.ID)) == mEntryId) {
