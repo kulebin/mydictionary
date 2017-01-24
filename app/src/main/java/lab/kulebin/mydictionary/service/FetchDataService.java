@@ -1,11 +1,14 @@
 package lab.kulebin.mydictionary.service;
 
 import android.app.IntentService;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import org.json.JSONException;
@@ -26,10 +29,30 @@ import lab.kulebin.mydictionary.utils.UriBuilder;
 
 public class FetchDataService extends IntentService {
 
+    public enum FetchDataServiceMode {SYNCHRONIZE, REFRESH}
+
     private static final String TAG = FetchDataService.class.getSimpleName();
+
+    private final BroadcastReceiver mRefreshTokenReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(final Context context, final Intent intent) {
+
+            mToken = getToken();
+        }
+    };
 
     public FetchDataService() {
         super(TAG);
+    }
+
+    private String mToken;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        LocalBroadcastManager.getInstance(this).registerReceiver(mRefreshTokenReceiver,
+                new IntentFilter(HttpClient.BROADCAST_EVENT_TOKEN_REFRESHED));
     }
 
     @Override
@@ -39,8 +62,7 @@ public class FetchDataService extends IntentService {
             serviceMode = FetchDataServiceMode.valueOf(
                     intent.getStringExtra(Constants.EXTRA_FETCH_DATA_SERVICE_MODE));
         }
-        final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
-        final String token = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
+        mToken = getToken();
         for (final Class model : Contract.FETCH_DATA_SET) {
 
             final String url = Uri.parse(Api.getBaseUrl()).buildUpon()
@@ -49,7 +71,7 @@ public class FetchDataService extends IntentService {
                     .toString();
             if (DataCache.isDataRefreshNeeded(this, url) || serviceMode == FetchDataServiceMode.REFRESH) {
                 final String fullUrl = Uri.parse(url).buildUpon()
-                        .appendQueryParameter(Api.PARAM_AUTH, token)
+                        .appendQueryParameter(Api.PARAM_AUTH, mToken)
                         .build()
                         .toString();
                 final List<ContentValues> list = fetchData(fullUrl, model);
@@ -66,6 +88,17 @@ public class FetchDataService extends IntentService {
                 }
             }
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mRefreshTokenReceiver);
+        super.onDestroy();
+    }
+
+    private String getToken() {
+        final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
+        return shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
     }
 
     private List<ContentValues> fetchData(final String pUrl, final Class pClazz) {
@@ -91,6 +124,4 @@ public class FetchDataService extends IntentService {
         }
         return -1;
     }
-
-    public enum FetchDataServiceMode {SYNCHRONIZE, REFRESH}
 }

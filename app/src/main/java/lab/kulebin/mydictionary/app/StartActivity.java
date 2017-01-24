@@ -30,7 +30,6 @@ public class StartActivity extends AppCompatActivity {
                 if (firebaseUser == null) {
                     intent = new Intent(StartActivity.this, SignInActivity.class);
                 } else {
-                    firebaseUser.reload();
                     intent = new Intent(StartActivity.this, MainActivity.class);
                 }
                 startActivity(intent);

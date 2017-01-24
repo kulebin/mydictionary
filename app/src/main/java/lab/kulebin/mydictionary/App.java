@@ -5,6 +5,7 @@ import android.app.Application;
 import com.facebook.stetho.Stetho;
 
 import lab.kulebin.mydictionary.thread.ThreadManager;
+import lab.kulebin.mydictionary.utils.ContextHolder;
 
 public class App extends Application {
 
@@ -12,6 +13,7 @@ public class App extends Application {
 
     public void onCreate() {
         super.onCreate();
+        ContextHolder.set(this);
         Stetho.initializeWithDefaults(this);
         mThreadManager = new ThreadManager();
     }
