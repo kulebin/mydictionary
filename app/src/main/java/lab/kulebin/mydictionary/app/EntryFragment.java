@@ -2,10 +2,8 @@ package lab.kulebin.mydictionary.app;
 
 import android.app.AlertDialog;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -48,6 +46,7 @@ import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
 import lab.kulebin.mydictionary.http.IHttpClient;
+import lab.kulebin.mydictionary.http.UrlBuilder;
 import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
@@ -331,16 +330,10 @@ public class EntryFragment extends Fragment {
 
                     @Override
                     public Void perform(final Long pEntryId, final ProgressCallback<Void> progressCallback) throws Exception {
-                        final SharedPreferences shp = getActivity().getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
-                        final String token = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
-                        final Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
-                                .appendPath(DbHelper.getTableName(Entry.class))
-                                .appendPath(pEntryId + Api.JSON_FORMAT)
-                                .appendQueryParameter(Api.PARAM_AUTH, token)
-                                .build();
                         final IHttpClient httpClient = new HttpClient();
+                        final String url = UrlBuilder.getPersonalisedUrl(new String[]{DbHelper.getTableName(Entry.class)}, null);
                         try {
-                            if (httpClient.delete(uri.toString()).equals(HttpClient.DELETE_RESPONSE_OK)) {
+                            if (httpClient.delete(url).equals(HttpClient.DELETE_RESPONSE_OK)) {
                                 getContext().getContentResolver().delete(
                                         UriBuilder.getTableUri(Entry.class),
                                         Entry.ID + "=?",

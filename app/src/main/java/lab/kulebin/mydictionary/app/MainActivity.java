@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -26,7 +25,6 @@ import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -51,9 +49,9 @@ import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.adapter.EntryCursorAdapter;
 import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.db.SortOrder;
-import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
 import lab.kulebin.mydictionary.http.IHttpClient;
+import lab.kulebin.mydictionary.http.UrlBuilder;
 import lab.kulebin.mydictionary.json.IJsonBuildable;
 import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
@@ -81,7 +79,6 @@ public class MainActivity extends AppCompatActivity
     private Toolbar mToolbar;
     private ProgressBar mProgressBar;
     private String mUserPhotoUrl;
-    private String mToken;
     private TextView mTextViewNoEntry;
     private SortOrder mSortOrder;
     private SwipeRefreshLayout mSwipeRefreshLayout;
@@ -399,25 +396,19 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onRefresh() {
-        if (mToken != null) {
-            mSwipeRefreshLayout.setRefreshing(true);
-            final Intent serviceIntent = new Intent(this, FetchDataService.class);
-            serviceIntent.putExtra(
-                    Constants.EXTRA_FETCH_DATA_SERVICE_MODE,
-                    FetchDataService.FetchDataServiceMode.REFRESH.toString());
-            startService(serviceIntent);
-        }
+        mSwipeRefreshLayout.setRefreshing(true);
+        final Intent serviceIntent = new Intent(this, FetchDataService.class);
+        serviceIntent.putExtra(
+                Constants.EXTRA_FETCH_DATA_SERVICE_MODE,
+                FetchDataService.FetchDataServiceMode.REFRESH.toString());
+        startService(serviceIntent);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
-        mToken = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
-        if (mToken != null) {
-            final Intent serviceIntent = new Intent(this, FetchDataService.class);
-            startService(serviceIntent);
-        }
+        final Intent serviceIntent = new Intent(this, FetchDataService.class);
+        startService(serviceIntent);
     }
 
     @Override
@@ -460,23 +451,12 @@ public class MainActivity extends AppCompatActivity
                             throw new Exception("Dictionary cursor is null");
                         }
 
-                        final Uri dictionaryUri;
-                        if (mToken != null) {
-                            dictionaryUri = Uri.parse(Api.getBaseUrl()).buildUpon()
-                                    .appendPath(DbHelper.getTableName(Dictionary.class))
-                                    .appendPath(dictionaryCreationDate + Api.JSON_FORMAT)
-                                    .appendQueryParameter(Api.PARAM_AUTH, mToken)
-                                    .build();
-                        } else {
-                            signOut();
-                            throw new Exception("Token is null");
-                        }
-
+                        final String dictionaryUrl = UrlBuilder.getPersonalisedUrl(new String[]{DbHelper.getTableName(Dictionary.class), String.valueOf(dictionaryCreationDate)}, null);
                         final HttpClient httpClient;
                         Cursor entryIdsCursor = null;
                         try {
                             httpClient = new HttpClient();
-                            if (httpClient.delete(dictionaryUri.toString()).equals(HttpClient.DELETE_RESPONSE_OK)) {
+                            if (httpClient.delete(dictionaryUrl).equals(HttpClient.DELETE_RESPONSE_OK)) {
                                 entryIdsCursor = getContentResolver().query(
                                         UriBuilder.getTableUri(Entry.class),
                                         new String[]{Entry.ID},
@@ -485,13 +465,12 @@ public class MainActivity extends AppCompatActivity
                                         null);
                                 if (entryIdsCursor != null) {
                                     while (entryIdsCursor.moveToNext()) {
-                                        final Uri entryUri = Uri.parse(Api.getBaseUrl()).buildUpon()
-                                                .appendPath(DbHelper.getTableName(Entry.class))
-                                                .appendPath(entryIdsCursor.getLong(entryIdsCursor.getColumnIndex(Entry.ID))
-                                                        + Api.JSON_FORMAT)
-                                                .appendQueryParameter(Api.PARAM_AUTH, mToken)
-                                                .build();
-                                        httpClient.delete(entryUri.toString());
+                                        final String entryUrl = UrlBuilder.getPersonalisedUrl(
+                                                new String[]{
+                                                        DbHelper.getTableName(Entry.class),
+                                                        String.valueOf(entryIdsCursor.getLong(entryIdsCursor.getColumnIndex(Entry.ID)))},
+                                                null);
+                                        httpClient.delete(entryUrl);
                                     }
                                     getContentResolver().delete(
                                             UriBuilder.getTableUri(Dictionary.class, String.valueOf(mSelectedDictionaryMenuId)),
@@ -633,14 +612,10 @@ public class MainActivity extends AppCompatActivity
                         values.put(Dictionary.NAME, pDictionaryName);
                         values.put(Dictionary.ID, creationDate);
 
-                        final Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
-                                .appendPath(DbHelper.getTableName(Dictionary.class))
-                                .appendPath(creationDate + Api.JSON_FORMAT)
-                                .appendQueryParameter(Api.PARAM_AUTH, mToken)
-                                .build();
+                        final String url = UrlBuilder.getPersonalisedUrl(new String[]{DbHelper.getTableName(Dictionary.class)}, null);
                         final IHttpClient httpClient = new HttpClient();
                         try {
-                            httpClient.put(uri.toString(), null, dictionary.toJson());
+                            httpClient.put(url, null, dictionary.toJson());
                             getContentResolver().insert(
                                     UriBuilder.getTableUri(Dictionary.class),
                                     values

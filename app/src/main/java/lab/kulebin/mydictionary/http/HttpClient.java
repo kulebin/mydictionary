@@ -1,13 +1,9 @@
 package lab.kulebin.mydictionary.http;
 
 import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.support.annotation.NonNull;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -29,7 +25,7 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 
-import lab.kulebin.mydictionary.Constants;
+import lab.kulebin.mydictionary.App;
 import lab.kulebin.mydictionary.utils.ContextHolder;
 
 public class HttpClient implements IHttpClient {
@@ -37,14 +33,11 @@ public class HttpClient implements IHttpClient {
     private enum RequestType {GET, PUT, POST, DELETE}
 
     public static final String DELETE_RESPONSE_OK = "null";
-    public static final String BROADCAST_EVENT_TOKEN_REFRESHED = "TOKEN_REFRESHED";
 
     private static final String TAG = HttpClient.class.getSimpleName();
     private static final int ERROR_UNAUTHORIZED = 401;
     private static final String ERROR_AUTH_TOKEN_IS_EXPIRED = "Auth token is expired";
     private static final String RESPONSE_KEY_ERROR = "error";
-
-    private String mToken;
 
     @Override
     public String get(final String url) throws Exception {
@@ -108,8 +101,7 @@ public class HttpClient implements IHttpClient {
                 if (!isSuccess) {
                     if (responseCode == ERROR_UNAUTHORIZED && isTokenExpiredError(response)) {
                         refreshToken();
-                        final String newUrl = replaceTokenInUrl(url, mToken);
-                        response = doRequest(newUrl, type, header, body);
+                        response = doRequest(UrlBuilder.replaceTokenInUrl(url), type, header, body);
                     } else {
                         throw new Exception(response);
                     }
@@ -160,12 +152,7 @@ public class HttpClient implements IHttpClient {
                 if (task.isSuccessful()) {
                     final String token = task.getResult().getToken();
                     if (token != null) {
-                        mToken = token;
-                        final SharedPreferences appPreferences = ContextHolder.get().getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
-                        final SharedPreferences.Editor editor = appPreferences.edit();
-                        editor.putString(Constants.APP_PREFERENCES_USER_TOKEN, token);
-                        editor.apply();
-                        notifyTokenRefreshed();
+                        ((App) ContextHolder.get()).getTokenHolder().refreshToken(token);
                     }
                 } else {
                     Log.e(TAG, "Refresh token error!");
@@ -191,15 +178,5 @@ public class HttpClient implements IHttpClient {
             return false;
         }
         return ERROR_AUTH_TOKEN_IS_EXPIRED.equals(error);
-    }
-
-    private String replaceTokenInUrl(final String pUrl, final CharSequence pNewToken) {
-        final String token = Uri.parse(pUrl).getQueryParameter(Api.PARAM_AUTH);
-        return pUrl.replace(token, pNewToken);
-    }
-
-    private void notifyTokenRefreshed() {
-        final Intent intent = new Intent(BROADCAST_EVENT_TOKEN_REFRESHED);
-        LocalBroadcastManager.getInstance(ContextHolder.get()).sendBroadcast(intent);
     }
 }

@@ -5,7 +5,6 @@ public final class Constants {
     public static final String ANONYMOUS = "Anonymous";
     public static final String APP_PREFERENCES = "AP";
     public static final String APP_PREFERENCES_SELECTED_DICTIONARY_ID = "AP_SELECTED_DICTIONARY_ID";
-    public static final String APP_PREFERENCES_USER_TOKEN = "AP_TOKEN";
     public static final int DEFAULT_SELECTED_DICTIONARY_ID = -1;
 
     public static final long ENTRY_ID_EMPTY = -1;
