@@ -43,18 +43,15 @@ public class FetchDataService extends IntentService {
 
             final String url = UrlBuilder.getUrl(new String[]{DbHelper.getTableName(model)}, null);
 
-            if (DataCache.isDataRefreshNeeded(this, url) || serviceMode == FetchDataServiceMode.REFRESH) {
-                final String personalisedUrl = UrlBuilder.getPersonalisedUrl(url);
-                final List<ContentValues> list = fetchData(personalisedUrl, model);
+            if (DataCache.isDataRefreshNeeded(url) || serviceMode == FetchDataServiceMode.REFRESH) {
+
+                final List<ContentValues> list = fetchData(url, model);
                 int storeResult = -1;
                 if (list != null && !list.isEmpty()) {
                     storeResult = storeData(list, model);
                 }
 
-                if (storeResult != -1) {
-                    DataCache.updateLastRequestedTime(this, url);
-
-                } else {
+                if (storeResult == -1) {
                     Log.v(TAG, "result is null");
                 }
             }
@@ -64,7 +61,11 @@ public class FetchDataService extends IntentService {
     private List<ContentValues> fetchData(final String pUrl, final Class pClazz) {
         final IHttpClient httpClient = new HttpClient();
         try {
-            return JsonHelper.parseJson(pClazz, httpClient.get(pUrl));
+            final String personalisedUrl = UrlBuilder.getPersonalisedUrl(pUrl);
+            final String result = httpClient.get(personalisedUrl);
+            DataCache.updateLastRequestedTime(pUrl);
+
+            return JsonHelper.parseJson(pClazz, result);
         } catch (final JSONException pE) {
             Log.v(TAG, "Parsing error");
         } catch (final Exception e) {
