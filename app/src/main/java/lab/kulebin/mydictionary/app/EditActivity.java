@@ -213,7 +213,11 @@ public class EditActivity extends AppCompatActivity {
                         values.put(Entry.TRANSLATION, Converter.convertStringArrayToString(pEntry.getTranslation()));
                         values.put(Entry.USAGE_CONTEXT, Converter.convertStringArrayToString(pEntry.getUsageContext()));
 
-                        final String url = UrlBuilder.getPersonalisedUrl(new String[]{DbHelper.getTableName(Entry.class)}, null);
+                        final String url = UrlBuilder.getPersonalisedUrl(
+                                new String[]{DbHelper.getTableName(Entry.class), String.valueOf(pEntry.getId())},
+                                null
+                        );
+
                         final IHttpClient httpClient = new HttpClient();
                         try {
                             final String response = httpClient.put(url, null, pEntry.toJson());

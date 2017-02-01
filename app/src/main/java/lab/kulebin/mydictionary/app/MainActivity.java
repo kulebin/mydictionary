@@ -613,7 +613,11 @@ public class MainActivity extends AppCompatActivity
                         values.put(Dictionary.NAME, pDictionaryName);
                         values.put(Dictionary.ID, creationDate);
 
-                        final String url = UrlBuilder.getPersonalisedUrl(new String[]{DbHelper.getTableName(Dictionary.class)}, null);
+                        final String url = UrlBuilder.getPersonalisedUrl(
+                                new String[]{DbHelper.getTableName(Dictionary.class), String.valueOf(creationDate)},
+                                null
+                        );
+
                         final IHttpClient httpClient = new HttpClient();
                         try {
                             httpClient.put(url, null, dictionary.toJson());

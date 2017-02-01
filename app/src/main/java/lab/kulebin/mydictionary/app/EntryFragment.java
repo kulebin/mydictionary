@@ -331,7 +331,11 @@ public class EntryFragment extends Fragment {
                     @Override
                     public Void perform(final Long pEntryId, final ProgressCallback<Void> progressCallback) throws Exception {
                         final IHttpClient httpClient = new HttpClient();
-                        final String url = UrlBuilder.getPersonalisedUrl(new String[]{DbHelper.getTableName(Entry.class)}, null);
+                        final String url = UrlBuilder.getPersonalisedUrl(
+                                new String[]{DbHelper.getTableName(Entry.class), String.valueOf(pEntryId)},
+                                null
+                        );
+
                         try {
                             if (httpClient.delete(url).equals(HttpClient.DELETE_RESPONSE_OK)) {
                                 getContext().getContentResolver().delete(
