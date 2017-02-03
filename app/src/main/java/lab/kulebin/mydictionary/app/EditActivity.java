@@ -224,7 +224,7 @@ public class EditActivity extends AppCompatActivity {
                         );
 
                         final IHttpClient httpClient = new HttpClient();
-                        final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
+                        final IHttpErrorHandler httpErrorHandler = IHttpErrorHandler.Impl.newInstance();
                         httpClient.setErrorHandler(httpErrorHandler);
                         final String response = httpClient.put(url, null, pEntry.toJson());
 
