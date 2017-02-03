@@ -132,6 +132,7 @@ public class HttpClient implements IHttpClient {
         os.close();
     }
 
+    //TODO it is not Client role -> Utils
     private boolean isNetworkAvailable() {
         final ConnectivityManager connectivityManager
                 = (ConnectivityManager) ContextHolder.get().getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -139,6 +140,7 @@ public class HttpClient implements IHttpClient {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
+    //TODO Move to error handling
     private void refreshToken() {
         final FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
         final FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
@@ -168,6 +170,7 @@ public class HttpClient implements IHttpClient {
         }
     }
 
+    //TODO Move to error handling
     private boolean isTokenExpiredError(final String pErrorResponse) {
         final String error;
         try {
