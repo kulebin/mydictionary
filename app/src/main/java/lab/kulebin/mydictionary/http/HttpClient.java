@@ -28,38 +28,35 @@ import java.util.concurrent.Semaphore;
 import lab.kulebin.mydictionary.App;
 import lab.kulebin.mydictionary.utils.ContextHolder;
 
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
+
 public class HttpClient implements IHttpClient {
 
-    private enum RequestType {GET, PUT, POST, DELETE}
-
-    public static final String DELETE_RESPONSE_OK = "null";
-
     private static final String TAG = HttpClient.class.getSimpleName();
-    private static final int ERROR_UNAUTHORIZED = 401;
-    private static final String ERROR_AUTH_TOKEN_IS_EXPIRED = "Auth token is expired";
-    private static final String RESPONSE_KEY_ERROR = "error";
+
+    private IHttpErrorHandler mErrorHandler;
 
     @Override
-    public String get(final String url) throws Exception {
+    public String get(final String url) {
         return doRequest(url, RequestType.GET, null, null);
     }
 
     @Override
-    public String get(final String url, final Map<String, String> headers) throws Exception {
+    public String get(final String url, final Map<String, String> headers) {
         return doRequest(url, RequestType.GET, headers, null);
     }
 
     @Override
-    public String put(final String url, final Map<String, String> headers, final String body) throws Exception {
+    public String put(final String url, final Map<String, String> headers, final String body) {
         return doRequest(url, RequestType.PUT, headers, body);
     }
 
     @Override
-    public String delete(final String url) throws Exception {
+    public String delete(final String url) {
         return doRequest(url, RequestType.DELETE, null, null);
     }
 
-    private String doRequest(final String url, final RequestType type, final Map<String, String> header, final String body) throws Exception {
+    private String doRequest(final String url, final RequestType type, final Map<String, String> header, final String body) {
         if (isNetworkAvailable()) {
             String response = null;
             HttpURLConnection connection = null;
@@ -99,14 +96,16 @@ public class HttpClient implements IHttpClient {
                 inputStream.close();
 
                 if (!isSuccess) {
-                    if (responseCode == ERROR_UNAUTHORIZED && isTokenExpiredError(response)) {
+                    if (responseCode == HTTP_UNAUTHORIZED && isTokenExpiredError(response)) {
                         refreshToken();
                         response = doRequest(UrlBuilder.replaceTokenInUrl(url), type, header, body);
                     } else {
-                        throw new Exception(response);
+                        mErrorHandler.handleError(new HttpRequestException(responseCode, response));
                     }
                 }
 
+            } catch (final Exception e) {
+                mErrorHandler.handleError(e);
             } finally {
                 if (connection != null) {
                     connection.disconnect();
@@ -121,9 +120,9 @@ public class HttpClient implements IHttpClient {
             }
             return response;
         } else {
-            throw new IOException();
+            mErrorHandler.handleError(new IOException());
+            return null;
         }
-
     }
 
     private void applyBody(final HttpURLConnection httpURLConnection, final String body) throws Exception {
@@ -165,7 +164,7 @@ public class HttpClient implements IHttpClient {
         try {
             semaphore.acquire();
         } catch (final InterruptedException pE) {
-            // ignore
+            Log.e(TAG, "Semaphore acquire error!");
         }
     }
 
@@ -173,10 +172,15 @@ public class HttpClient implements IHttpClient {
         final String error;
         try {
             final JSONObject errorObject = new JSONObject(pErrorResponse);
-            error = errorObject.getString(RESPONSE_KEY_ERROR);
+            error = errorObject.getString(ErrorConstants.ERROR_KEY);
         } catch (final JSONException pE) {
             return false;
         }
-        return ERROR_AUTH_TOKEN_IS_EXPIRED.equals(error);
+        return ErrorConstants.ERROR_VALUE_AUTH_TOKEN_IS_EXPIRED.equals(error);
+    }
+
+    @Override
+    public void setErrorHandler(final IHttpErrorHandler pErrorHandler) {
+        mErrorHandler = pErrorHandler;
     }
 }

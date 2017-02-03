@@ -21,7 +21,9 @@ import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.http.HttpClient;
+import lab.kulebin.mydictionary.http.HttpErrorHandler;
 import lab.kulebin.mydictionary.http.IHttpClient;
+import lab.kulebin.mydictionary.http.IHttpErrorHandler;
 import lab.kulebin.mydictionary.http.UrlBuilder;
 import lab.kulebin.mydictionary.json.JsonHelper;
 import lab.kulebin.mydictionary.model.Entry;
@@ -219,27 +221,24 @@ public class EditActivity extends AppCompatActivity {
                         );
 
                         final IHttpClient httpClient = new HttpClient();
-                        try {
-                            final String response = httpClient.put(url, null, pEntry.toJson());
-                            if (pEntry.getLastEditionDate() == JsonHelper.getEntryLastEditionDateFromJson(response)) {
-                                if (mEditActivityMode == EditActivityMode.EDIT) {
-                                    getContentResolver().update(
-                                            UriBuilder.getTableUri(Entry.class),
-                                            values,
-                                            Entry.ID + "=?",
-                                            new String[]{String.valueOf(pEntry.getId())}
-                                    );
-                                } else {
-                                    getContentResolver().insert(
-                                            UriBuilder.getTableUri(Entry.class),
-                                            values
-                                    );
-                                }
+                        final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
+                        httpClient.setErrorHandler(httpErrorHandler);
+                        final String response = httpClient.put(url, null, pEntry.toJson());
+
+                        if (pEntry.getLastEditionDate() == JsonHelper.getEntryLastEditionDateFromJson(response)) {
+                            if (mEditActivityMode == EditActivityMode.EDIT) {
+                                getContentResolver().update(
+                                        UriBuilder.getTableUri(Entry.class),
+                                        values,
+                                        Entry.ID + "=?",
+                                        new String[]{String.valueOf(pEntry.getId())}
+                                );
+                            } else {
+                                getContentResolver().insert(
+                                        UriBuilder.getTableUri(Entry.class),
+                                        values
+                                );
                             }
-                        } catch (final Exception e) {
-                            Toast.makeText(getApplicationContext(),
-                                    R.string.ERROR_ENTRY_NOT_CREATED_OR_UPDATED,
-                                    Toast.LENGTH_SHORT).show();
                         }
                         return null;
                     }

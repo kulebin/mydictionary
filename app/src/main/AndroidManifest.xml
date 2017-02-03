@@ -13,7 +13,6 @@
         android:label="@string/APP_NAME"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
         <activity
             android:name=".app.StartActivity"
             android:theme="@style/AppTheme.NoActionBar">
@@ -49,6 +48,9 @@
                 android:name="android.app.searchable"
                 android:resource="@xml/searchable"/>
         </activity>
+        <activity
+            android:name=".app.ErrorDialogActivity"
+            android:theme="@style/ErrorDialogTheme"/>
 
         <provider
             android:name=".EntryProvider"

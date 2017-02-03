@@ -45,7 +45,9 @@ import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
+import lab.kulebin.mydictionary.http.HttpErrorHandler;
 import lab.kulebin.mydictionary.http.IHttpClient;
+import lab.kulebin.mydictionary.http.IHttpErrorHandler;
 import lab.kulebin.mydictionary.http.UrlBuilder;
 import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.thread.ITask;
@@ -331,25 +333,22 @@ public class EntryFragment extends Fragment {
                     @Override
                     public Void perform(final Long pEntryId, final ProgressCallback<Void> progressCallback) throws Exception {
                         final IHttpClient httpClient = new HttpClient();
+                        final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
+                        httpClient.setErrorHandler(httpErrorHandler);
+
                         final String url = UrlBuilder.getPersonalisedUrl(
                                 new String[]{DbHelper.getTableName(Entry.class), String.valueOf(pEntryId)},
                                 null
                         );
 
-                        try {
-                            if (httpClient.delete(url).equals(HttpClient.DELETE_RESPONSE_OK)) {
-                                getContext().getContentResolver().delete(
-                                        UriBuilder.getTableUri(Entry.class),
-                                        Entry.ID + "=?",
-                                        new String[]{String.valueOf(pEntryId)});
-                            } else {
-                                Toast.makeText(getContext(),
-                                        R.string.ERROR_NO_CONNECTION, Toast.LENGTH_SHORT).show();
-                            }
-                        } catch (final Exception e) {
+                        if (httpClient.delete(url).equals(Constants.HTTP_RESPONSE_DELETE_OK)) {
+                            getContext().getContentResolver().delete(
+                                    UriBuilder.getTableUri(Entry.class),
+                                    Entry.ID + "=?",
+                                    new String[]{String.valueOf(pEntryId)});
+                        } else {
                             Toast.makeText(getContext(),
-                                    R.string.ERROR_ENTRY_NOT_DELETED,
-                                    Toast.LENGTH_SHORT).show();
+                                    R.string.ERROR_NO_CONNECTION, Toast.LENGTH_SHORT).show();
                         }
                         return null;
                     }

@@ -5,8 +5,6 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.util.Log;
 
-import org.json.JSONException;
-
 import java.lang.reflect.AnnotatedElement;
 import java.util.Collection;
 import java.util.List;
@@ -15,7 +13,9 @@ import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.db.Contract;
 import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.http.HttpClient;
+import lab.kulebin.mydictionary.http.HttpErrorHandler;
 import lab.kulebin.mydictionary.http.IHttpClient;
+import lab.kulebin.mydictionary.http.IHttpErrorHandler;
 import lab.kulebin.mydictionary.http.UrlBuilder;
 import lab.kulebin.mydictionary.json.JsonHelper;
 import lab.kulebin.mydictionary.model.DataCache;
@@ -39,13 +39,26 @@ public class FetchDataService extends IntentService {
                     intent.getStringExtra(Constants.EXTRA_FETCH_DATA_SERVICE_MODE));
         }
 
+        final IHttpClient httpClient = new HttpClient();
+        final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
+        httpClient.setErrorHandler(httpErrorHandler);
+
         for (final Class model : Contract.FETCH_DATA_SET) {
 
             final String url = UrlBuilder.getUrl(new String[]{DbHelper.getTableName(model)}, null);
 
             if (DataCache.isDataRefreshNeeded(url) || serviceMode == FetchDataServiceMode.REFRESH) {
 
-                final List<ContentValues> list = fetchData(url, model);
+                final String personalisedUrl = UrlBuilder.getPersonalisedUrl(url);
+                final String result = httpClient.get(personalisedUrl);
+                DataCache.updateLastRequestedTime(url);
+
+                List<ContentValues> list = null;
+                try {
+                    list = JsonHelper.parseJson(model, result);
+                } catch (final Exception e) {
+                    Log.v(TAG, "Fetching data error!");
+                }
                 int storeResult = -1;
                 if (list != null && !list.isEmpty()) {
                     storeResult = storeData(list, model);
@@ -56,22 +69,6 @@ public class FetchDataService extends IntentService {
                 }
             }
         }
-    }
-
-    private List<ContentValues> fetchData(final String pUrl, final Class pClazz) {
-        final IHttpClient httpClient = new HttpClient();
-        try {
-            final String personalisedUrl = UrlBuilder.getPersonalisedUrl(pUrl);
-            final String result = httpClient.get(personalisedUrl);
-            DataCache.updateLastRequestedTime(pUrl);
-
-            return JsonHelper.parseJson(pClazz, result);
-        } catch (final JSONException pE) {
-            Log.v(TAG, "Parsing error");
-        } catch (final Exception e) {
-            Log.v(TAG, "Fetching data error!");
-        }
-        return null;
     }
 
     private int storeData(final Collection<ContentValues> pList, final AnnotatedElement pClazz) {
