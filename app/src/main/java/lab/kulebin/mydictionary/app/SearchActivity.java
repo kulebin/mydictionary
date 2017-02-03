@@ -37,6 +37,41 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
     private TextView mNoSearchResultView;
 
     @Override
+    protected void onCreate(final Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_search);
+
+        final ListView listView = (ListView) findViewById(R.id.listview_search_result);
+        mProgressBar = (ProgressBar) findViewById(R.id.search_progressBar);
+        mNoSearchResultView = (TextView) findViewById(R.id.search_no_result);
+        mSearchResultCursorAdapter = new SearchCursorAdapter(this, null, 0);
+        listView.setAdapter(mSearchResultCursorAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
+                long selectedEntryId = Constants.ENTRY_ID_EMPTY;
+                int selectedDictionaryId = Constants.DEFAULT_SELECTED_DICTIONARY_ID;
+                String selectedDictionaryName = null;
+                final Cursor cursor = (Cursor) parent.getItemAtPosition(position); //TODO getItemAtPosition returns cursor already at requested position
+                if (cursor.moveToPosition(position)) {
+                    selectedEntryId = cursor.getLong(cursor.getColumnIndex(Entry.ID));
+                    selectedDictionaryId = cursor.getInt(cursor.getColumnIndex(Entry.DICTIONARY_MENU_ID));
+                    selectedDictionaryName = cursor.getString(cursor.getColumnIndex(Dictionary.NAME));
+                }
+                //TODO if you have some logic at if ... else block, be shure that default behavior is expected
+                final Intent intent = new Intent(SearchActivity.this, EntryActivity.class)
+                        .putExtra(Constants.EXTRA_INTENT_SENDER, SearchActivity.class.getSimpleName())
+                        .putExtra(Constants.EXTRA_ENTRY_ID, selectedEntryId)
+                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, selectedDictionaryId)
+                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME, selectedDictionaryName);
+                startActivity(intent);
+                finish();
+            }
+        });
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
         final MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.activity_search_menu, menu);
@@ -132,40 +167,5 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
     @Override
     public void onLoaderReset(final Loader<Cursor> loader) {
         mSearchResultCursorAdapter.swapCursor(null);
-    }
-
-    @Override
-    protected void onCreate(final Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_search);
-
-        final ListView listView = (ListView) findViewById(R.id.listview_search_result);
-        mProgressBar = (ProgressBar) findViewById(R.id.search_progressBar);
-        mNoSearchResultView = (TextView) findViewById(R.id.search_no_result);
-        mSearchResultCursorAdapter = new SearchCursorAdapter(this, null, 0);
-        listView.setAdapter(mSearchResultCursorAdapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            @Override
-            public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
-                long selectedEntryId = Constants.ENTRY_ID_EMPTY;
-                int selectedDictionaryId = Constants.DEFAULT_SELECTED_DICTIONARY_ID;
-                String selectedDictionaryName = null;
-                final Cursor cursor = (Cursor) parent.getItemAtPosition(position); //TODO getItemAtPosition returns cursor already at requested position
-                if (cursor.moveToPosition(position)) {
-                    selectedEntryId = cursor.getLong(cursor.getColumnIndex(Entry.ID));
-                    selectedDictionaryId = cursor.getInt(cursor.getColumnIndex(Entry.DICTIONARY_MENU_ID));
-                    selectedDictionaryName = cursor.getString(cursor.getColumnIndex(Dictionary.NAME));
-                }
-                //TODO if you have some logic at if ... else block, be shure that default behavior is expected
-                final Intent intent = new Intent(SearchActivity.this, EntryActivity.class)
-                        .putExtra(Constants.EXTRA_INTENT_SENDER, SearchActivity.class.getSimpleName())
-                        .putExtra(Constants.EXTRA_ENTRY_ID, selectedEntryId)
-                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, selectedDictionaryId)
-                        .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME, selectedDictionaryName);
-                startActivity(intent);
-                finish();
-            }
-        });
     }
 }

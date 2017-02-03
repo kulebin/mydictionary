@@ -52,58 +52,7 @@ public class SignInActivity extends AppCompatActivity implements
     private GoogleApiClient mGoogleApiClient;
     //temporary solution, flag will be deleted when firebase fixes its bug;
     private boolean isAuthStateChanged = true;
-
-    @Override
-    public void onClick(final View v) {
-        switch (v.getId()) {
-            case R.id.sign_in_with_google_button:
-                signInWithGoogle();
-                break;
-            case R.id.email_create_account_button:
-                createAccount(mEmailField.getText().toString(), mPasswordField.getText().toString());
-                break;
-            case R.id.email_sign_in_button:
-                signInWithEmailPass(mEmailField.getText().toString(), mPasswordField.getText().toString());
-        }
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull final ConnectionResult connectionResult) {
-        Log.d(TAG, "onConnectionFailed:" + connectionResult);
-        Toast.makeText(this, R.string.ERROR_NO_CONNECTION, Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == RC_SIGN_IN) {
-            final GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
-            if (result.isSuccess()) {
-                final GoogleSignInAccount account = result.getSignInAccount();
-                firebaseAuthWithGoogle(account);
-            } else {
-                Log.e(TAG, "Google Sign In failed");
-            }
-        }
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        mFirebaseAuth.addAuthStateListener(mAuthListener);
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        //TODO can mAuthListener be null?
-        if (mAuthListener != null) {
-            mFirebaseAuth.removeAuthStateListener(mAuthListener);
-        }
-    }
-
-    //TODO better style if the order of methods is the same as they are called (onCreate is called before onStop, etc.)
+    
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -143,6 +92,56 @@ public class SignInActivity extends AppCompatActivity implements
                 }
             }
         };
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        mFirebaseAuth.addAuthStateListener(mAuthListener);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        //TODO can mAuthListener be null?
+        if (mAuthListener != null) {
+            mFirebaseAuth.removeAuthStateListener(mAuthListener);
+        }
+    }
+
+    @Override
+    public void onClick(final View v) {
+        switch (v.getId()) {
+            case R.id.sign_in_with_google_button:
+                signInWithGoogle();
+                break;
+            case R.id.email_create_account_button:
+                createAccount(mEmailField.getText().toString(), mPasswordField.getText().toString());
+                break;
+            case R.id.email_sign_in_button:
+                signInWithEmailPass(mEmailField.getText().toString(), mPasswordField.getText().toString());
+        }
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull final ConnectionResult connectionResult) {
+        Log.d(TAG, "onConnectionFailed:" + connectionResult);
+        Toast.makeText(this, R.string.ERROR_NO_CONNECTION, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == RC_SIGN_IN) {
+            final GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+            if (result.isSuccess()) {
+                final GoogleSignInAccount account = result.getSignInAccount();
+                firebaseAuthWithGoogle(account);
+            } else {
+                Log.e(TAG, "Google Sign In failed");
+            }
+        }
     }
 
     protected void setSignInGoogleButtonText(final SignInButton pSignInButton, final CharSequence pButtonText) {

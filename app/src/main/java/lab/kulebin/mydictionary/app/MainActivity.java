@@ -167,6 +167,42 @@ public class MainActivity extends AppCompatActivity
         getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        final Intent serviceIntent = new Intent(this, FetchDataService.class);
+        startService(serviceIntent);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        //TODO is it ok to store preferences only onStop()? what if we change order and open entry details.
+        //http://startandroid.ru/ru/uroki/vse-uroki-spiskom/61-urok-24-activity-lifecycle-primer-smeny-sostojanij-s-dvumja-activity.html
+        final SharedPreferences appPreferences = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
+        final SharedPreferences.Editor editor = appPreferences.edit();
+        editor.putInt(Constants.APP_PREFERENCES_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
+        editor.putString(Constants.APP_PREFERENCES_SORT_ORDER, mSortOrder.toString());
+        editor.apply();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mDictionaryMenuCursor != null) {
+            mDictionaryMenuCursor.close();
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+            mDrawerLayout.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
     private void onEntryListItemClick(int position) {
         final Intent intent = new Intent(MainActivity.this, EntryActivity.class)
                 .putExtra(Constants.EXTRA_INTENT_SENDER, MainActivity.class.getSimpleName())
@@ -196,15 +232,6 @@ public class MainActivity extends AppCompatActivity
             intent.putExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE, EditActivity.EditActivityMode.CREATE)
                     .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
             startActivity(intent);
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
-            mDrawerLayout.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
         }
     }
 
@@ -405,33 +432,6 @@ public class MainActivity extends AppCompatActivity
                 Constants.EXTRA_FETCH_DATA_SERVICE_MODE,
                 FetchDataService.FetchDataServiceMode.REFRESH.toString());
         startService(serviceIntent);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        final Intent serviceIntent = new Intent(this, FetchDataService.class);
-        startService(serviceIntent);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        //TODO is it ok to store preferences only onStop()? what if we change order and open entry details.
-        //http://startandroid.ru/ru/uroki/vse-uroki-spiskom/61-urok-24-activity-lifecycle-primer-smeny-sostojanij-s-dvumja-activity.html
-        final SharedPreferences appPreferences = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
-        final SharedPreferences.Editor editor = appPreferences.edit();
-        editor.putInt(Constants.APP_PREFERENCES_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
-        editor.putString(Constants.APP_PREFERENCES_SORT_ORDER, mSortOrder.toString());
-        editor.apply();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (mDictionaryMenuCursor != null) {
-            mDictionaryMenuCursor.close();
-        }
     }
 
     private void deleteDictionaryTask() {

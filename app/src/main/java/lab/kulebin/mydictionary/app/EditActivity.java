@@ -49,40 +49,6 @@ public class EditActivity extends AppCompatActivity {
     private int mDictionaryMenuId;
     private ThreadManager mThreadManager;
 
-    @Override
-    public boolean onOptionsItemSelected(final MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                if (isAnyDataFilled() && mIsDataChanged) {
-                    final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-                    alertDialogBuilder.setTitle(getString(R.string.TITLE_DIALOG_DATA_NOT_SAVED));
-                    alertDialogBuilder
-                            .setMessage(getString(R.string.TEXT_DIALOG_DATA_NOT_SAVED))
-                            .setCancelable(false)
-                            .setPositiveButton(getString(R.string.BUTTON_DIALOG_POSITIVE), new DialogInterface.OnClickListener() {
-
-                                public void onClick(final DialogInterface dialog, final int id) {
-                                    finish();
-                                }
-                            })
-                            .setNegativeButton(getString(R.string.BUTTON_DIALOG_NEGATIVE), new DialogInterface.OnClickListener() {
-
-                                public void onClick(final DialogInterface dialog, final int id) {
-                                    dialog.cancel();
-                                }
-                            });
-
-                    final AlertDialog alertDialog = alertDialogBuilder.create();
-                    alertDialog.show();
-                    return true;
-                } else {
-                    this.finish();
-                    return true;
-                }
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
     //TODO method is too long
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -186,6 +152,40 @@ public class EditActivity extends AppCompatActivity {
                 finish();
             }
         });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(final MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                if (isAnyDataFilled() && mIsDataChanged) {
+                    final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+                    alertDialogBuilder.setTitle(getString(R.string.TITLE_DIALOG_DATA_NOT_SAVED));
+                    alertDialogBuilder
+                            .setMessage(getString(R.string.TEXT_DIALOG_DATA_NOT_SAVED))
+                            .setCancelable(false)
+                            .setPositiveButton(getString(R.string.BUTTON_DIALOG_POSITIVE), new DialogInterface.OnClickListener() {
+
+                                public void onClick(final DialogInterface dialog, final int id) {
+                                    finish();
+                                }
+                            })
+                            .setNegativeButton(getString(R.string.BUTTON_DIALOG_NEGATIVE), new DialogInterface.OnClickListener() {
+
+                                public void onClick(final DialogInterface dialog, final int id) {
+                                    dialog.cancel();
+                                }
+                            });
+
+                    final AlertDialog alertDialog = alertDialogBuilder.create();
+                    alertDialog.show();
+                    return true;
+                } else {
+                    this.finish();
+                    return true;
+                }
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private boolean isAllDataFilled() {
