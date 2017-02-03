@@ -2,12 +2,9 @@ package lab.kulebin.mydictionary.app;
 
 import android.app.AlertDialog;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -23,9 +20,11 @@ import android.widget.Toast;
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.db.DbHelper;
-import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
+import lab.kulebin.mydictionary.http.HttpErrorHandler;
 import lab.kulebin.mydictionary.http.IHttpClient;
+import lab.kulebin.mydictionary.http.IHttpErrorHandler;
+import lab.kulebin.mydictionary.http.UrlBuilder;
 import lab.kulebin.mydictionary.json.JsonHelper;
 import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.thread.ITask;
@@ -219,36 +218,30 @@ public class EditActivity extends AppCompatActivity {
                         values.put(Entry.TRANSLATION, Converter.convertStringArrayToString(pEntry.getTranslation()));
                         values.put(Entry.USAGE_CONTEXT, Converter.convertStringArrayToString(pEntry.getUsageContext()));
 
-                        final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
-                        final String token = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
+                        final String url = UrlBuilder.getPersonalisedUrl(
+                                new String[]{DbHelper.getTableName(Entry.class), String.valueOf(pEntry.getId())},
+                                null
+                        );
 
-                        final Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
-                                .appendPath(DbHelper.getTableName(Entry.class))
-                                .appendPath(pEntry.getId() + Api.JSON_FORMAT)
-                                .appendQueryParameter(Api.PARAM_AUTH, token)
-                                .build();
                         final IHttpClient httpClient = new HttpClient();
-                        try {
-                            final String response = httpClient.put(uri.toString(), null, pEntry.toJson());
-                            if (pEntry.getLastEditionDate() == JsonHelper.getEntryLastEditionDateFromJson(response)) {
-                                if (mEditActivityMode == EditActivityMode.EDIT) {
-                                    getContentResolver().update(
-                                            UriBuilder.getTableUri(Entry.class),
-                                            values,
-                                            Entry.ID + "=?",
-                                            new String[]{String.valueOf(pEntry.getId())}
-                                    );
-                                } else {
-                                    getContentResolver().insert(
-                                            UriBuilder.getTableUri(Entry.class),
-                                            values
-                                    );
-                                }
+                        final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
+                        httpClient.setErrorHandler(httpErrorHandler);
+                        final String response = httpClient.put(url, null, pEntry.toJson());
+
+                        if (pEntry.getLastEditionDate() == JsonHelper.getEntryLastEditionDateFromJson(response)) {
+                            if (mEditActivityMode == EditActivityMode.EDIT) {
+                                getContentResolver().update(
+                                        UriBuilder.getTableUri(Entry.class),
+                                        values,
+                                        Entry.ID + "=?",
+                                        new String[]{String.valueOf(pEntry.getId())}
+                                );
+                            } else {
+                                getContentResolver().insert(
+                                        UriBuilder.getTableUri(Entry.class),
+                                        values
+                                );
                             }
-                        } catch (final Exception e) {
-                            Toast.makeText(getApplicationContext(),
-                                    R.string.ERROR_ENTRY_NOT_CREATED_OR_UPDATED,
-                                    Toast.LENGTH_SHORT).show();
                         }
                         return null;
                     }

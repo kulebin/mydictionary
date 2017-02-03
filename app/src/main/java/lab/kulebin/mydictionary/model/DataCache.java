@@ -9,6 +9,7 @@ import lab.kulebin.mydictionary.db.annotations.Table;
 import lab.kulebin.mydictionary.db.annotations.dbLong;
 import lab.kulebin.mydictionary.db.annotations.dbString;
 import lab.kulebin.mydictionary.db.annotations.dbUnique;
+import lab.kulebin.mydictionary.utils.ContextHolder;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
 @Table(name = "dataCache")
@@ -22,8 +23,8 @@ public final class DataCache {
 
     private static final long LIFE_TIME = DateUtils.MINUTE_IN_MILLIS * 120;
 
-    public static boolean isDataRefreshNeeded(final Context pContext, final String pUrl) {
-        final Cursor cursor = pContext.getContentResolver().query(
+    public static boolean isDataRefreshNeeded(final String pUrl) {
+        final Cursor cursor = ContextHolder.get().getContentResolver().query(
                 UriBuilder.getTableUri(DataCache.class),
                 null,
                 DataCache.URL + "=?",
@@ -40,11 +41,11 @@ public final class DataCache {
         return true;
     }
 
-    public static void updateLastRequestedTime(final Context pContext, final String pUrl) {
+    public static void updateLastRequestedTime(final String pUrl) {
         final ContentValues values = new ContentValues();
         values.put(DataCache.URL, pUrl);
         values.put(DataCache.LAST_REQUESTED_TIME, System.currentTimeMillis());
-        pContext.getContentResolver().insert(
+        ContextHolder.get().getContentResolver().insert(
                 UriBuilder.getTableUri(DataCache.class),
                 values);
     }

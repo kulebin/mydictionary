@@ -2,6 +2,7 @@
 <manifest package="lab.kulebin.mydictionary"
           xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
@@ -12,7 +13,6 @@
         android:label="@string/APP_NAME"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
         <activity
             android:name=".app.StartActivity"
             android:theme="@style/AppTheme.NoActionBar">
@@ -48,6 +48,9 @@
                 android:name="android.app.searchable"
                 android:resource="@xml/searchable"/>
         </activity>
+        <activity
+            android:name=".app.ErrorDialogActivity"
+            android:theme="@style/ErrorDialogTheme"/>
 
         <provider
             android:name=".EntryProvider"

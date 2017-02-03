@@ -5,7 +5,6 @@ public final class Constants {
     public static final String ANONYMOUS = "Anonymous";
     public static final String APP_PREFERENCES = "AP";
     public static final String APP_PREFERENCES_SELECTED_DICTIONARY_ID = "AP_SELECTED_DICTIONARY_ID";
-    public static final String APP_PREFERENCES_USER_TOKEN = "AP_TOKEN";
     public static final int DEFAULT_SELECTED_DICTIONARY_ID = -1;
 
     public static final long ENTRY_ID_EMPTY = -1;
@@ -25,4 +24,9 @@ public final class Constants {
     public static final String EXTRA_SELECTED_ENTRY_POSITION = "EXTRA_SELECTED_ENTRY_POSITION";
     public static final String EXTRA_INTENT_SENDER = "EXTRA_INTENT_SENDER";
     public static final String EXTRA_FETCH_DATA_SERVICE_MODE = "EXTRA_FETCH_DATA_SERVICE_MODE";
+
+    public static final String HTTP_RESPONSE_DELETE_OK = "null";
+
+    public static final String EXTRA_ERROR_DIALOG_TITLE = "EXTRA_ERROR_DIALOG_TITLE";
+    public static final String EXTRA_ERROR_DIALOG_TEXT = "EXTRA_ERROR_DIALOG_TEXT";
 }

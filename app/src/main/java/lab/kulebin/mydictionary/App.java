@@ -5,13 +5,16 @@ import android.app.Application;
 import com.facebook.stetho.Stetho;
 
 import lab.kulebin.mydictionary.thread.ThreadManager;
+import lab.kulebin.mydictionary.utils.ContextHolder;
 
 public class App extends Application {
 
     private ThreadManager mThreadManager;
+    private TokenHolder mTokenHolder;
 
     public void onCreate() {
         super.onCreate();
+        ContextHolder.set(this);
         Stetho.initializeWithDefaults(this);
         mThreadManager = new ThreadManager();
     }
@@ -22,5 +25,13 @@ public class App extends Application {
             return mThreadManager;
         }
         return super.getSystemService(pName);
+    }
+
+    public TokenHolder getTokenHolder() {
+        if (mTokenHolder == null) {
+            mTokenHolder = new TokenHolder();
+        }
+
+        return mTokenHolder;
     }
 }

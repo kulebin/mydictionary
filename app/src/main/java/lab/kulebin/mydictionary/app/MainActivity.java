@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -51,9 +50,11 @@ import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.adapter.EntryCursorAdapter;
 import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.db.SortOrder;
-import lab.kulebin.mydictionary.http.Api;
 import lab.kulebin.mydictionary.http.HttpClient;
+import lab.kulebin.mydictionary.http.HttpErrorHandler;
 import lab.kulebin.mydictionary.http.IHttpClient;
+import lab.kulebin.mydictionary.http.IHttpErrorHandler;
+import lab.kulebin.mydictionary.http.UrlBuilder;
 import lab.kulebin.mydictionary.json.IJsonBuildable;
 import lab.kulebin.mydictionary.model.Dictionary;
 import lab.kulebin.mydictionary.model.Entry;
@@ -81,7 +82,6 @@ public class MainActivity extends AppCompatActivity
     private Toolbar mToolbar;
     private ProgressBar mProgressBar;
     private String mUserPhotoUrl;
-    private String mToken;
     private TextView mTextViewNoEntry;
     private SortOrder mSortOrder;
     private SwipeRefreshLayout mSwipeRefreshLayout;
@@ -399,25 +399,19 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onRefresh() {
-        if (mToken != null) {
-            mSwipeRefreshLayout.setRefreshing(true);
-            final Intent serviceIntent = new Intent(this, FetchDataService.class);
-            serviceIntent.putExtra(
-                    Constants.EXTRA_FETCH_DATA_SERVICE_MODE,
-                    FetchDataService.FetchDataServiceMode.REFRESH.toString());
-            startService(serviceIntent);
-        }
+        mSwipeRefreshLayout.setRefreshing(true);
+        final Intent serviceIntent = new Intent(this, FetchDataService.class);
+        serviceIntent.putExtra(
+                Constants.EXTRA_FETCH_DATA_SERVICE_MODE,
+                FetchDataService.FetchDataServiceMode.REFRESH.toString());
+        startService(serviceIntent);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
-        mToken = shp.getString(Constants.APP_PREFERENCES_USER_TOKEN, null);
-        if (mToken != null) {
-            final Intent serviceIntent = new Intent(this, FetchDataService.class);
-            startService(serviceIntent);
-        }
+        final Intent serviceIntent = new Intent(this, FetchDataService.class);
+        startService(serviceIntent);
     }
 
     @Override
@@ -462,58 +456,44 @@ public class MainActivity extends AppCompatActivity
                             throw new Exception("Dictionary cursor is null");
                         }
 
-                        final Uri dictionaryUri;
-                        if (mToken != null) {
-                            dictionaryUri = Uri.parse(Api.getBaseUrl()).buildUpon()
-                                    .appendPath(DbHelper.getTableName(Dictionary.class))
-                                    .appendPath(dictionaryCreationDate + Api.JSON_FORMAT)
-                                    .appendQueryParameter(Api.PARAM_AUTH, mToken)
-                                    .build();
-                        } else {
-                            signOut();
-                            throw new Exception("Token is null");
-                        }
-
-                        final HttpClient httpClient;
+                        final String dictionaryUrl = UrlBuilder.getPersonalisedUrl(new String[]{DbHelper.getTableName(Dictionary.class), String.valueOf(dictionaryCreationDate)}, null);
+                        final IHttpClient httpClient = new HttpClient();
+                        final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
+                        httpClient.setErrorHandler(httpErrorHandler);
                         Cursor entryIdsCursor = null;
-                        try {
-                            httpClient = new HttpClient();
-                            if (httpClient.delete(dictionaryUri.toString()).equals(HttpClient.DELETE_RESPONSE_OK)) {
-                                entryIdsCursor = getContentResolver().query(
-                                        UriBuilder.getTableUri(Entry.class),
-                                        new String[]{Entry.ID},
-                                        Entry.DICTIONARY_MENU_ID + "=?",
-                                        new String[]{String.valueOf(mSelectedDictionaryMenuId)},
-                                        null);
-                                if (entryIdsCursor != null) {
-                                    while (entryIdsCursor.moveToNext()) {
-                                        final Uri entryUri = Uri.parse(Api.getBaseUrl()).buildUpon()
-                                                .appendPath(DbHelper.getTableName(Entry.class))
-                                                .appendPath(entryIdsCursor.getLong(entryIdsCursor.getColumnIndex(Entry.ID))
-                                                        + Api.JSON_FORMAT)
-                                                .appendQueryParameter(Api.PARAM_AUTH, mToken)
-                                                .build();
-                                        httpClient.delete(entryUri.toString());
-                                    }
-                                    getContentResolver().delete(
-                                            UriBuilder.getTableUri(Dictionary.class, String.valueOf(mSelectedDictionaryMenuId)),
-                                            null,
-                                            null
-                                    );
+
+                        if (httpClient.delete(dictionaryUrl).equals(Constants.HTTP_RESPONSE_DELETE_OK)) {
+                            entryIdsCursor = getContentResolver().query(
+                                    UriBuilder.getTableUri(Entry.class),
+                                    new String[]{Entry.ID},
+                                    Entry.DICTIONARY_MENU_ID + "=?",
+                                    new String[]{String.valueOf(mSelectedDictionaryMenuId)},
+                                    null);
+                            if (entryIdsCursor != null) {
+                                while (entryIdsCursor.moveToNext()) {
+                                    final String entryUrl = UrlBuilder.getPersonalisedUrl(
+                                            new String[]{
+                                                    DbHelper.getTableName(Entry.class),
+                                                    String.valueOf(entryIdsCursor.getLong(entryIdsCursor.getColumnIndex(Entry.ID)))},
+                                            null);
+                                    httpClient.delete(entryUrl);
                                 }
-                            } else {
-                                Toast.makeText(MainActivity.this,
-                                        R.string.ERROR_NO_CONNECTION, Toast.LENGTH_SHORT).show();
+                                getContentResolver().delete(
+                                        UriBuilder.getTableUri(Dictionary.class, String.valueOf(mSelectedDictionaryMenuId)),
+                                        null,
+                                        null
+                                );
                             }
-                        } catch (final Exception e) {
+                        } else {
                             Toast.makeText(getApplicationContext(),
                                     R.string.ERROR_DICTIONARY_NOT_DELETED,
                                     Toast.LENGTH_SHORT).show();
-                        } finally {
-                            if (entryIdsCursor != null) {
-                                entryIdsCursor.close();
-                            }
                         }
+
+                        if (entryIdsCursor != null) {
+                            entryIdsCursor.close();
+                        }
+
                         return null;
                     }
                 },
@@ -635,24 +615,21 @@ public class MainActivity extends AppCompatActivity
                         values.put(Dictionary.NAME, pDictionaryName);
                         values.put(Dictionary.ID, creationDate);
 
-                        final Uri uri = Uri.parse(Api.getBaseUrl()).buildUpon()
-                                .appendPath(DbHelper.getTableName(Dictionary.class))
-                                .appendPath(creationDate + Api.JSON_FORMAT)
-                                .appendQueryParameter(Api.PARAM_AUTH, mToken)
-                                .build();
+                        final String url = UrlBuilder.getPersonalisedUrl(
+                                new String[]{DbHelper.getTableName(Dictionary.class), String.valueOf(creationDate)},
+                                null
+                        );
+
                         final IHttpClient httpClient = new HttpClient();
-                        try {
-                            httpClient.put(uri.toString(), null, dictionary.toJson());
-                            getContentResolver().insert(
-                                    UriBuilder.getTableUri(Dictionary.class),
-                                    values
-                            );
-                            mSelectedDictionaryMenuId = menuId;
-                        } catch (final Exception e) {
-                            Toast.makeText(getApplicationContext(),
-                                    R.string.ERROR_DICTIONARY_NOT_CREATED,
-                                    Toast.LENGTH_SHORT).show();
-                        }
+                        final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
+                        httpClient.setErrorHandler(httpErrorHandler);
+                        httpClient.put(url, null, dictionary.toJson());
+                        getContentResolver().insert(
+                                UriBuilder.getTableUri(Dictionary.class),
+                                values
+                        );
+                        mSelectedDictionaryMenuId = menuId;
+
                         return null;
                     }
                 },

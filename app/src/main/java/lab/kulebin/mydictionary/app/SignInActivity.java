@@ -1,6 +1,5 @@
 package lab.kulebin.mydictionary.app;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -29,9 +28,11 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GetTokenResult;
 import com.google.firebase.auth.GoogleAuthProvider;
 
+import lab.kulebin.mydictionary.App;
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.db.Contract;
+import lab.kulebin.mydictionary.utils.ContextHolder;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
@@ -217,10 +218,7 @@ public class SignInActivity extends AppCompatActivity implements
                 if (task.isSuccessful()) {
                     final String token = task.getResult().getToken();
                     if (token != null) {
-                        final SharedPreferences appPreferences = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
-                        final SharedPreferences.Editor editor = appPreferences.edit();
-                        editor.putString(Constants.APP_PREFERENCES_USER_TOKEN, token);
-                        editor.apply();
+                        ((App) ContextHolder.get()).getTokenHolder().refreshToken(token);
                         startActivity(new Intent(SignInActivity.this, MainActivity.class).setFlags(FLAG_ACTIVITY_CLEAR_TOP | FLAG_ACTIVITY_NEW_TASK));
                         finish();
                     }

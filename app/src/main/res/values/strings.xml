@@ -21,6 +21,11 @@
     <string name="TITLE_DIALOG_CONFIRM_ENTRY_DELETION">Confirm deletion</string>
     <string name="TITLE_DIALOG_DATA_NOT_SAVED">Data not saved</string>
     <string name="TITLE_DIALOG_ADD_DICTIONARY">New dictionary name</string>
+    <string name="TITLE_DIALOG_ERROR_DEFAULT">Error</string>
+    <string name="TITLE_DIALOG_ERROR_NO_INTERNET_CONNECTION">No Internet connection</string>
+    <string name="TITLE_DIALOG_ERROR_UNAUTHORIZED_REQUEST">Authorization error</string>
+    <string name="TITLE_DIALOG_ERROR_SERVER_ERROR">Server error</string>
+    <string name="TITLE_DIALOG_ERROR_SERVER_UNAVAILABLE">Server unavailable</string>
     <string name="TITLE_ACTIVITY_EDIT_MODE">Edit entry</string>
     <string name="TITLE_ACTIVITY_CREATE_NEW_ENTRY">New entry</string>
     <string name="TITLE_EMAIL_PASSWORD_BLOCK">Email and Password</string>
@@ -32,8 +37,12 @@
     <string name="TEXT_DIALOG_CONFIRM_DICTIONARY_DELETION">All your entries for this dictionary will
         be deleted.\nDo you want to proceed?
     </string>
-    <string name="TEXT_NO_ENTRY_IN_DICTIONARY">There is not any entry in this dictionary</string>
+    <string name="TEXT_DIALOG_ERROR_UNAUTHORIZED_REQUEST">Permission denied.</string>
+    <string name="TEXT_DIALOG_ERROR_NO_INTERNET_CONNECTION">Unable to connect to the server. Please check your internet connection settings.</string>
+    <string name="TEXT_DIALOG_ERROR_SERVER_ERROR">The server returned an error.</string>
+    <string name="TEXT_DIALOG_ERROR_SERVER_UNAVAILABLE">The server is currently down for maintenance. Please try again later.</string>
     <string name="TEXT_DIALOG_NO_DICTIONARY_ADDED">Please add at least one dictionary</string>
+    <string name="TEXT_NO_ENTRY_IN_DICTIONARY">There is not any entry in this dictionary</string>
     <string name="TEXT_USER_NAME_ANONYMOUS">Anonymous</string>
     <string name="TEXT_NO_SEARCH_RESULTS">No search results</string>
 
