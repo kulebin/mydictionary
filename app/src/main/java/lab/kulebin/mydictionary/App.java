@@ -15,10 +15,12 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         ContextHolder.set(this);
+        //TODO do we need it for release? or only for debug?
         Stetho.initializeWithDefaults(this);
         mThreadManager = new ThreadManager();
     }
 
+    //TODO why we use getSysService here and direct call of getTokenHolder()? use one approach
     @Override
     public Object getSystemService(final String pName) {
         if (ThreadManager.APP_SERVICE_KEY.equals(pName)) {
