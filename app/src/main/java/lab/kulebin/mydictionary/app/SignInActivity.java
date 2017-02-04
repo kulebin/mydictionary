@@ -86,8 +86,6 @@ public class SignInActivity extends AppCompatActivity implements
                 final FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null && isAuthStateChanged) {
                     isAuthStateChanged = false;
-                    //TODO better approach to clear data when user logouts
-                    clearAllData();
                     storeToken(user);
                 }
             }
@@ -103,10 +101,7 @@ public class SignInActivity extends AppCompatActivity implements
     @Override
     public void onStop() {
         super.onStop();
-        //TODO can mAuthListener be null?
-        if (mAuthListener != null) {
-            mFirebaseAuth.removeAuthStateListener(mAuthListener);
-        }
+        mFirebaseAuth.removeAuthStateListener(mAuthListener);
     }
 
     @Override
@@ -249,15 +244,5 @@ public class SignInActivity extends AppCompatActivity implements
         }
 
         return valid;
-    }
-
-    private void clearAllData() {
-        for (final Class clazz : Contract.MODELS) {
-            this.getContentResolver().delete(UriBuilder.getTableUri(clazz), null, null);
-        }
-        final SharedPreferences preferences = getSharedPreferences(Constants.APP_PREFERENCES, 0);
-        final SharedPreferences.Editor editor = preferences.edit();
-        editor.clear();
-        editor.apply();
     }
 }

@@ -48,6 +48,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.adapter.EntryCursorAdapter;
+import lab.kulebin.mydictionary.db.Contract;
 import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.db.SortOrder;
 import lab.kulebin.mydictionary.http.HttpClient;
@@ -86,6 +87,7 @@ public class MainActivity extends AppCompatActivity
     private SortOrder mSortOrder;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private ThreadManager mThreadManager;
+    private boolean isSignOut;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -175,15 +177,15 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-        //TODO is it ok to store preferences only onStop()? what if we change order and open entry details.
-        //http://startandroid.ru/ru/uroki/vse-uroki-spiskom/61-urok-24-activity-lifecycle-primer-smeny-sostojanij-s-dvumja-activity.html
-        final SharedPreferences appPreferences = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
-        final SharedPreferences.Editor editor = appPreferences.edit();
-        editor.putInt(Constants.APP_PREFERENCES_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
-        editor.putString(Constants.APP_PREFERENCES_SORT_ORDER, mSortOrder.toString());
-        editor.apply();
+    protected void onPause() {
+        super.onPause();
+        if (!isSignOut) {
+            final SharedPreferences appPreferences = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
+            final SharedPreferences.Editor editor = appPreferences.edit();
+            editor.putInt(Constants.APP_PREFERENCES_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
+            editor.putString(Constants.APP_PREFERENCES_SORT_ORDER, mSortOrder.toString());
+            editor.apply();
+        }
     }
 
     @Override
@@ -665,8 +667,20 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void signOut() {
+        isSignOut = true;
         mFirebaseAuth.signOut();
         startActivity(new Intent(this, SignInActivity.class));
+        clearAllData();
         finish();
+    }
+
+    private void clearAllData() {
+        for (final Class clazz : Contract.MODELS) {
+            this.getContentResolver().delete(UriBuilder.getTableUri(clazz), null, null);
+        }
+        final SharedPreferences preferences = getSharedPreferences(Constants.APP_PREFERENCES, 0);
+        final SharedPreferences.Editor editor = preferences.edit();
+        editor.clear();
+        editor.apply();
     }
 }
