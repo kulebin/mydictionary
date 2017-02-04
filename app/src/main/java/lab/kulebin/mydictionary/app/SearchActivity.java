@@ -11,6 +11,7 @@ import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -92,7 +93,7 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
             public boolean onQueryTextChange(final String newText) {
                 final Bundle bundle = new Bundle();
                 bundle.putString(SEARCH_QUERY_PARAM, newText);
-                if (!"".equals(newText)) {  //TODO we have TextUtils.isEmpty() method to check
+                if (!TextUtils.isEmpty(newText)) {
                     getSupportLoaderManager().restartLoader(SEARCH_RESULT_LOADER, bundle, SearchActivity.this);
                 } else {
                     mSearchResultCursorAdapter.swapCursor(null);
