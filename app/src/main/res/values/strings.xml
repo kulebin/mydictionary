@@ -70,4 +70,6 @@
     <string name="HINT_EMAIL">Email</string>
     <string name="HINT_PASSWORD">Password</string>
     <string name="HINT_ERROR_REQUIRED_FILLED_IN_FIELD">Required</string>
+    <string name="HINT_ERROR_INVALID_FIELD">Invalid</string>
+    <string name="HINT_ERROR_SHORT_PASSWORD">At least 6 characters</string>
 </resources>
