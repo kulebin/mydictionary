@@ -1,6 +1,7 @@
 package lab.kulebin.mydictionary.app;
 
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -8,6 +9,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -41,6 +43,7 @@ public class SignInActivity extends AppCompatActivity implements
     private static final String TAG = SignInActivity.class.getSimpleName();
     private static final int RC_SIGN_IN = 69;
     private static final int MIN_PASSWORD_LENGTH = 6;
+    private static final int MIN_KEYBOARD_HEIGHT = 200;
 
     private FirebaseAuth mFirebaseAuth;
     private EditText mEmailField;
@@ -49,15 +52,16 @@ public class SignInActivity extends AppCompatActivity implements
     //temporary solution, flag will be deleted when firebase fixes its bug;
     private boolean isAuthStateChanged = true;
     private OnCompleteListener<AuthResult> mAuthResultOnCompleteListener;
+    private SignInButton mSignInWithGoogleButton;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
 
-        final SignInButton signInButton = (SignInButton) findViewById(R.id.sign_in_with_google_button);
-        setSignInGoogleButtonText(signInButton, getString(R.string.BUTTON_SIGN_IN_WITH_GOGGLE));
-        signInButton.setOnClickListener(this);
+        mSignInWithGoogleButton = (SignInButton) findViewById(R.id.sign_in_with_google_button);
+        setSignInGoogleButtonText(mSignInWithGoogleButton, getString(R.string.BUTTON_SIGN_IN_WITH_GOGGLE));
+        mSignInWithGoogleButton.setOnClickListener(this);
 
         mEmailField = (EditText) findViewById(R.id.field_email);
         mPasswordField = (EditText) findViewById(R.id.field_password);
@@ -92,6 +96,8 @@ public class SignInActivity extends AppCompatActivity implements
                 }
             }
         };
+
+        setOnSoftKeyboardListener(findViewById(R.id.main_layout));
     }
 
     @Override
@@ -252,5 +258,23 @@ public class SignInActivity extends AppCompatActivity implements
             mPasswordField.setError(null);
             return true;
         }
+    }
+
+    private void setOnSoftKeyboardListener(final View pRootView) {
+        pRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+
+            @Override
+            public void onGlobalLayout() {
+                final Rect visibleFrame = new Rect();
+                pRootView.getWindowVisibleDisplayFrame(visibleFrame);
+
+                final int heightDiff = pRootView.getRootView().getHeight() - (visibleFrame.bottom - visibleFrame.top);
+                if (heightDiff > MIN_KEYBOARD_HEIGHT) {
+                    mSignInWithGoogleButton.setVisibility(View.GONE);
+                } else {
+                    mSignInWithGoogleButton.setVisibility(View.VISIBLE);
+                }
+            }
+        });
     }
 }
