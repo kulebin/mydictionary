@@ -68,7 +68,7 @@ import lab.kulebin.mydictionary.thread.ThreadManager;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
 public class MainActivity extends AppCompatActivity
-        implements LoaderManager.LoaderCallbacks<Cursor>, NavigationView.OnNavigationItemSelectedListener, SwipeRefreshLayout.OnRefreshListener, GoogleApiClient.OnConnectionFailedListener {
+        implements LoaderManager.LoaderCallbacks<Cursor>, NavigationView.OnNavigationItemSelectedListener, SwipeRefreshLayout.OnRefreshListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int DICTIONARY_LOADER = 0;
@@ -329,13 +329,6 @@ public class MainActivity extends AppCompatActivity
         }
         mDrawerLayout.closeDrawer(GravityCompat.START);
         return true;
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull final ConnectionResult pConnectionResult) {
-        Log.d(TAG, "onConnectionFailed:" + pConnectionResult);
-        Toast.makeText(this, "Connection error.", Toast.LENGTH_SHORT).show();
-
     }
 
     @Override
