@@ -45,7 +45,7 @@ public class EditActivity extends AppCompatActivity {
     private Button mEntryCreateButton;
     private boolean mIsDataChanged;
     private long mEntryId;
-    private EditActivityMode mEditActivityMode;
+    private boolean isEditMode;
     private int mDictionaryMenuId;
     private ThreadManager mThreadManager;
 
@@ -68,28 +68,25 @@ public class EditActivity extends AppCompatActivity {
         mEditTextImageUrl = (EditText) findViewById(R.id.edit_text_image_url);
         mEntryCreateButton = (Button) findViewById(R.id.button_create);
 
-        //TODO update logic
         final Intent intent = getIntent();
-        if (intent.hasExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE)) {
-            mEditActivityMode = (EditActivityMode) intent.getSerializableExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE);
-            if (mEditActivityMode == EditActivityMode.EDIT) {
-                mEntryCreateButton.setText(R.string.BUTTON_SAVE);
-                if (actionBar != null) {
-                    actionBar.setTitle(R.string.TITLE_ACTIVITY_EDIT_MODE);
-                }
-                mEntryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, Constants.ENTRY_ID_EMPTY);
-                if (mEntryId > 0) {
-                    fetchEntryTask(mEntryId);
-                }
-            } else {
-                if (actionBar != null) {
-                    actionBar.setTitle(R.string.TITLE_ACTIVITY_CREATE_NEW_ENTRY);
-                }
-                mDictionaryMenuId = intent.getIntExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID,
-                        Constants.DEFAULT_SELECTED_DICTIONARY_ID);
-                mEntryCreateButton.setText(R.string.BUTTON_CREATE);
+        if (intent.hasExtra(Constants.EXTRA_ENTRY_ID)) {
+            isEditMode = true;
+            mEntryCreateButton.setText(R.string.BUTTON_SAVE);
+            if (actionBar != null) {
+                actionBar.setTitle(R.string.TITLE_ACTIVITY_EDIT_MODE);
+            }
+            mEntryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, Constants.ENTRY_ID_EMPTY);
+            if (mEntryId > 0) {
+                fetchEntryTask(mEntryId);
             }
 
+        } else{
+            if (actionBar != null) {
+                actionBar.setTitle(R.string.TITLE_ACTIVITY_CREATE_NEW_ENTRY);
+            }
+            mDictionaryMenuId = intent.getIntExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID,
+                    Constants.DEFAULT_SELECTED_DICTIONARY_ID);
+            mEntryCreateButton.setText(R.string.BUTTON_CREATE);
         }
 
         final TextWatcher textWatcher = new TextWatcher() {
@@ -132,10 +129,10 @@ public class EditActivity extends AppCompatActivity {
             public void onClick(final View arg0) {
                 final long entryId;
                 final long systemTimeStamp = System.currentTimeMillis();
-                if (mEditActivityMode == EditActivityMode.CREATE) {
-                    entryId = systemTimeStamp;
-                } else {
+                if (isEditMode) {
                     entryId = mEntryId;
+                } else {
+                    entryId = systemTimeStamp;
                 }
                 final Entry entry = new Entry(
                         entryId,
@@ -229,7 +226,7 @@ public class EditActivity extends AppCompatActivity {
                         final String response = httpClient.put(url, null, pEntry.toJson());
 
                         if (pEntry.getLastEditionDate() == JsonHelper.getEntryLastEditionDateFromJson(response)) {
-                            if (mEditActivityMode == EditActivityMode.EDIT) {
+                            if (isEditMode) {
                                 getContentResolver().update(
                                         UriBuilder.getTableUri(Entry.class),
                                         values,
@@ -320,7 +317,4 @@ public class EditActivity extends AppCompatActivity {
                 }
         );
     }
-
-    //TODO you can check if you edit or create item if you have id in intent
-    public enum EditActivityMode {CREATE, EDIT}
 }

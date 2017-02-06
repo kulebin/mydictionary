@@ -231,8 +231,7 @@ public class MainActivity extends AppCompatActivity
             alertDialog.show();
         } else {
             final Intent intent = new Intent(MainActivity.this, EditActivity.class);
-            intent.putExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE, EditActivity.EditActivityMode.CREATE)
-                    .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
+            intent.putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
             startActivity(intent);
         }
     }
