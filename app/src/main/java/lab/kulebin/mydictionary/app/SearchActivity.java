@@ -62,7 +62,6 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
                 }
                 //TODO if you have some logic at if ... else block, be shure that default behavior is expected
                 final Intent intent = new Intent(SearchActivity.this, EntryActivity.class)
-                        .putExtra(Constants.EXTRA_INTENT_SENDER, SearchActivity.class.getSimpleName())
                         .putExtra(Constants.EXTRA_ENTRY_ID, selectedEntryId)
                         .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, selectedDictionaryId)
                         .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME, selectedDictionaryName);

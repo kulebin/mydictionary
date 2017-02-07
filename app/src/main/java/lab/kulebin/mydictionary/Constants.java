@@ -21,7 +21,6 @@ public final class Constants {
     public static final String ID_COLUMN = "_id";
     public static final String CURSOR_COLUMN_TAGS = "TAGS";
     public static final String EXTRA_SELECTED_ENTRY_POSITION = "EXTRA_SELECTED_ENTRY_POSITION";
-    public static final String EXTRA_INTENT_SENDER = "EXTRA_INTENT_SENDER";
     public static final String EXTRA_FETCH_DATA_SERVICE_MODE = "EXTRA_FETCH_DATA_SERVICE_MODE";
 
     public static final String HTTP_RESPONSE_DELETE_OK = "null";

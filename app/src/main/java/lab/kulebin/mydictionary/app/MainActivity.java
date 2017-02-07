@@ -207,7 +207,6 @@ public class MainActivity extends AppCompatActivity
 
     private void onEntryListItemClick(int position) {
         final Intent intent = new Intent(MainActivity.this, EntryActivity.class)
-                .putExtra(Constants.EXTRA_INTENT_SENDER, MainActivity.class.getSimpleName())
                 .putExtra(Constants.EXTRA_SELECTED_ENTRY_POSITION, position)
                 .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId)
                 .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME, mToolbar.getTitle());
