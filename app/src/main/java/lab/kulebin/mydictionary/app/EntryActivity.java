@@ -34,7 +34,6 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
     private ViewPager viewPager;
     private EntryPagerAdapter mEntryPagerAdapter;
     private long mEntryId;
-    private int mDictionaryMenuId;
     private SortOrder mSortOrder;
     private int mEntryPosition;
     private String mIntentSender;
@@ -58,10 +57,6 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
         } else if (mIntentSender.equals(SearchActivity.class.getSimpleName())) {
             mEntryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, Constants.ENTRY_ID_EMPTY);
         }
-        // TODO params are used only once, you don't need to create fields for them
-        mDictionaryMenuId = intent.getIntExtra(
-                Constants.EXTRA_SELECTED_DICTIONARY_ID,
-                Constants.DEFAULT_SELECTED_DICTIONARY_ID);
 
         //TODO we get saved order here and in main activity, it's a good point to move this lines to one place
         final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
@@ -85,13 +80,16 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
 
     @Override
     public Loader<Cursor> onCreateLoader(final int id, final Bundle args) {
+        final int dictionaryMenuId = getIntent().getIntExtra(
+                Constants.EXTRA_SELECTED_DICTIONARY_ID,
+                Constants.DEFAULT_SELECTED_DICTIONARY_ID);
 
         return new CursorLoader(
                 this,
                 UriBuilder.getTableUri(Entry.class),
                 ENTRY_PROJECTION,
                 Entry.DICTIONARY_MENU_ID + "=?",
-                new String[]{String.valueOf(mDictionaryMenuId)},
+                new String[]{String.valueOf(dictionaryMenuId)},
                 mSortOrder.getEntrySortOrderQueryParam());
     }
 
