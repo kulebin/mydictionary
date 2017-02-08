@@ -14,7 +14,6 @@ public final class Constants {
     public static final String EXTRA_ENTRY_TRANSLATION = "EXTRA_ENTRY_TRANSLATION";
     public static final String EXTRA_ENTRY_IMAGE_URL = "EXTRA_ENTRY_IMAGE_URL";
     public static final String EXTRA_ENTRY_USAGE_CONTEXT = "EXTRA_ENTRY_USAGE_CONTEXT";
-    public static final String EXTRA_EDIT_ACTIVITY_MODE = "EXTRA_EDIT_ACTIVITY_MODE";
     public static final String EXTRA_SELECTED_DICTIONARY_ID = "EXTRA_SELECTED_DICTIONARY_ID";
     public static final String EXTRA_SELECTED_DICTIONARY_NAME = "EXTRA_SELECTED_DICTIONARY_NAME";
     public static final String APP_PREFERENCES_SORT_ORDER = "AP_SORT_ORDER";
@@ -22,7 +21,6 @@ public final class Constants {
     public static final String ID_COLUMN = "_id";
     public static final String CURSOR_COLUMN_TAGS = "TAGS";
     public static final String EXTRA_SELECTED_ENTRY_POSITION = "EXTRA_SELECTED_ENTRY_POSITION";
-    public static final String EXTRA_INTENT_SENDER = "EXTRA_INTENT_SENDER";
     public static final String EXTRA_FETCH_DATA_SERVICE_MODE = "EXTRA_FETCH_DATA_SERVICE_MODE";
 
     public static final String HTTP_RESPONSE_DELETE_OK = "null";

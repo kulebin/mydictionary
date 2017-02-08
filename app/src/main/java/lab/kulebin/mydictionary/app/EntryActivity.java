@@ -23,6 +23,7 @@ import lab.kulebin.mydictionary.utils.UriBuilder;
 public class EntryActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final int ENTRY_LOADER = 0;
+    private static final int DEFAULT_ENTRY_POSITION = 0;
     private static final String[] ENTRY_PROJECTION = {
             Entry.ID,
             Entry.VALUE,
@@ -33,35 +34,18 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
 
     private ViewPager viewPager;
     private EntryPagerAdapter mEntryPagerAdapter;
-    private long mEntryId;
-    private int mDictionaryMenuId;
     private SortOrder mSortOrder;
-    private int mEntryPosition;
-    private String mIntentSender;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_entry);
 
-        final Intent intent = getIntent();
-
         final ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setTitle(intent.getCharSequenceExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME));
+            actionBar.setTitle(getIntent().getCharSequenceExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME));
         }
-
-        mIntentSender = intent.getStringExtra(Constants.EXTRA_INTENT_SENDER);
-        if (mIntentSender.equals(MainActivity.class.getSimpleName())) {
-            mEntryPosition = intent.getIntExtra(Constants.EXTRA_SELECTED_ENTRY_POSITION, 0);
-        } else if (mIntentSender.equals(SearchActivity.class.getSimpleName())) {
-            mEntryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, Constants.ENTRY_ID_EMPTY);
-        }
-        // TODO params are used only once, you don't need to create fields for them
-        mDictionaryMenuId = intent.getIntExtra(
-                Constants.EXTRA_SELECTED_DICTIONARY_ID,
-                Constants.DEFAULT_SELECTED_DICTIONARY_ID);
 
         //TODO we get saved order here and in main activity, it's a good point to move this lines to one place
         final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
@@ -85,13 +69,16 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
 
     @Override
     public Loader<Cursor> onCreateLoader(final int id, final Bundle args) {
+        final int dictionaryMenuId = getIntent().getIntExtra(
+                Constants.EXTRA_SELECTED_DICTIONARY_ID,
+                Constants.DEFAULT_SELECTED_DICTIONARY_ID);
 
         return new CursorLoader(
                 this,
                 UriBuilder.getTableUri(Entry.class),
                 ENTRY_PROJECTION,
                 Entry.DICTIONARY_MENU_ID + "=?",
-                new String[]{String.valueOf(mDictionaryMenuId)},
+                new String[]{String.valueOf(dictionaryMenuId)},
                 mSortOrder.getEntrySortOrderQueryParam());
     }
 
@@ -101,16 +88,23 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
         mEntryPagerAdapter = new EntryPagerAdapter(getSupportFragmentManager(), cursor);
         viewPager.setAdapter(mEntryPagerAdapter);
 
-        //TODO check if mEntryId exists and is valid, try to use as less params, as possible
-        if (mIntentSender.equals(SearchActivity.class.getSimpleName())) {
+        int entryPosition = DEFAULT_ENTRY_POSITION;
+        final Intent intent = getIntent();
+
+        if (intent.hasExtra(Constants.EXTRA_SELECTED_ENTRY_POSITION)) {
+            entryPosition = intent.getIntExtra(Constants.EXTRA_SELECTED_ENTRY_POSITION, DEFAULT_ENTRY_POSITION);
+        } else if (intent.hasExtra(Constants.EXTRA_ENTRY_ID)) {
+
+            final long entryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, Constants.ENTRY_ID_EMPTY);
             while (cursor.moveToNext()) {
-                if (cursor.getLong(cursor.getColumnIndex(Entry.ID)) == mEntryId) {
-                    mEntryPosition = cursor.getPosition();
+                if (cursor.getLong(cursor.getColumnIndex(Entry.ID)) == entryId) {
+                    entryPosition = cursor.getPosition();
                     break;
                 }
             }
         }
-        viewPager.setCurrentItem(mEntryPosition);
+
+        viewPager.setCurrentItem(entryPosition);
     }
 
     @Override

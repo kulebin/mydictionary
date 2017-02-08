@@ -32,7 +32,8 @@
         <activity
             android:name=".app.SignInActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar"/>
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="stateHidden"/>
         <activity
             android:name=".app.EditActivity"
             android:screenOrientation="portrait"/>

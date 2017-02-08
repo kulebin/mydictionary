@@ -45,9 +45,106 @@ public class EditActivity extends AppCompatActivity {
     private Button mEntryCreateButton;
     private boolean mIsDataChanged;
     private long mEntryId;
-    private EditActivityMode mEditActivityMode;
+    private boolean isEditMode;
     private int mDictionaryMenuId;
-    private ThreadManager mThreadManager;
+
+    private final TextWatcher mTextWatcher = new TextWatcher() {
+
+        @Override
+        public void beforeTextChanged(final CharSequence charSequence, final int i, final int i1, final int i2) {
+        }
+
+        @Override
+        public void onTextChanged(final CharSequence charSequence, final int i, final int i1, final int i2) {
+        }
+
+        @Override
+        public void afterTextChanged(final Editable editable) {
+            if (!mIsDataChanged) {
+                mIsDataChanged = true;
+            }
+            if (!mEntryCreateButton.isEnabled()) {
+                if (isAllDataFilled()) {
+                    mEntryCreateButton.setEnabled(true);
+                }
+            } else if (!isAllDataFilled()) {
+                mEntryCreateButton.setEnabled(false);
+            }
+        }
+    };
+
+    private final View.OnClickListener mOnClickListener = new View.OnClickListener() {
+
+        @Override
+        public void onClick(final View arg0) {
+            final long entryId;
+            final long systemTimeStamp = System.currentTimeMillis();
+            if (isEditMode) {
+                entryId = mEntryId;
+            } else {
+                entryId = systemTimeStamp;
+            }
+            final Entry entry = new Entry(
+                    entryId,
+                    mDictionaryMenuId,
+                    mEditTextValue.getText().toString(),
+                    null,
+                    systemTimeStamp,
+                    mEditTextImageUrl.getText().toString(),
+                    null,
+                    Converter.convertStringToStringArray(mEditTextTranslation.getText().toString()),
+                    Converter.convertStringToStringArray(mEditTextContextUsage.getText().toString())
+            );
+            storeDataTask(entry);
+            finish();
+        }
+    };
+
+    @Override
+    protected void onCreate(final Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_edit);
+
+        final ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+
+        mEditTextValue = (EditText) findViewById(R.id.edit_text_value);
+        mEditTextTranslation = (EditText) findViewById(R.id.edit_text_translation);
+        mEditTextContextUsage = (EditText) findViewById(R.id.edit_text_context_usage);
+        mEditTextImageUrl = (EditText) findViewById(R.id.edit_text_image_url);
+        mEntryCreateButton = (Button) findViewById(R.id.button_create);
+        mEntryCreateButton.setEnabled(false);
+
+        final Intent intent = getIntent();
+        if (intent.hasExtra(Constants.EXTRA_ENTRY_ID)) {
+            isEditMode = true;
+            mEntryCreateButton.setText(R.string.BUTTON_SAVE);
+            if (actionBar != null) {
+                actionBar.setTitle(R.string.TITLE_ACTIVITY_EDIT_MODE);
+            }
+            mEntryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, Constants.ENTRY_ID_EMPTY);
+            if (mEntryId > 0) {
+                fetchEntryTask(mEntryId);
+            }
+
+        } else {
+            if (actionBar != null) {
+                actionBar.setTitle(R.string.TITLE_ACTIVITY_CREATE_NEW_ENTRY);
+            }
+            mDictionaryMenuId = intent.getIntExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID,
+                    Constants.DEFAULT_SELECTED_DICTIONARY_ID);
+            mEntryCreateButton.setText(R.string.BUTTON_CREATE);
+        }
+
+        mEditTextValue.addTextChangedListener(mTextWatcher);
+        mEditTextTranslation.addTextChangedListener(mTextWatcher);
+        mEditTextContextUsage.addTextChangedListener(mTextWatcher);
+        mEditTextImageUrl.addTextChangedListener(mTextWatcher);
+
+        mEntryCreateButton.setOnClickListener(mOnClickListener);
+    }
 
     @Override
     public boolean onOptionsItemSelected(final MenuItem item) {
@@ -83,111 +180,6 @@ public class EditActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    //TODO method is too long
-    @Override
-    protected void onCreate(final Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_edit);
-
-        final ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
-
-        //noinspection WrongConstant
-        mThreadManager = (ThreadManager) getApplication().getSystemService(ThreadManager.APP_SERVICE_KEY);
-        mEditTextValue = (EditText) findViewById(R.id.edit_text_value);
-        mEditTextTranslation = (EditText) findViewById(R.id.edit_text_translation);
-        mEditTextContextUsage = (EditText) findViewById(R.id.edit_text_context_usage);
-        mEditTextImageUrl = (EditText) findViewById(R.id.edit_text_image_url);
-        mEntryCreateButton = (Button) findViewById(R.id.button_create);
-
-        //TODO update logic
-        final Intent intent = getIntent();
-        if (intent.hasExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE)) {
-            mEditActivityMode = (EditActivityMode) intent.getSerializableExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE);
-            if (mEditActivityMode == EditActivityMode.EDIT) {
-                mEntryCreateButton.setText(R.string.BUTTON_SAVE);
-                if (actionBar != null) {
-                    actionBar.setTitle(R.string.TITLE_ACTIVITY_EDIT_MODE);
-                }
-                mEntryId = intent.getLongExtra(Constants.EXTRA_ENTRY_ID, Constants.ENTRY_ID_EMPTY);
-                if (mEntryId > 0) {
-                    fetchEntryTask(mEntryId);
-                }
-            } else {
-                if (actionBar != null) {
-                    actionBar.setTitle(R.string.TITLE_ACTIVITY_CREATE_NEW_ENTRY);
-                }
-                mDictionaryMenuId = intent.getIntExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID,
-                        Constants.DEFAULT_SELECTED_DICTIONARY_ID);
-                mEntryCreateButton.setText(R.string.BUTTON_CREATE);
-            }
-
-        }
-
-        final TextWatcher textWatcher = new TextWatcher() {
-
-            boolean isEnabled;
-
-            @Override
-            public void beforeTextChanged(final CharSequence charSequence, final int i, final int i1, final int i2) {
-            }
-
-            @Override
-            public void onTextChanged(final CharSequence charSequence, final int i, final int i1, final int i2) {
-            }
-
-            @Override
-            public void afterTextChanged(final Editable editable) {
-                if (!mIsDataChanged) {
-                    mIsDataChanged = true;
-                }
-                if (!isEnabled) {
-                    if (isAllDataFilled()) {
-                        mEntryCreateButton.setEnabled(true);
-                        isEnabled = true;
-                    }
-                } else if (!isAllDataFilled()) {
-                    mEntryCreateButton.setEnabled(false);
-                    isEnabled = false;
-                }
-            }
-        };
-
-        mEditTextValue.addTextChangedListener(textWatcher);
-        mEditTextTranslation.addTextChangedListener(textWatcher);
-        mEditTextContextUsage.addTextChangedListener(textWatcher);
-        mEditTextImageUrl.addTextChangedListener(textWatcher);
-
-        mEntryCreateButton.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(final View arg0) {
-                final long entryId;
-                final long systemTimeStamp = System.currentTimeMillis();
-                if (mEditActivityMode == EditActivityMode.CREATE) {
-                    entryId = systemTimeStamp;
-                } else {
-                    entryId = mEntryId;
-                }
-                final Entry entry = new Entry(
-                        entryId,
-                        mDictionaryMenuId,
-                        mEditTextValue.getText().toString(),
-                        null,
-                        systemTimeStamp,
-                        mEditTextImageUrl.getText().toString(),
-                        null,
-                        Converter.convertStringToStringArray(mEditTextTranslation.getText().toString()),
-                        Converter.convertStringToStringArray(mEditTextContextUsage.getText().toString())
-                );
-                storeDataTask(entry);
-                finish();
-            }
-        });
-    }
-
     private boolean isAllDataFilled() {
         return !TextUtils.isEmpty(mEditTextValue.getText().toString())
                 && !TextUtils.isEmpty(mEditTextTranslation.getText().toString());
@@ -201,7 +193,8 @@ public class EditActivity extends AppCompatActivity {
     }
 
     private void storeDataTask(final Entry pEntry) {
-        mThreadManager.execute(
+        //noinspection WrongConstant
+        ((ThreadManager) getApplication().getSystemService(ThreadManager.APP_SERVICE_KEY)).execute(
                 new ITask<Entry, Void, Void>() {
 
                     @Override
@@ -229,7 +222,7 @@ public class EditActivity extends AppCompatActivity {
                         final String response = httpClient.put(url, null, pEntry.toJson());
 
                         if (pEntry.getLastEditionDate() == JsonHelper.getEntryLastEditionDateFromJson(response)) {
-                            if (mEditActivityMode == EditActivityMode.EDIT) {
+                            if (isEditMode) {
                                 getContentResolver().update(
                                         UriBuilder.getTableUri(Entry.class),
                                         values,
@@ -276,7 +269,8 @@ public class EditActivity extends AppCompatActivity {
     }
 
     private void fetchEntryTask(final long pEntryId) {
-        mThreadManager.execute(
+        //noinspection WrongConstant
+        ((ThreadManager) getApplication().getSystemService(ThreadManager.APP_SERVICE_KEY)).execute(
                 new ITask<Long, Void, Cursor>() {
 
                     @Override
@@ -301,6 +295,7 @@ public class EditActivity extends AppCompatActivity {
                             mEditTextContextUsage.setText(pCursor.getString(pCursor.getColumnIndex(Entry.USAGE_CONTEXT)));
                             mDictionaryMenuId = pCursor.getInt(pCursor.getColumnIndex(Entry.DICTIONARY_MENU_ID));
                             mIsDataChanged = false;
+                            mEntryCreateButton.setEnabled(false);
                         }
                     }
 
@@ -320,7 +315,4 @@ public class EditActivity extends AppCompatActivity {
                 }
         );
     }
-
-    //TODO you can check if you edit or create item if you have id in intent
-    public enum EditActivityMode {CREATE, EDIT}
 }

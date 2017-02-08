@@ -48,6 +48,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.adapter.EntryCursorAdapter;
+import lab.kulebin.mydictionary.db.Contract;
 import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.db.SortOrder;
 import lab.kulebin.mydictionary.http.HttpClient;
@@ -67,7 +68,7 @@ import lab.kulebin.mydictionary.thread.ThreadManager;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
 public class MainActivity extends AppCompatActivity
-        implements LoaderManager.LoaderCallbacks<Cursor>, NavigationView.OnNavigationItemSelectedListener, SwipeRefreshLayout.OnRefreshListener, GoogleApiClient.OnConnectionFailedListener {
+        implements LoaderManager.LoaderCallbacks<Cursor>, NavigationView.OnNavigationItemSelectedListener, SwipeRefreshLayout.OnRefreshListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int DICTIONARY_LOADER = 0;
@@ -86,6 +87,7 @@ public class MainActivity extends AppCompatActivity
     private SortOrder mSortOrder;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private ThreadManager mThreadManager;
+    private boolean isSignOut;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -167,9 +169,44 @@ public class MainActivity extends AppCompatActivity
         getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        final Intent serviceIntent = new Intent(this, FetchDataService.class);
+        startService(serviceIntent);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (!isSignOut) {
+            final SharedPreferences appPreferences = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
+            final SharedPreferences.Editor editor = appPreferences.edit();
+            editor.putInt(Constants.APP_PREFERENCES_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
+            editor.putString(Constants.APP_PREFERENCES_SORT_ORDER, mSortOrder.toString());
+            editor.apply();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mDictionaryMenuCursor != null) {
+            mDictionaryMenuCursor.close();
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+            mDrawerLayout.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
     private void onEntryListItemClick(int position) {
         final Intent intent = new Intent(MainActivity.this, EntryActivity.class)
-                .putExtra(Constants.EXTRA_INTENT_SENDER, MainActivity.class.getSimpleName())
                 .putExtra(Constants.EXTRA_SELECTED_ENTRY_POSITION, position)
                 .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId)
                 .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME, mToolbar.getTitle());
@@ -193,18 +230,8 @@ public class MainActivity extends AppCompatActivity
             alertDialog.show();
         } else {
             final Intent intent = new Intent(MainActivity.this, EditActivity.class);
-            intent.putExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE, EditActivity.EditActivityMode.CREATE)
-                    .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
+            intent.putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
             startActivity(intent);
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
-            mDrawerLayout.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
         }
     }
 
@@ -303,13 +330,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onConnectionFailed(@NonNull final ConnectionResult pConnectionResult) {
-        Log.d(TAG, "onConnectionFailed:" + pConnectionResult);
-        Toast.makeText(this, "Connection error.", Toast.LENGTH_SHORT).show();
-
-    }
-
-    @Override
     public Loader<Cursor> onCreateLoader(final int pId, final Bundle pArgs) {
 
         mProgressBar.setVisibility(View.VISIBLE);
@@ -405,33 +425,6 @@ public class MainActivity extends AppCompatActivity
                 Constants.EXTRA_FETCH_DATA_SERVICE_MODE,
                 FetchDataService.FetchDataServiceMode.REFRESH.toString());
         startService(serviceIntent);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        final Intent serviceIntent = new Intent(this, FetchDataService.class);
-        startService(serviceIntent);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        //TODO is it ok to store preferences only onStop()? what if we change order and open entry details.
-        //http://startandroid.ru/ru/uroki/vse-uroki-spiskom/61-urok-24-activity-lifecycle-primer-smeny-sostojanij-s-dvumja-activity.html
-        final SharedPreferences appPreferences = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
-        final SharedPreferences.Editor editor = appPreferences.edit();
-        editor.putInt(Constants.APP_PREFERENCES_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
-        editor.putString(Constants.APP_PREFERENCES_SORT_ORDER, mSortOrder.toString());
-        editor.apply();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (mDictionaryMenuCursor != null) {
-            mDictionaryMenuCursor.close();
-        }
     }
 
     private void deleteDictionaryTask() {
@@ -665,8 +658,20 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void signOut() {
+        isSignOut = true;
         mFirebaseAuth.signOut();
         startActivity(new Intent(this, SignInActivity.class));
+        clearAllData();
         finish();
+    }
+
+    private void clearAllData() {
+        for (final Class clazz : Contract.MODELS) {
+            this.getContentResolver().delete(UriBuilder.getTableUri(clazz), null, null);
+        }
+        final SharedPreferences preferences = getSharedPreferences(Constants.APP_PREFERENCES, 0);
+        final SharedPreferences.Editor editor = preferences.edit();
+        editor.clear();
+        editor.apply();
     }
 }

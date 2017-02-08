@@ -135,7 +135,6 @@ public class EntryFragment extends Fragment {
             public void onClick(final View v) {
                 final Intent intent = new Intent(getContext(), EditActivity.class);
                 intent.putExtra(Constants.EXTRA_ENTRY_ID, mEntryId);
-                intent.putExtra(Constants.EXTRA_EDIT_ACTIVITY_MODE, EditActivity.EditActivityMode.EDIT);
                 startActivity(intent);
             }
         });
