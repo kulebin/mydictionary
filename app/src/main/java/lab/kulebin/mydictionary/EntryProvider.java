@@ -43,7 +43,7 @@ public class EntryProvider extends ContentProvider {
                         " ON " + DbHelper.getTableName(Entry.class) +
                         "." + Entry.DICTIONARY_MENU_ID +
                         " = " + DbHelper.getTableName(Dictionary.class) +
-                        "." + Dictionary.ID);
+                        "." + Dictionary.MENU_ID);
     }
 
     public static final String SQL_ENTRY_WITH_TAGS_WITHOUT_SORT_PARAM = "SELECT " +
