@@ -51,16 +51,11 @@ public class SearchActivity extends AppCompatActivity implements LoaderManager.L
 
             @Override
             public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id) {
-                long selectedEntryId = Constants.ENTRY_ID_EMPTY;
-                int selectedDictionaryId = Constants.DEFAULT_SELECTED_DICTIONARY_ID;
-                String selectedDictionaryName = null;
-                final Cursor cursor = (Cursor) parent.getItemAtPosition(position); //TODO getItemAtPosition returns cursor already at requested position
-                if (cursor.moveToPosition(position)) {
-                    selectedEntryId = cursor.getLong(cursor.getColumnIndex(Entry.ID));
-                    selectedDictionaryId = cursor.getInt(cursor.getColumnIndex(Entry.DICTIONARY_MENU_ID));
-                    selectedDictionaryName = cursor.getString(cursor.getColumnIndex(Dictionary.NAME));
-                }
-                //TODO if you have some logic at if ... else block, be shure that default behavior is expected
+                final Cursor cursor = (Cursor) parent.getItemAtPosition(position);
+                final long selectedEntryId = cursor.getLong(cursor.getColumnIndex(Entry.ID));
+                final int selectedDictionaryId = cursor.getInt(cursor.getColumnIndex(Entry.DICTIONARY_MENU_ID));
+                final String selectedDictionaryName = cursor.getString(cursor.getColumnIndex(Dictionary.NAME));
+
                 final Intent intent = new Intent(SearchActivity.this, EntryActivity.class)
                         .putExtra(Constants.EXTRA_ENTRY_ID, selectedEntryId)
                         .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, selectedDictionaryId)
