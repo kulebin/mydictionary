@@ -30,7 +30,7 @@ import lab.kulebin.mydictionary.utils.ContextHolder;
 
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 
-public class HttpClient implements IHttpClient {
+class HttpClient implements IHttpClient {
 
     private static final String TAG = HttpClient.class.getSimpleName();
 

@@ -44,7 +44,6 @@ import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.http.Api;
-import lab.kulebin.mydictionary.http.HttpClient;
 import lab.kulebin.mydictionary.http.HttpErrorHandler;
 import lab.kulebin.mydictionary.http.IHttpClient;
 import lab.kulebin.mydictionary.http.IHttpErrorHandler;
@@ -331,7 +330,7 @@ public class EntryFragment extends Fragment {
 
                     @Override
                     public Void perform(final Long pEntryId, final ProgressCallback<Void> progressCallback) throws Exception {
-                        final IHttpClient httpClient = new HttpClient();
+                        final IHttpClient httpClient = IHttpClient.Impl.newInstance();
                         final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
                         httpClient.setErrorHandler(httpErrorHandler);
 

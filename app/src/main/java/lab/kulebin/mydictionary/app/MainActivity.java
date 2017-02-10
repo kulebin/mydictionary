@@ -25,7 +25,6 @@ import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,8 +38,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -51,7 +48,6 @@ import lab.kulebin.mydictionary.adapter.EntryCursorAdapter;
 import lab.kulebin.mydictionary.db.Contract;
 import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.db.SortOrder;
-import lab.kulebin.mydictionary.http.HttpClient;
 import lab.kulebin.mydictionary.http.HttpErrorHandler;
 import lab.kulebin.mydictionary.http.IHttpClient;
 import lab.kulebin.mydictionary.http.IHttpErrorHandler;
@@ -450,7 +446,7 @@ public class MainActivity extends AppCompatActivity
                         }
 
                         final String dictionaryUrl = UrlBuilder.getPersonalisedUrl(new String[]{DbHelper.getTableName(Dictionary.class), String.valueOf(dictionaryCreationDate)}, null);
-                        final IHttpClient httpClient = new HttpClient();
+                        final IHttpClient httpClient = IHttpClient.Impl.newInstance();
                         final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
                         httpClient.setErrorHandler(httpErrorHandler);
                         Cursor entryIdsCursor = null;
@@ -613,7 +609,7 @@ public class MainActivity extends AppCompatActivity
                                 null
                         );
 
-                        final IHttpClient httpClient = new HttpClient();
+                        final IHttpClient httpClient = IHttpClient.Impl.newInstance();
                         final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
                         httpClient.setErrorHandler(httpErrorHandler);
                         httpClient.put(url, null, dictionary.toJson());

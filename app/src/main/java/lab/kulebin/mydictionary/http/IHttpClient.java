@@ -4,6 +4,8 @@ import java.util.Map;
 
 public interface IHttpClient {
 
+    enum RequestType {GET, PUT, POST, DELETE}
+
     String get(String url);
 
     String get(String url, Map<String, String> headers);
@@ -14,5 +16,11 @@ public interface IHttpClient {
 
     void setErrorHandler(IHttpErrorHandler errorHandler);
 
-    enum RequestType {GET, PUT, POST, DELETE}
+    class Impl {
+
+        public static IHttpClient newInstance() {
+            return new HttpClient();
+        }
+
+    }
 }
