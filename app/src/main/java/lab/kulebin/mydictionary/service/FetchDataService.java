@@ -12,7 +12,6 @@ import java.util.List;
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.db.Contract;
 import lab.kulebin.mydictionary.db.DbHelper;
-import lab.kulebin.mydictionary.http.HttpClient;
 import lab.kulebin.mydictionary.http.HttpErrorHandler;
 import lab.kulebin.mydictionary.http.IHttpClient;
 import lab.kulebin.mydictionary.http.IHttpErrorHandler;
@@ -39,7 +38,7 @@ public class FetchDataService extends IntentService {
                     intent.getStringExtra(Constants.EXTRA_FETCH_DATA_SERVICE_MODE));
         }
 
-        final IHttpClient httpClient = new HttpClient();
+        final IHttpClient httpClient = IHttpClient.Impl.newInstance();
         final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
         httpClient.setErrorHandler(httpErrorHandler);
 
