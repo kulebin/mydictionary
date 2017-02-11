@@ -201,11 +201,12 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void onEntryListItemClick(int position) {
-        final Intent intent = new Intent(MainActivity.this, EntryActivity.class)
+    private void onEntryListItemClick(final int position) {
+        final Intent intent = new Intent(this, EntryActivity.class)
                 .putExtra(Constants.EXTRA_SELECTED_ENTRY_POSITION, position)
                 .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId)
-                .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME, mToolbar.getTitle());
+                .putExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME, mToolbar.getTitle())
+                .putExtra(Constants.EXTRA_SELECTED_SORT_ORDER, mSortOrder.toString());
         startActivity(intent);
     }
 

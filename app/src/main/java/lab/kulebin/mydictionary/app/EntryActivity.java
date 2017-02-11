@@ -1,8 +1,6 @@
 package lab.kulebin.mydictionary.app;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -11,7 +9,6 @@ import android.support.v4.content.Loader;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.view.MenuItem;
 
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
@@ -34,7 +31,6 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
 
     private ViewPager viewPager;
     private EntryPagerAdapter mEntryPagerAdapter;
-    private SortOrder mSortOrder;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -47,31 +43,19 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
             actionBar.setTitle(getIntent().getCharSequenceExtra(Constants.EXTRA_SELECTED_DICTIONARY_NAME));
         }
 
-        //TODO we get saved order here and in main activity, it's a good point to move this lines to one place
-        final SharedPreferences shp = getSharedPreferences(Constants.APP_PREFERENCES, Context.MODE_PRIVATE);
-        mSortOrder = SortOrder.valueOf(shp.getString(
-                Constants.APP_PREFERENCES_SORT_ORDER,
-                SortOrder.NEWEST.toString()));
         viewPager = (ViewPager) findViewById(R.id.pager);
         getSupportLoaderManager().initLoader(ENTRY_LOADER, null, this);
     }
 
-    //TODO isn't it default behaviour?
-    @Override
-    public boolean onOptionsItemSelected(final MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                this.finish();
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
     @Override
     public Loader<Cursor> onCreateLoader(final int id, final Bundle args) {
-        final int dictionaryMenuId = getIntent().getIntExtra(
+        final Intent intent = getIntent();
+        final int dictionaryMenuId = intent.getIntExtra(
                 Constants.EXTRA_SELECTED_DICTIONARY_ID,
                 Constants.DEFAULT_SELECTED_DICTIONARY_ID);
+        final SortOrder sortOrder = SortOrder.valueOf(intent.getStringExtra(
+                Constants.EXTRA_SELECTED_SORT_ORDER
+        ));
 
         return new CursorLoader(
                 this,
@@ -79,7 +63,7 @@ public class EntryActivity extends AppCompatActivity implements LoaderManager.Lo
                 ENTRY_PROJECTION,
                 Entry.DICTIONARY_MENU_ID + "=?",
                 new String[]{String.valueOf(dictionaryMenuId)},
-                mSortOrder.getEntrySortOrderQueryParam());
+                sortOrder.getEntrySortOrderQueryParam());
     }
 
     @Override
