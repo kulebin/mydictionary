@@ -2,9 +2,8 @@ package lab.kulebin.mydictionary;
 
 import android.app.Application;
 
-import com.facebook.stetho.Stetho;
-
 import lab.kulebin.mydictionary.thread.ThreadManager;
+import lab.kulebin.mydictionary.utils.BuildTypeUtils;
 import lab.kulebin.mydictionary.utils.ContextHolder;
 
 public class App extends Application {
@@ -15,8 +14,7 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         ContextHolder.set(this);
-        //TODO do we need it for release? or only for debug?
-        Stetho.initializeWithDefaults(this);
+        BuildTypeUtils.initStetho(this);
         mThreadManager = new ThreadManager();
     }
 
