@@ -1,15 +1,18 @@
 package lab.kulebin.mydictionary.app;
 
 import android.content.Intent;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewTreeObserver;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -43,7 +46,7 @@ public class SignInActivity extends AppCompatActivity implements
     private static final String TAG = SignInActivity.class.getSimpleName();
     private static final int RC_SIGN_IN = 69;
     private static final int MIN_PASSWORD_LENGTH = 6;
-    private static final int MIN_KEYBOARD_HEIGHT = 200;
+    public static final int ANIMATION_FADE_IN_START_OFFSET = 200;
 
     private FirebaseAuth mFirebaseAuth;
     private EditText mEmailField;
@@ -53,6 +56,30 @@ public class SignInActivity extends AppCompatActivity implements
     private boolean isAuthStateChanged = true;
     private OnCompleteListener<AuthResult> mAuthResultOnCompleteListener;
     private SignInButton mSignInWithGoogleButton;
+    private boolean isSoftKeyboardShown;
+
+    private final View.OnTouchListener mOnTouchListener = new View.OnTouchListener() {
+
+        @Override
+        public boolean onTouch(final View v, final MotionEvent event) {
+            if (!isSoftKeyboardShown) {
+                showSignInWithGoogleButton();
+            }
+            return false;
+        }
+    };
+
+    //TODO: KeyEvent.KEYCODE_BACK event is not handled by tapping on back arrow when SoftKeyBord is shown
+    private final EditText.OnEditorActionListener mOnEditorActionListener = new EditText.OnEditorActionListener() {
+
+        @Override
+        public boolean onEditorAction(final TextView v, final int actionId, final KeyEvent event) {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                hideSignInWithGoogleButton();
+            }
+            return false;
+        }
+    };
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -97,7 +124,9 @@ public class SignInActivity extends AppCompatActivity implements
             }
         };
 
-        setOnSoftKeyboardListener(findViewById(R.id.main_layout));
+        mEmailField.setOnTouchListener(mOnTouchListener);
+        mPasswordField.setOnTouchListener(mOnTouchListener);
+        mPasswordField.setOnEditorActionListener(mOnEditorActionListener);
     }
 
     @Override
@@ -260,21 +289,17 @@ public class SignInActivity extends AppCompatActivity implements
         }
     }
 
-    private void setOnSoftKeyboardListener(final View pRootView) {
-        pRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+    private void showSignInWithGoogleButton() {
+        mSignInWithGoogleButton.clearAnimation();
+        mSignInWithGoogleButton.setVisibility(View.GONE);
+        isSoftKeyboardShown = true;
+    }
 
-            @Override
-            public void onGlobalLayout() {
-                final Rect visibleFrame = new Rect();
-                pRootView.getWindowVisibleDisplayFrame(visibleFrame);
-
-                final int heightDiff = pRootView.getRootView().getHeight() - (visibleFrame.bottom - visibleFrame.top);
-                if (heightDiff > MIN_KEYBOARD_HEIGHT) {
-                    mSignInWithGoogleButton.setVisibility(View.GONE);
-                } else {
-                    mSignInWithGoogleButton.setVisibility(View.VISIBLE);
-                }
-            }
-        });
+    private void hideSignInWithGoogleButton() {
+        final Animation mAnimFadeIn = AnimationUtils.loadAnimation(this, android.R.anim.fade_in);
+        mAnimFadeIn.setStartOffset(ANIMATION_FADE_IN_START_OFFSET);
+        mSignInWithGoogleButton.setAnimation(mAnimFadeIn);
+        mSignInWithGoogleButton.setVisibility(View.VISIBLE);
+        isSoftKeyboardShown = false;
     }
 }

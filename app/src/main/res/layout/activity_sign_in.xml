@@ -63,6 +63,8 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
             android:paddingLeft="16dp"
             android:paddingRight="16dp"
             android:paddingTop="16dp">
@@ -73,7 +75,8 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:hint="@string/HINT_EMAIL"
-                android:inputType="textEmailAddress"/>
+                android:inputType="textEmailAddress"
+                android:imeOptions="actionNext"/>
 
             <EditText
                 android:id="@+id/field_password"
