@@ -16,8 +16,6 @@ public final class Constants {
     public static final String EXTRA_SELECTED_SORT_ORDER = "EXTRA_SELECTED_SORT_ORDER";
     public static final String EXTRA_SELECTED_ENTRY_POSITION = "EXTRA_SELECTED_ENTRY_POSITION";
     public static final String EXTRA_FETCH_DATA_SERVICE_MODE = "EXTRA_FETCH_DATA_SERVICE_MODE";
-    public static final String EXTRA_ERROR_DIALOG_TITLE = "EXTRA_ERROR_DIALOG_TITLE";
-    public static final String EXTRA_ERROR_DIALOG_TEXT = "EXTRA_ERROR_DIALOG_TEXT";
 
     public static final String ANONYMOUS = "Anonymous";
     public static final String ID_COLUMN = "_id";

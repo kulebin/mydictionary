@@ -17,14 +17,17 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.io.IOException;
+
+import lab.kulebin.mydictionary.App;
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.db.DbHelper;
-import lab.kulebin.mydictionary.http.HttpErrorHandler;
+import lab.kulebin.mydictionary.http.HttpRequest;
+import lab.kulebin.mydictionary.http.HttpRequestType;
 import lab.kulebin.mydictionary.http.IHttpClient;
 import lab.kulebin.mydictionary.http.IHttpErrorHandler;
 import lab.kulebin.mydictionary.http.UrlBuilder;
-import lab.kulebin.mydictionary.json.JsonHelper;
 import lab.kulebin.mydictionary.model.Entry;
 import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
@@ -215,26 +218,39 @@ public class EditActivity extends AppCompatActivity {
                                 null
                         );
 
-                        final IHttpClient httpClient = IHttpClient.Impl.newInstance();
-                        final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
-                        httpClient.setErrorHandler(httpErrorHandler);
-                        final String response = httpClient.put(url, null, pEntry.toJson());
+                        final HttpRequest entryPutRequest = new HttpRequest.Builder()
+                                .setRequestType(HttpRequestType.PUT)
+                                .setUrl(url)
+                                .setBody(pEntry.toJson())
+                                .build();
 
-                        if (pEntry.getLastEditionDate() == JsonHelper.getEntryLastEditionDateFromJson(response)) {
-                            if (isEditMode) {
-                                getContentResolver().update(
-                                        UriBuilder.getTableUri(Entry.class),
-                                        values,
-                                        Entry.ID + "=?",
-                                        new String[]{String.valueOf(pEntry.getId())}
-                                );
-                            } else {
-                                getContentResolver().insert(
-                                        UriBuilder.getTableUri(Entry.class),
-                                        values
-                                );
+                        //todo check for is connection available
+                        ((App) getApplication()).getHttpClient().doRequest(entryPutRequest, new IHttpClient.IOnResult() {
+
+                            @Override
+                            public void onSuccess(final String result) {
+                                if (isEditMode) {
+                                    getContentResolver().update(
+                                            UriBuilder.getTableUri(Entry.class),
+                                            values,
+                                            Entry.ID + "=?",
+                                            new String[]{String.valueOf(pEntry.getId())}
+                                    );
+                                } else {
+                                    getContentResolver().insert(
+                                            UriBuilder.getTableUri(Entry.class),
+                                            values
+                                    );
+                                }
                             }
-                        }
+
+                            @Override
+                            public void onError(final IOException e) {
+                                IHttpErrorHandler.Impl.newInstance(EditActivity.this).handleError(e);
+
+                            }
+                        });
+
                         return null;
                     }
                 },

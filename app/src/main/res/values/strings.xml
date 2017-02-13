@@ -4,7 +4,7 @@
     <string name="DESCRIPTION_NAVIGATION_DRAWER_OPEN">Open navigation drawer</string>
     <string name="DESCRIPTION_NAVIGATION_DRAWER_CLOSE">Close navigation drawer</string>
 
-    <string name="ERROR_NO_CONNECTION">Connection Error!</string>
+    <string name="ERROR_CONNECTION_GENERAL">Oops! Connection Error!</string>
     <string name="ERROR_FILE_NOT_FOUND">Error: File not found!</string>
     <string name="ERROR_FILE_NOT_UPLOADED">Error: Photo is not uploaded!</string>
     <string name="ERROR_AUTHENTICATION_FAILED">Authentication failed.</string>

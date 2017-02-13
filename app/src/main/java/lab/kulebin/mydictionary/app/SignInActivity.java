@@ -129,7 +129,7 @@ public class SignInActivity extends AppCompatActivity implements
     @Override
     public void onConnectionFailed(@NonNull final ConnectionResult connectionResult) {
         Log.d(TAG, "onConnectionFailed:" + connectionResult);
-        Toast.makeText(this, R.string.ERROR_NO_CONNECTION, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.ERROR_CONNECTION_GENERAL, Toast.LENGTH_SHORT).show();
     }
 
     @Override

@@ -41,14 +41,18 @@ import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import java.io.IOException;
+
 import de.hdodenhof.circleimageview.CircleImageView;
+import lab.kulebin.mydictionary.App;
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.adapter.EntryCursorAdapter;
 import lab.kulebin.mydictionary.db.Contract;
 import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.db.SortOrder;
-import lab.kulebin.mydictionary.http.HttpErrorHandler;
+import lab.kulebin.mydictionary.http.HttpRequest;
+import lab.kulebin.mydictionary.http.HttpRequestType;
 import lab.kulebin.mydictionary.http.IHttpClient;
 import lab.kulebin.mydictionary.http.IHttpErrorHandler;
 import lab.kulebin.mydictionary.http.UrlBuilder;
@@ -61,6 +65,7 @@ import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
 import lab.kulebin.mydictionary.thread.ProgressCallback;
 import lab.kulebin.mydictionary.thread.ThreadManager;
+import lab.kulebin.mydictionary.utils.ConnectionUtils;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
 public class MainActivity extends AppCompatActivity
@@ -84,6 +89,7 @@ public class MainActivity extends AppCompatActivity
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private ThreadManager mThreadManager;
     private boolean isSignOut;
+    private IHttpErrorHandler mHttpErrorHandler;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -447,41 +453,74 @@ public class MainActivity extends AppCompatActivity
                         }
 
                         final String dictionaryUrl = UrlBuilder.getPersonalisedUrl(new String[]{DbHelper.getTableName(Dictionary.class), String.valueOf(dictionaryCreationDate)}, null);
-                        final IHttpClient httpClient = IHttpClient.Impl.newInstance();
-                        final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
-                        httpClient.setErrorHandler(httpErrorHandler);
-                        Cursor entryIdsCursor = null;
 
-                        if (httpClient.delete(dictionaryUrl).equals(Constants.HTTP_RESPONSE_DELETE_OK)) {
-                            entryIdsCursor = getContentResolver().query(
-                                    UriBuilder.getTableUri(Entry.class),
-                                    new String[]{Entry.ID},
-                                    Entry.DICTIONARY_MENU_ID + "=?",
-                                    new String[]{String.valueOf(mSelectedDictionaryMenuId)},
-                                    null);
-                            if (entryIdsCursor != null) {
-                                while (entryIdsCursor.moveToNext()) {
-                                    final String entryUrl = UrlBuilder.getPersonalisedUrl(
-                                            new String[]{
-                                                    DbHelper.getTableName(Entry.class),
-                                                    String.valueOf(entryIdsCursor.getLong(entryIdsCursor.getColumnIndex(Entry.ID)))},
-                                            null);
-                                    httpClient.delete(entryUrl);
+                        final HttpRequest dictionaryDeleteRequest = new HttpRequest.Builder()
+                                .setRequestType(HttpRequestType.DELETE)
+                                .setUrl(dictionaryUrl)
+                                .build();
+
+                        if (ConnectionUtils.isNetworkAvailable()) {
+                            final IHttpClient httpClient = ((App) getApplication()).getHttpClient();
+                            httpClient.doRequest(dictionaryDeleteRequest, new IHttpClient.IOnResult() {
+
+                                @Override
+                                public void onSuccess(final String result) {
+                                    if (Constants.HTTP_RESPONSE_DELETE_OK.equals(result)) {
+                                        final Cursor entryIdsCursor = getContentResolver().query(
+                                                UriBuilder.getTableUri(Entry.class),
+                                                new String[]{Entry.ID},
+                                                Entry.DICTIONARY_MENU_ID + "=?",
+                                                new String[]{String.valueOf(mSelectedDictionaryMenuId)},
+                                                null);
+                                        if (entryIdsCursor != null) {
+                                            while (entryIdsCursor.moveToNext()) {
+                                                final String entryUrl = UrlBuilder.getPersonalisedUrl(
+                                                        new String[]{
+                                                                DbHelper.getTableName(Entry.class),
+                                                                String.valueOf(entryIdsCursor.getLong(entryIdsCursor.getColumnIndex(Entry.ID)))},
+                                                        null);
+                                                final HttpRequest entryDeleteRequest = new HttpRequest.Builder()
+                                                        .setRequestType(HttpRequestType.DELETE)
+                                                        .setUrl(entryUrl)
+                                                        .build();
+                                                httpClient.doRequest(entryDeleteRequest, new IHttpClient.IOnResult() {
+
+                                                    @Override
+                                                    public void onSuccess(final String result) {
+                                                        // ignore
+                                                    }
+
+                                                    @Override
+                                                    public void onError(final IOException e) {
+                                                        getHttpErrorHandler().handleError(e);
+                                                    }
+                                                });
+                                            }
+                                            getContentResolver().delete(
+                                                    UriBuilder.getTableUri(Dictionary.class, String.valueOf(mSelectedDictionaryMenuId)),
+                                                    null,
+                                                    null
+                                            );
+                                        }
+
+                                        if (entryIdsCursor != null) {
+                                            entryIdsCursor.close();
+                                        }
+
+                                    } else {
+                                        Toast.makeText(getApplicationContext(),
+                                                R.string.ERROR_DICTIONARY_NOT_DELETED,
+                                                Toast.LENGTH_SHORT).show();
+                                    }
                                 }
-                                getContentResolver().delete(
-                                        UriBuilder.getTableUri(Dictionary.class, String.valueOf(mSelectedDictionaryMenuId)),
-                                        null,
-                                        null
-                                );
-                            }
-                        } else {
-                            Toast.makeText(getApplicationContext(),
-                                    R.string.ERROR_DICTIONARY_NOT_DELETED,
-                                    Toast.LENGTH_SHORT).show();
-                        }
 
-                        if (entryIdsCursor != null) {
-                            entryIdsCursor.close();
+                                @Override
+                                public void onError(final IOException e) {
+                                    getHttpErrorHandler().handleError(e);
+                                }
+                            });
+                        } else {
+                            // TODO: 2/13/2017 show no connection dialog
                         }
 
                         return null;
@@ -581,18 +620,20 @@ public class MainActivity extends AppCompatActivity
                                 null,
                                 Dictionary.MENU_ID + " ASC");
 
-                        int menuId = 0;
+                        int tempMenuId = 0;
                         if (cursor != null && cursor.getCount() > 0) {
                             while (cursor.moveToNext()) {
-                                if (menuId != cursor.getInt(cursor.getColumnIndex(Dictionary.MENU_ID))) {
+                                if (tempMenuId != cursor.getInt(cursor.getColumnIndex(Dictionary.MENU_ID))) {
                                     break;
                                 }
-                                menuId++;
+                                tempMenuId++;
                             }
                         }
                         if (cursor != null) {
                             cursor.close();
                         }
+
+                        final int menuId = tempMenuId;
 
                         final long creationDate = System.currentTimeMillis();
                         final IJsonBuildable dictionary = new Dictionary(
@@ -600,25 +641,41 @@ public class MainActivity extends AppCompatActivity
                                 pDictionaryName,
                                 menuId);
 
-                        final ContentValues values = new ContentValues();
-                        values.put(Dictionary.MENU_ID, menuId);
-                        values.put(Dictionary.NAME, pDictionaryName);
-                        values.put(Dictionary.ID, creationDate);
-
                         final String url = UrlBuilder.getPersonalisedUrl(
                                 new String[]{DbHelper.getTableName(Dictionary.class), String.valueOf(creationDate)},
                                 null
                         );
 
-                        final IHttpClient httpClient = IHttpClient.Impl.newInstance();
-                        final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
-                        httpClient.setErrorHandler(httpErrorHandler);
-                        httpClient.put(url, null, dictionary.toJson());
-                        getContentResolver().insert(
-                                UriBuilder.getTableUri(Dictionary.class),
-                                values
-                        );
-                        mSelectedDictionaryMenuId = menuId;
+                        final HttpRequest dictionaryPutRequest = new HttpRequest.Builder()
+                                .setRequestType(HttpRequestType.PUT)
+                                .setUrl(url)
+                                .setBody(dictionary.toJson())
+                                .build();
+
+                        //todo check if connection available
+                        ((App) getApplication()).getHttpClient().doRequest(dictionaryPutRequest,
+                                new IHttpClient.IOnResult() {
+
+                                    @Override
+                                    public void onSuccess(final String result) {
+
+                                        final ContentValues values = new ContentValues();
+                                        values.put(Dictionary.MENU_ID, menuId);
+                                        values.put(Dictionary.NAME, pDictionaryName);
+                                        values.put(Dictionary.ID, creationDate);
+
+                                        getContentResolver().insert(
+                                                UriBuilder.getTableUri(Dictionary.class),
+                                                values
+                                        );
+                                        mSelectedDictionaryMenuId = menuId;
+                                    }
+
+                                    @Override
+                                    public void onError(final IOException e) {
+                                        getHttpErrorHandler().handleError(e);
+                                    }
+                                });
 
                         return null;
                     }
@@ -670,5 +727,12 @@ public class MainActivity extends AppCompatActivity
         final SharedPreferences.Editor editor = preferences.edit();
         editor.clear();
         editor.apply();
+    }
+
+    private IHttpErrorHandler getHttpErrorHandler() {
+        if (mHttpErrorHandler == null) {
+            mHttpErrorHandler = IHttpErrorHandler.Impl.newInstance(this);
+        }
+        return mHttpErrorHandler;
     }
 }

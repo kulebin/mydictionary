@@ -1,26 +1,22 @@
 package lab.kulebin.mydictionary.http;
 
-import java.util.Map;
+import java.io.IOException;
 
 public interface IHttpClient {
 
-    enum RequestType {GET, PUT, POST, DELETE}
+    interface IOnResult {
 
-    String get(String url);
+        void onSuccess(String result);
 
-    String get(String url, Map<String, String> headers);
+        void onError(IOException e);
+    }
 
-    String put(String url, Map<String, String> headers, String body);
+    void doRequest(HttpRequest pHttpRequest, IOnResult pIOnResult);
 
-    String delete(String url);
-
-    void setErrorHandler(IHttpErrorHandler errorHandler);
-
-    class Impl {
+    final class Impl {
 
         public static IHttpClient newInstance() {
             return new HttpClient();
         }
-
     }
 }

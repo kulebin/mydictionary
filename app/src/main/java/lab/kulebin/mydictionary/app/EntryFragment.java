@@ -37,14 +37,17 @@ import com.google.firebase.storage.UploadTask;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import lab.kulebin.mydictionary.App;
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.R;
 import lab.kulebin.mydictionary.db.DbHelper;
 import lab.kulebin.mydictionary.http.Api;
-import lab.kulebin.mydictionary.http.HttpErrorHandler;
+import lab.kulebin.mydictionary.http.HttpRequest;
+import lab.kulebin.mydictionary.http.HttpRequestType;
 import lab.kulebin.mydictionary.http.IHttpClient;
 import lab.kulebin.mydictionary.http.IHttpErrorHandler;
 import lab.kulebin.mydictionary.http.UrlBuilder;
@@ -53,6 +56,7 @@ import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
 import lab.kulebin.mydictionary.thread.ProgressCallback;
 import lab.kulebin.mydictionary.thread.ThreadManager;
+import lab.kulebin.mydictionary.utils.ConnectionUtils;
 import lab.kulebin.mydictionary.utils.NameUtils;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
@@ -330,24 +334,44 @@ public class EntryFragment extends Fragment {
 
                     @Override
                     public Void perform(final Long pEntryId, final ProgressCallback<Void> progressCallback) throws Exception {
-                        final IHttpClient httpClient = IHttpClient.Impl.newInstance();
-                        final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
-                        httpClient.setErrorHandler(httpErrorHandler);
 
                         final String url = UrlBuilder.getPersonalisedUrl(
                                 new String[]{DbHelper.getTableName(Entry.class), String.valueOf(pEntryId)},
                                 null
                         );
 
-                        if (httpClient.delete(url).equals(Constants.HTTP_RESPONSE_DELETE_OK)) {
-                            getContext().getContentResolver().delete(
-                                    UriBuilder.getTableUri(Entry.class),
-                                    Entry.ID + "=?",
-                                    new String[]{String.valueOf(pEntryId)});
+                        final HttpRequest entryDeleteRequest = new HttpRequest.Builder()
+                                .setRequestType(HttpRequestType.DELETE)
+                                .setUrl(url)
+                                .build();
+
+                        if (ConnectionUtils.isNetworkAvailable()) {
+                            ((App) getActivity().getApplication()).getHttpClient().doRequest(entryDeleteRequest, new IHttpClient.IOnResult() {
+
+                                @Override
+                                public void onSuccess(final String result) {
+                                    if (Constants.HTTP_RESPONSE_DELETE_OK.equals(result)) {
+                                        getContext().getContentResolver().delete(
+                                                UriBuilder.getTableUri(Entry.class),
+                                                Entry.ID + "=?",
+                                                new String[]{String.valueOf(pEntryId)});
+                                    } else {
+                                        Toast.makeText(getContext(),
+                                                R.string.ERROR_CONNECTION_GENERAL, Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+
+                                @Override
+                                public void onError(final IOException e) {
+                                    IHttpErrorHandler.Impl.newInstance(getContext()).handleError(e);
+
+                                }
+                            });
+
                         } else {
-                            Toast.makeText(getContext(),
-                                    R.string.ERROR_NO_CONNECTION, Toast.LENGTH_SHORT).show();
+                            //todo show no connection dialog
                         }
+
                         return null;
                     }
                 },

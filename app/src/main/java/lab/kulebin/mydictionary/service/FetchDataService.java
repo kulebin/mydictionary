@@ -5,16 +5,18 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.util.Log;
 
+import java.io.IOException;
 import java.lang.reflect.AnnotatedElement;
 import java.util.Collection;
 import java.util.List;
 
+import lab.kulebin.mydictionary.App;
 import lab.kulebin.mydictionary.Constants;
 import lab.kulebin.mydictionary.db.Contract;
 import lab.kulebin.mydictionary.db.DbHelper;
-import lab.kulebin.mydictionary.http.HttpErrorHandler;
+import lab.kulebin.mydictionary.http.HttpRequest;
+import lab.kulebin.mydictionary.http.HttpRequestType;
 import lab.kulebin.mydictionary.http.IHttpClient;
-import lab.kulebin.mydictionary.http.IHttpErrorHandler;
 import lab.kulebin.mydictionary.http.UrlBuilder;
 import lab.kulebin.mydictionary.json.JsonHelper;
 import lab.kulebin.mydictionary.model.DataCache;
@@ -38,10 +40,6 @@ public class FetchDataService extends IntentService {
                     intent.getStringExtra(Constants.EXTRA_FETCH_DATA_SERVICE_MODE));
         }
 
-        final IHttpClient httpClient = IHttpClient.Impl.newInstance();
-        final IHttpErrorHandler httpErrorHandler = new HttpErrorHandler();
-        httpClient.setErrorHandler(httpErrorHandler);
-
         for (final Class model : Contract.FETCH_DATA_SET) {
 
             final String url = UrlBuilder.getUrl(new String[]{DbHelper.getTableName(model)}, null);
@@ -49,23 +47,40 @@ public class FetchDataService extends IntentService {
             if (DataCache.isDataRefreshNeeded(url) || serviceMode == FetchDataServiceMode.REFRESH) {
 
                 final String personalisedUrl = UrlBuilder.getPersonalisedUrl(url);
-                final String result = httpClient.get(personalisedUrl);
-                DataCache.updateLastRequestedTime(url);
+                final HttpRequest getRequest = new HttpRequest.Builder()
+                        .setRequestType(HttpRequestType.GET)
+                        .setUrl(personalisedUrl)
+                        .build();
 
-                List<ContentValues> list = null;
-                try {
-                    list = JsonHelper.parseJson(model, result);
-                } catch (final Exception e) {
-                    Log.v(TAG, "Fetching data error!");
-                }
-                int storeResult = -1;
-                if (list != null && !list.isEmpty()) {
-                    storeResult = storeData(list, model);
-                }
+                //todo check if connection is available
+                ((App) getApplication()).getHttpClient().doRequest(getRequest, new IHttpClient.IOnResult() {
 
-                if (storeResult == -1) {
-                    Log.v(TAG, "result is null");
-                }
+                    @Override
+                    public void onSuccess(final String result) {
+                        DataCache.updateLastRequestedTime(url);
+
+                        List<ContentValues> list = null;
+                        try {
+                            list = JsonHelper.parseJson(model, result);
+                        } catch (final Exception e) {
+                            Log.v(TAG, "Fetching data error!");
+                        }
+                        int storeResult = -1;
+                        if (list != null && !list.isEmpty()) {
+                            storeResult = storeData(list, model);
+                        }
+
+                        if (storeResult == -1) {
+                            Log.v(TAG, "result is null");
+                        }
+                    }
+
+                    @Override
+                    public void onError(final IOException e) {
+                        //todo think if it is possible to handle error and show alert dialog from service
+
+                    }
+                });
             }
         }
     }

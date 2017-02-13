@@ -2,6 +2,7 @@ package lab.kulebin.mydictionary;
 
 import android.app.Application;
 
+import lab.kulebin.mydictionary.http.IHttpClient;
 import lab.kulebin.mydictionary.thread.ThreadManager;
 import lab.kulebin.mydictionary.utils.BuildTypeUtils;
 import lab.kulebin.mydictionary.utils.ContextHolder;
@@ -10,6 +11,7 @@ public class App extends Application {
 
     private ThreadManager mThreadManager;
     private TokenHolder mTokenHolder;
+    private IHttpClient mHttpClient;
 
     public void onCreate() {
         super.onCreate();
@@ -33,5 +35,12 @@ public class App extends Application {
         }
 
         return mTokenHolder;
+    }
+
+    public IHttpClient getHttpClient() {
+        if (mHttpClient == null) {
+            mHttpClient = IHttpClient.Impl.newInstance();
+        }
+        return mHttpClient;
     }
 }

@@ -1,6 +1,17 @@
 package lab.kulebin.mydictionary.http;
 
+import android.content.Context;
+
+import java.io.IOException;
+
 public interface IHttpErrorHandler {
 
-    void handleError(final Exception e);
+    void handleError(final IOException e);
+
+    final class Impl {
+
+        public static IHttpErrorHandler newInstance(final Context pContext) {
+            return new HttpErrorHandler(pContext);
+        }
+    }
 }
