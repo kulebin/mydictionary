@@ -52,7 +52,6 @@ public class FetchDataService extends IntentService {
                         .setUrl(personalisedUrl)
                         .build();
 
-                //todo check if connection is available
                 ((App) getApplication()).getHttpClient().doRequest(getRequest, new IHttpClient.IOnResult() {
 
                     @Override

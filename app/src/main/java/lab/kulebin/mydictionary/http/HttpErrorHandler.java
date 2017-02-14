@@ -2,10 +2,12 @@ package lab.kulebin.mydictionary.http;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -21,6 +23,7 @@ import java.util.concurrent.Semaphore;
 
 import lab.kulebin.mydictionary.App;
 import lab.kulebin.mydictionary.R;
+import lab.kulebin.mydictionary.app.SignInActivity;
 import lab.kulebin.mydictionary.utils.ContextHolder;
 
 import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
@@ -31,9 +34,10 @@ import static lab.kulebin.mydictionary.http.ErrorConstants.ERROR_VALUE_PERMISSIO
 class HttpErrorHandler implements IHttpErrorHandler {
 
     private static final String TAG = HttpErrorHandler.class.getSimpleName();
+    private boolean isTokenRefreshedSuccessfully;
     private final Context mContext;
 
-    public HttpErrorHandler(final Context pContext) {
+    HttpErrorHandler(final Context pContext) {
         this.mContext = pContext;
     }
 
@@ -45,17 +49,13 @@ class HttpErrorHandler implements IHttpErrorHandler {
                 case HTTP_UNAUTHORIZED:
                     final String errorMessage = parseError(httpRequestException.getMessage());
                     if (isTokenExpiredError(errorMessage)) {
-                        //todo test if token is refreshes correct and request is retried again
                         refreshToken();
-                        final IHttpClient httpClient = IHttpClient.Impl.newInstance();
-                        final HttpRequest oldHttpRequest = httpRequestException.getHttpRequest();
-                        final HttpRequest newHttpRequest = new HttpRequest.Builder()
-                                .setRequestType(oldHttpRequest.getRequestType())
-                                .setUrl(UrlBuilder.replaceTokenInUrl(oldHttpRequest.getUrl()))
-                                .setHeaders(oldHttpRequest.getHeaders())
-                                .setBody(oldHttpRequest.getBody())
-                                .build();
-                        httpClient.doRequest(newHttpRequest, httpRequestException.getIOnResult());
+                        if (isTokenRefreshedSuccessfully) {
+                            repeatRequest(httpRequestException);
+                        } else {
+                            final Intent intent = new Intent(mContext, SignInActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            mContext.startActivity(intent);
+                        }
                     } else {
                         final String dialogText;
                         if (ERROR_VALUE_PERMISSION_DENIED.equals(errorMessage)) {
@@ -80,7 +80,8 @@ class HttpErrorHandler implements IHttpErrorHandler {
                             parseError(pException.getMessage()));
             }
         } else {
-            Toast.makeText(mContext, ContextHolder.get().getString(R.string.ERROR_CONNECTION_GENERAL), Toast.LENGTH_SHORT).show();
+            showErrorDialog(ContextHolder.get().getString(R.string.TITLE_DIALOG_ERROR_NO_INTERNET_CONNECTION),
+                    ContextHolder.get().getString(R.string.TEXT_DIALOG_ERROR_NO_INTERNET_CONNECTION));
         }
     }
 
@@ -97,25 +98,34 @@ class HttpErrorHandler implements IHttpErrorHandler {
 
     private void showErrorDialog(final CharSequence pTitle, final CharSequence pMessage) {
 
-        final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(mContext);
-        alertDialogBuilder
-                .setTitle(pTitle)
-                .setMessage(pMessage)
-                .setCancelable(true)
-                .setPositiveButton(mContext.getString(R.string.BUTTON_DIALOG_POSITIVE), new DialogInterface.OnClickListener() {
+        final Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
 
-                    public void onClick(final DialogInterface dialog, final int id) {
-                        dialog.dismiss();
-                    }
-                });
+            @Override
+            public void run() {
+                final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(mContext);
+                alertDialogBuilder
+                        .setTitle(pTitle)
+                        .setMessage(pMessage)
+                        .setCancelable(true)
+                        .setPositiveButton(mContext.getString(R.string.BUTTON_DIALOG_POSITIVE), new DialogInterface.OnClickListener() {
 
-        final AlertDialog alertDialog = alertDialogBuilder.create();
-        alertDialog.show();
+                            public void onClick(final DialogInterface dialog, final int id) {
+                                dialog.dismiss();
+                            }
+                        });
+
+                final AlertDialog alertDialog = alertDialogBuilder.create();
+                alertDialog.show();
+            }
+        });
+
     }
 
     private void refreshToken() {
         final FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
         final FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
+        isTokenRefreshedSuccessfully = false;
 
         final Semaphore semaphore = new Semaphore(0);
 
@@ -127,6 +137,7 @@ class HttpErrorHandler implements IHttpErrorHandler {
                     if (token != null) {
                         ((App) ContextHolder.get()).getTokenHolder().refreshToken(token);
                     }
+                    isTokenRefreshedSuccessfully = true;
                 } else {
                     Log.e(TAG, "Refresh token error!");
                 }
@@ -144,5 +155,16 @@ class HttpErrorHandler implements IHttpErrorHandler {
 
     private boolean isTokenExpiredError(final String pErrorMessage) {
         return ErrorConstants.ERROR_VALUE_AUTH_TOKEN_IS_EXPIRED.equals(pErrorMessage);
+    }
+
+    private void repeatRequest(final HttpRequestException pE) {
+        final HttpRequest oldHttpRequest = pE.getHttpRequest();
+        final HttpRequest newHttpRequest = new HttpRequest.Builder()
+                .setRequestType(oldHttpRequest.getRequestType())
+                .setUrl(UrlBuilder.replaceTokenInUrl(oldHttpRequest.getUrl()))
+                .setHeaders(oldHttpRequest.getHeaders())
+                .setBody(oldHttpRequest.getBody())
+                .build();
+        ((App) ContextHolder.get()).getHttpClient().doRequest(newHttpRequest, pE.getIOnResult());
     }
 }

@@ -56,7 +56,6 @@ import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
 import lab.kulebin.mydictionary.thread.ProgressCallback;
 import lab.kulebin.mydictionary.thread.ThreadManager;
-import lab.kulebin.mydictionary.utils.ConnectionUtils;
 import lab.kulebin.mydictionary.utils.NameUtils;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
@@ -345,32 +344,27 @@ public class EntryFragment extends Fragment {
                                 .setUrl(url)
                                 .build();
 
-                        if (ConnectionUtils.isNetworkAvailable()) {
-                            ((App) getActivity().getApplication()).getHttpClient().doRequest(entryDeleteRequest, new IHttpClient.IOnResult() {
+                        ((App) getActivity().getApplication()).getHttpClient().doRequest(entryDeleteRequest, new IHttpClient.IOnResult() {
 
-                                @Override
-                                public void onSuccess(final String result) {
-                                    if (Constants.HTTP_RESPONSE_DELETE_OK.equals(result)) {
-                                        getContext().getContentResolver().delete(
-                                                UriBuilder.getTableUri(Entry.class),
-                                                Entry.ID + "=?",
-                                                new String[]{String.valueOf(pEntryId)});
-                                    } else {
-                                        Toast.makeText(getContext(),
-                                                R.string.ERROR_CONNECTION_GENERAL, Toast.LENGTH_SHORT).show();
-                                    }
+                            @Override
+                            public void onSuccess(final String result) {
+                                if (Constants.HTTP_RESPONSE_DELETE_OK.equals(result)) {
+                                    getContext().getContentResolver().delete(
+                                            UriBuilder.getTableUri(Entry.class),
+                                            Entry.ID + "=?",
+                                            new String[]{String.valueOf(pEntryId)});
+                                } else {
+                                    Toast.makeText(getContext(),
+                                            R.string.ERROR_CONNECTION_GENERAL, Toast.LENGTH_SHORT).show();
                                 }
+                            }
 
-                                @Override
-                                public void onError(final IOException e) {
-                                    IHttpErrorHandler.Impl.newInstance(getContext()).handleError(e);
+                            @Override
+                            public void onError(final IOException e) {
+                                IHttpErrorHandler.Impl.newInstance(getActivity()).handleError(e);
 
-                                }
-                            });
-
-                        } else {
-                            //todo show no connection dialog
-                        }
+                            }
+                        });
 
                         return null;
                     }

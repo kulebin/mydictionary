@@ -14,20 +14,24 @@ import java.util.Map;
 class HttpClient implements IHttpClient {
 
     private static final String TAG = HttpClient.class.getSimpleName();
-    private static final int READ_TIMEOUT = 10000;
-    private static final int CONNECTION_TIMEOUT = 15000;
+    private static final int READ_TIMEOUT = 5000;
+    private static final int CONNECTION_TIMEOUT = 8000;
 
     public void doRequest(final HttpRequest pHttpRequest, final IOnResult pIOnResult) {
 
         HttpURLConnection connection = null;
         BufferedReader reader = null;
+        IOException exception = null;
+        String response = null;
+        int responseCode = -1;
+        boolean isSuccess;
 
         try {
             final URL reqUrl = new URL(pHttpRequest.getUrl());
             connection = ((HttpURLConnection) reqUrl.openConnection());
             connection.setRequestMethod(pHttpRequest.getRequestType().name());
-            connection.setReadTimeout(READ_TIMEOUT);
             connection.setConnectTimeout(CONNECTION_TIMEOUT);
+            connection.setReadTimeout(READ_TIMEOUT);
             final Map<String, String> headers = pHttpRequest.getHeaders();
             if (headers != null) {
                 for (final String key : pHttpRequest.getHeaders().keySet()) {
@@ -39,9 +43,9 @@ class HttpClient implements IHttpClient {
             }
 
             final InputStream inputStream;
-            final int responseCode = connection.getResponseCode();
+            responseCode = connection.getResponseCode();
 
-            final boolean isSuccess = connection.getResponseCode() >= 200 && responseCode < 300;
+            isSuccess = connection.getResponseCode() >= 200 && responseCode < 300;
             if (isSuccess) {
                 inputStream = connection.getInputStream();
             } else {
@@ -54,18 +58,13 @@ class HttpClient implements IHttpClient {
             while ((line = reader.readLine()) != null) {
                 stringBuilder.append(line);
             }
-            final String response = stringBuilder.toString();
-
+            response = stringBuilder.toString();
             inputStream.close();
 
-            if (isSuccess) {
-                pIOnResult.onSuccess(response);
-            } else {
-                pIOnResult.onError(new HttpRequestException(responseCode, response, pHttpRequest, pIOnResult));
-            }
-
         } catch (final IOException e) {
-            pIOnResult.onError(e);
+            isSuccess = false;
+            exception = e;
+
         } finally {
             if (connection != null) {
                 connection.disconnect();
@@ -77,6 +76,14 @@ class HttpClient implements IHttpClient {
                     Log.e(TAG, "Error closing stream", e);
                 }
             }
+        }
+
+        if (isSuccess) {
+            pIOnResult.onSuccess(response);
+        } else if (exception == null) {
+            pIOnResult.onError(new HttpRequestException(responseCode, response, pHttpRequest, pIOnResult));
+        } else {
+            pIOnResult.onError(exception);
         }
     }
 

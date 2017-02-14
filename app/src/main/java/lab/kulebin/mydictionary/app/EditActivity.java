@@ -224,7 +224,6 @@ public class EditActivity extends AppCompatActivity {
                                 .setBody(pEntry.toJson())
                                 .build();
 
-                        //todo check for is connection available
                         ((App) getApplication()).getHttpClient().doRequest(entryPutRequest, new IHttpClient.IOnResult() {
 
                             @Override
@@ -247,7 +246,6 @@ public class EditActivity extends AppCompatActivity {
                             @Override
                             public void onError(final IOException e) {
                                 IHttpErrorHandler.Impl.newInstance(EditActivity.this).handleError(e);
-
                             }
                         });
 
@@ -264,10 +262,7 @@ public class EditActivity extends AppCompatActivity {
 
                     @Override
                     public void onSuccess(final Void pVoid) {
-                        final Toast toast = Toast.makeText(getApplicationContext(),
-                                R.string.TEXT_RESULT_SUCCESS_ENTRY_STORED,
-                                Toast.LENGTH_SHORT);
-                        toast.show();
+
                     }
 
                     @Override

@@ -65,7 +65,6 @@ import lab.kulebin.mydictionary.thread.ITask;
 import lab.kulebin.mydictionary.thread.OnResultCallback;
 import lab.kulebin.mydictionary.thread.ProgressCallback;
 import lab.kulebin.mydictionary.thread.ThreadManager;
-import lab.kulebin.mydictionary.utils.ConnectionUtils;
 import lab.kulebin.mydictionary.utils.UriBuilder;
 
 public class MainActivity extends AppCompatActivity
@@ -232,7 +231,7 @@ public class MainActivity extends AppCompatActivity
             final AlertDialog alertDialog = alertDialogBuilder.create();
             alertDialog.show();
         } else {
-            final Intent intent = new Intent(MainActivity.this, EditActivity.class);
+            final Intent intent = new Intent(this, EditActivity.class);
             intent.putExtra(Constants.EXTRA_SELECTED_DICTIONARY_ID, mSelectedDictionaryMenuId);
             startActivity(intent);
         }
@@ -459,69 +458,65 @@ public class MainActivity extends AppCompatActivity
                                 .setUrl(dictionaryUrl)
                                 .build();
 
-                        if (ConnectionUtils.isNetworkAvailable()) {
-                            final IHttpClient httpClient = ((App) getApplication()).getHttpClient();
-                            httpClient.doRequest(dictionaryDeleteRequest, new IHttpClient.IOnResult() {
+                        final IHttpClient httpClient = ((App) getApplication()).getHttpClient();
+                        httpClient.doRequest(dictionaryDeleteRequest, new IHttpClient.IOnResult() {
 
-                                @Override
-                                public void onSuccess(final String result) {
-                                    if (Constants.HTTP_RESPONSE_DELETE_OK.equals(result)) {
-                                        final Cursor entryIdsCursor = getContentResolver().query(
-                                                UriBuilder.getTableUri(Entry.class),
-                                                new String[]{Entry.ID},
-                                                Entry.DICTIONARY_MENU_ID + "=?",
-                                                new String[]{String.valueOf(mSelectedDictionaryMenuId)},
-                                                null);
-                                        if (entryIdsCursor != null) {
-                                            while (entryIdsCursor.moveToNext()) {
-                                                final String entryUrl = UrlBuilder.getPersonalisedUrl(
-                                                        new String[]{
-                                                                DbHelper.getTableName(Entry.class),
-                                                                String.valueOf(entryIdsCursor.getLong(entryIdsCursor.getColumnIndex(Entry.ID)))},
-                                                        null);
-                                                final HttpRequest entryDeleteRequest = new HttpRequest.Builder()
-                                                        .setRequestType(HttpRequestType.DELETE)
-                                                        .setUrl(entryUrl)
-                                                        .build();
-                                                httpClient.doRequest(entryDeleteRequest, new IHttpClient.IOnResult() {
+                            @Override
+                            public void onSuccess(final String result) {
+                                if (Constants.HTTP_RESPONSE_DELETE_OK.equals(result)) {
+                                    final Cursor entryIdsCursor = getContentResolver().query(
+                                            UriBuilder.getTableUri(Entry.class),
+                                            new String[]{Entry.ID},
+                                            Entry.DICTIONARY_MENU_ID + "=?",
+                                            new String[]{String.valueOf(mSelectedDictionaryMenuId)},
+                                            null);
+                                    if (entryIdsCursor != null) {
+                                        while (entryIdsCursor.moveToNext()) {
+                                            final String entryUrl = UrlBuilder.getPersonalisedUrl(
+                                                    new String[]{
+                                                            DbHelper.getTableName(Entry.class),
+                                                            String.valueOf(entryIdsCursor.getLong(entryIdsCursor.getColumnIndex(Entry.ID)))},
+                                                    null);
+                                            final HttpRequest entryDeleteRequest = new HttpRequest.Builder()
+                                                    .setRequestType(HttpRequestType.DELETE)
+                                                    .setUrl(entryUrl)
+                                                    .build();
+                                            httpClient.doRequest(entryDeleteRequest, new IHttpClient.IOnResult() {
 
-                                                    @Override
-                                                    public void onSuccess(final String result) {
-                                                        // ignore
-                                                    }
+                                                @Override
+                                                public void onSuccess(final String result) {
+                                                    // ignore
+                                                }
 
-                                                    @Override
-                                                    public void onError(final IOException e) {
-                                                        getHttpErrorHandler().handleError(e);
-                                                    }
-                                                });
-                                            }
-                                            getContentResolver().delete(
-                                                    UriBuilder.getTableUri(Dictionary.class, String.valueOf(mSelectedDictionaryMenuId)),
-                                                    null,
-                                                    null
-                                            );
+                                                @Override
+                                                public void onError(final IOException e) {
+                                                    getHttpErrorHandler().handleError(e);
+                                                }
+                                            });
                                         }
-
-                                        if (entryIdsCursor != null) {
-                                            entryIdsCursor.close();
-                                        }
-
-                                    } else {
-                                        Toast.makeText(getApplicationContext(),
-                                                R.string.ERROR_DICTIONARY_NOT_DELETED,
-                                                Toast.LENGTH_SHORT).show();
+                                        getContentResolver().delete(
+                                                UriBuilder.getTableUri(Dictionary.class, String.valueOf(mSelectedDictionaryMenuId)),
+                                                null,
+                                                null
+                                        );
                                     }
-                                }
 
-                                @Override
-                                public void onError(final IOException e) {
-                                    getHttpErrorHandler().handleError(e);
+                                    if (entryIdsCursor != null) {
+                                        entryIdsCursor.close();
+                                    }
+
+                                } else {
+                                    Toast.makeText(getApplicationContext(),
+                                            R.string.ERROR_DICTIONARY_NOT_DELETED,
+                                            Toast.LENGTH_SHORT).show();
                                 }
-                            });
-                        } else {
-                            // TODO: 2/13/2017 show no connection dialog
-                        }
+                            }
+
+                            @Override
+                            public void onError(final IOException e) {
+                                getHttpErrorHandler().handleError(e);
+                            }
+                        });
 
                         return null;
                     }
@@ -652,7 +647,6 @@ public class MainActivity extends AppCompatActivity
                                 .setBody(dictionary.toJson())
                                 .build();
 
-                        //todo check if connection available
                         ((App) getApplication()).getHttpClient().doRequest(dictionaryPutRequest,
                                 new IHttpClient.IOnResult() {
 
@@ -691,9 +685,6 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onSuccess(final Void pVoid) {
                         getSupportLoaderManager().restartLoader(ENTRY_LOADER, null, MainActivity.this);
-                        Toast.makeText(getApplicationContext(),
-                                R.string.TEXT_RESULT_SUCCESS_DICTIONARY_STORED,
-                                Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
